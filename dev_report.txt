@@ -1,0 +1,99 @@
+
+============================================================
+  SESSION 1
+============================================================
+  Cycles: 40
+  Mean coherence: 0.823
+  Final coherence: 0.910
+  GCO: STABLE=0  PARTIAL=38  DEGRADED=2  CRITICAL=0
+  Exploration ratio: 52%
+  Actions used: ['checkpoint', 'cleanup_temp', 'compare_state', 'deep_scan', 'introspect', 'list_terrain', 'mark_terrain', 'query_memory', 'read_terrain', 'rest', 'shallow_scan', 'write_memory']
+  Action counts: {'list_terrain': 15, 'shallow_scan': 6, 'checkpoint': 3, 'mark_terrain': 3, 'write_memory': 3, 'rest': 2, 'deep_scan': 2, 'query_memory': 2, 'read_terrain': 1, 'compare_state': 1, 'cleanup_temp': 1, 'introspect': 1}
+  Tier counts: {'reflex': 22, 'build': 10, 'regulate': 3, 'explore': 5}
+  Compute: 0.0017s
+  Log size: 40
+  World: 3 entities, 43 relations
+
+============================================================
+  SESSION 2
+============================================================
+  Cycles: 40
+  Mean coherence: 0.826
+  Final coherence: 0.861
+  GCO: STABLE=0  PARTIAL=38  DEGRADED=2  CRITICAL=0
+  Exploration ratio: 45%
+  Actions used: ['checkpoint', 'cleanup_temp', 'compare_state', 'deep_scan', 'introspect', 'list_terrain', 'mark_terrain', 'query_memory', 'read_terrain', 'rest', 'shallow_scan', 'write_memory']
+  Action counts: {'list_terrain': 9, 'mark_terrain': 5, 'write_memory': 5, 'cleanup_temp': 4, 'read_terrain': 3, 'deep_scan': 3, 'checkpoint': 3, 'rest': 2, 'query_memory': 2, 'introspect': 2, 'shallow_scan': 1, 'compare_state': 1}
+  Tier counts: {'regulate': 6, 'reflex': 13, 'build': 15, 'explore': 6}
+  Compute: 0.0013s
+  Log size: 58
+  World: 3 entities, 43 relations
+
+============================================================
+  SESSION 3
+============================================================
+  Cycles: 20
+  Mean coherence: 0.785
+  Final coherence: 0.874
+  GCO: STABLE=0  PARTIAL=18  DEGRADED=2  CRITICAL=0
+  Exploration ratio: 60%
+  Actions used: ['compare_state', 'deep_scan', 'introspect', 'list_terrain', 'mark_terrain', 'query_memory', 'read_terrain', 'rest', 'write_memory']
+  Action counts: {'rest': 5, 'deep_scan': 4, 'compare_state': 3, 'list_terrain': 2, 'write_memory': 2, 'read_terrain': 1, 'query_memory': 1, 'mark_terrain': 1, 'introspect': 1}
+  Tier counts: {'regulate': 5, 'reflex': 3, 'explore': 8, 'build': 4}
+  Compute: 0.0005s
+  Log size: 26
+  World: 3 entities, 23 relations
+
+============================================================
+  DEVELOPMENTAL ARC
+============================================================
+  Total sessions: 3
+  Total cycles:   100
+
+  Coherence trend:
+    Session 1: 0.823  ################################
+    Session 2: 0.826  #################################
+    Session 3: 0.785  ###############################
+
+  Exploration trend:
+    Session 1: 52%   #####################
+    Session 2: 45%   ##################
+    Session 3: 60%   ########################
+
+  Vocabulary growth:
+    Session 1: 12 distinct actions
+    Session 2: 12 distinct actions
+    Session 3: 9 distinct actions
+
+============================================================
+  AGENT SELF-MODEL
+============================================================
+=== REAL Agent Self-Model ===
+Entries analyzed: 41
+Consolidations: 2
+
+Behavioral Profile:
+  Dominant action: list_terrain
+  Action diversity: 92%
+
+Coherence:
+  Mean: 0.8111
+  Trajectory: +0.1007
+  GCO proximity: 24%
+
+Dimensions:
+  Strongest: contextual_fit
+  Weakest: reflexivity
+    continuity: 0.9048
+    vitality: 0.8299
+    contextual_fit: 1.0000
+    differentiation: 0.9254
+    accountability: 0.7005
+    reflexivity: 0.5488
+
+Metabolic:
+  Total compute: 0.5976s
+  Mean per cycle: 0.01458s
+
+============================================================
+DONE
