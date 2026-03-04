@@ -67,6 +67,7 @@ class REALAgent:
         # ── Coherence evaluation ──────────────────────────────────────
         self.coherence = CoherenceEngine()
         self.log = EpisodicLog(maxlen=500)
+        self.coherence.set_log(self.log)  # wire log for reflexivity scoring
 
         # ── Boundary ──────────────────────────────────────────────────
         self.sandbox = Sandbox()
@@ -245,12 +246,16 @@ class REALAgent:
 
                 # Print cycle summary
                 if self.verbose:
-                    mode_char = "F" if mode == SelectionMode.FLUCTUATION else "C"
+                    mode_char = {"fluctuation": "F", "constraint": "C", "guided": "G"}.get(mode.value, "?")
+                    guided_info = ""
+                    if mode == SelectionMode.GUIDED and self.selector._weakest_dim:
+                        guided_info = f"  [{self.selector._weakest_dim}]"
                     print(
                         f"  [{self.cycle:3d}] {mode_char} {action_def.name:<16s} "
                         f"→ {composite:.3f} ({delta:+.3f})  "
                         f"GCO:{gco:<8s} "
                         f"ATP:{result.get('compute_cost_secs', 0):.4f}s"
+                        f"{guided_info}"
                     )
 
                 self.coherence.advance_cycle()

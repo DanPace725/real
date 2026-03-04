@@ -61,6 +61,11 @@ python -m real --cycles 100 --interval 0.5
 python -m real --cycles 50 --quiet
 ```
 
+**Arguments:**
+- `--cycles N` — Number of perceive→act→evaluate cycles per session (default: 50)
+- `--interval SECS` — Real wall-clock seconds to wait between cycles (default: 1.0). This matters because the agent is embedded in real hardware — the pause gives system state time to actually change between readings. Shorter intervals (0.1–0.2s) make runs faster but reduce state variation between cycles. Longer intervals (1–2s) give the agent more distinct snapshots of its environment.
+- `--quiet` — Suppress per-cycle output, only show session summary
+
 ## Key Design Decisions
 
 - **Compute-as-ATP**: Wall-clock time per tick is measured. More relations in the world graph = more expensive evaluation. The agent pays real metabolic cost for complexity.

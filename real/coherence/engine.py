@@ -161,6 +161,11 @@ class CoherenceEngine:
         self.prior_score: Optional[float] = None
         self._recent_states: list[SystemState] = []
         self._max_recent: int = 20
+        self._log = None  # EpisodicLog reference, set by agent loop
+
+    def set_log(self, log) -> None:
+        """Wire in the episodic log for reflexivity scoring."""
+        self._log = log
 
     def read_state(self) -> SystemState:
         """Read real system state and track history."""
@@ -270,17 +275,59 @@ class CoherenceEngine:
         """
         P6 Meta: Can the system revise patterns after negative outcomes?
 
-        Initially thin — scores based on whether the system has enough
-        history to revise.  Deeper reflexivity emerges with introspect
-        capacity at later AVIA stages.
+        Measures three components of actual reflexive capacity:
+
+        1. Action revision: after a coherence dip (negative delta),
+           did the agent switch to a different action next cycle?
+        2. Recovery signal: after switching, did coherence improve?
+        3. Introspection depth: has introspect been triggered?
+
+        These are measured from the episodic log, not from hardware state.
+        The reflexivity scorer is the only scorer that reads the log —
+        because meta-level evaluation IS about the agent's own behavior.
         """
-        if len(self._recent_states) < 5:
+        if not self._log or self._log.size < 5:
             return 0.3  # Limited capacity to revise without data
 
-        # Check if recent scores show any recovery after dips
-        scores = [s.cpu_load_avg for s in self._recent_states[-5:]]
-        has_variation = _variance(scores) > 0.001
-        return 0.6 if has_variation else 0.4
+        entries = self._log.recent(15)
+
+        # Component 1: Action revision rate after dips
+        # Count cycles where delta was negative AND the agent switched actions
+        dips = 0
+        revisions = 0
+        for i in range(1, len(entries)):
+            if entries[i-1].delta_coherence < -0.02:
+                dips += 1
+                if entries[i].action != entries[i-1].action:
+                    revisions += 1
+
+        revision_rate = revisions / max(dips, 1) if dips > 0 else 0.5
+
+        # Component 2: Recovery after revision
+        # When the agent DID switch after a dip, did coherence improve?
+        recoveries = 0
+        recovery_attempts = 0
+        for i in range(1, len(entries)):
+            if (entries[i-1].delta_coherence < -0.02
+                    and entries[i].action != entries[i-1].action):
+                recovery_attempts += 1
+                if entries[i].delta_coherence > 0:
+                    recoveries += 1
+
+        recovery_rate = recoveries / max(recovery_attempts, 1) if recovery_attempts > 0 else 0.3
+
+        # Component 3: Introspection depth
+        # Has the agent used introspect? More uses = more meta-awareness.
+        introspect_count = sum(1 for e in self._log.entries if e.action == "introspect")
+        introspect_score = min(1.0, introspect_count / 5.0)
+
+        # Weighted combination
+        score = (
+            revision_rate * 0.4
+            + recovery_rate * 0.35
+            + introspect_score * 0.25
+        )
+        return max(0.0, min(1.0, score))
 
     # ── Composite scoring ─────────────────────────────────────────────
 

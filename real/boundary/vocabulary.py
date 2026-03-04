@@ -19,15 +19,17 @@ from __future__ import annotations
 
 import time
 import json
+import hashlib
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Callable, Dict, Optional
+from pathlib import Path
 
 from real.core.primitives import RPPrimitive
 from real.core.entity import Entity
 from real.core.relation import Relation
 from real.core.world import World
-from real.boundary.sandbox import Sandbox
+from real.boundary.sandbox import Sandbox, TERRAIN_DIR
 from real.coherence.memory import EpisodicLog
 
 
@@ -93,6 +95,10 @@ VOCABULARY: list[ActionDef] = [
     ActionDef("write_memory",    Tier.BUILD,    0.15,  5, RPPrimitive.ONTOLOGY,   "Write to persistent memory"),
     ActionDef("checkpoint",      Tier.BUILD,    0.20, 10, RPPrimitive.ONTOLOGY,   "Save full state checkpoint"),
     ActionDef("introspect",      Tier.BUILD,    0.25, 15, RPPrimitive.META,       "Self-model from log analysis"),
+
+    # SPAWN tier (genuinely expensive — real CPU or I/O work)
+    ActionDef("digest_log",      Tier.SPAWN,    0.40, 20, RPPrimitive.DYNAMICS,   "CPU-bound: iterative SHA-256 over serialized log"),
+    ActionDef("sort_terrain",    Tier.SPAWN,    0.35, 12, RPPrimitive.GEOMETRY,   "I/O-bound: read, sort, and rewrite terrain files"),
 ]
 
 # Name → ActionDef lookup
@@ -207,6 +213,12 @@ class ActionExecutor:
 
         elif action == "introspect":
             return self._introspect(params)
+
+        elif action == "digest_log":
+            return self._digest_log(params)
+
+        elif action == "sort_terrain":
+            return self._sort_terrain(params)
 
         else:
             return {"success": False, "error": f"Not implemented: {action}"}
@@ -335,6 +347,110 @@ class ActionExecutor:
             "success": True,
             "model": model,
             "persisted": ["self_model.json", "self_model_summary.txt"],
+        }
+
+    def _digest_log(self, params: dict) -> dict:
+        """
+        P2 Dynamics — CPU-bound computational work on the agent's own data.
+
+        Serializes the episodic log, then runs iterative SHA-256 hashing.
+        This is NOT crypto — it's genuine computational work performed on
+        the agent's own experience.  The output is a compact digest stored
+        as a terrain marker.
+
+        The number of hash iterations scales with log size, so the cost
+        grows as the agent accumulates more experience.  This is the
+        metabolic cost of "digesting" experience.
+        """
+        if not self.log or self.log.size < 5:
+            return {"success": False, "reason": "insufficient_log_data"}
+
+        # Serialize the log entries to bytes
+        log_data = json.dumps(
+            [{"c": e.cycle, "a": e.action, "s": e.coherence_score,
+              "d": e.delta_coherence, "ds": e.dimension_scores}
+             for e in self.log.entries],
+            separators=(",", ":")
+        ).encode("utf-8")
+
+        # Iterative hashing — cost scales with log size
+        # Base: 5000 iterations. +500 per log entry. Genuinely expensive.
+        iterations = 5000 + (self.log.size * 500)
+        digest = hashlib.sha256(log_data).digest()
+        for _ in range(iterations):
+            digest = hashlib.sha256(digest).digest()
+
+        hex_digest = digest.hex()
+
+        # Store the digest as a terrain marker
+        marker_name = f"digest_{int(time.time())}"
+        marker_content = json.dumps({
+            "digest": hex_digest,
+            "entries_digested": self.log.size,
+            "iterations": iterations,
+            "timestamp": time.time(),
+        })
+        self.sandbox.mark_terrain(marker_name, marker_content)
+
+        return {
+            "success": True,
+            "digest": hex_digest[:16] + "...",
+            "entries_digested": self.log.size,
+            "iterations": iterations,
+        }
+
+    def _sort_terrain(self, params: dict) -> dict:
+        """
+        P3 Geometry — I/O-bound: read, sort, and rewrite all terrain files.
+
+        Reads every terrain file, computes a sorting metric (by timestamp
+        extracted from filename, then by file size), and rewrites them
+        with an index prefix.  This is genuine disk I/O work — the agent
+        encounters a different metabolic signature than CPU-bound work.
+
+        CPU-heavy digest_log spikes vitality scoring one way.
+        I/O-heavy sort_terrain spikes it differently (memory pressure,
+        file system latency).
+        """
+        terrain_dir = TERRAIN_DIR
+        if not terrain_dir.exists():
+            return {"success": False, "reason": "no_terrain_dir"}
+
+        # Read all terrain files
+        files = []
+        for p in terrain_dir.iterdir():
+            if p.is_file():
+                try:
+                    content = p.read_text(encoding="utf-8")
+                    stat = p.stat()
+                    files.append({
+                        "name": p.name,
+                        "content": content,
+                        "size": stat.st_size,
+                        "mtime": stat.st_mtime,
+                        "path": p,
+                    })
+                except (OSError, UnicodeDecodeError):
+                    continue
+
+        if not files:
+            return {"success": True, "sorted": 0, "reason": "no_files"}
+
+        # Sort by modification time, then by size
+        files.sort(key=lambda f: (f["mtime"], f["size"]))
+
+        # Rewrite each file with a sort-order prefix in content
+        for i, f in enumerate(files):
+            new_content = f"[{i:04d}] {f['content']}"
+            try:
+                f["path"].write_text(new_content, encoding="utf-8")
+            except OSError:
+                continue
+
+        return {
+            "success": True,
+            "sorted": len(files),
+            "order": [f["name"] for f in files],
         }
 
     # ── World recording ───────────────────────────────────────────────

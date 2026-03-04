@@ -1,15 +1,18 @@
 """
-Action selector — CFAR-based exploration/exploitation.
+Action selector — CFAR-based exploration/exploitation with dimension guidance.
 
 Uses a Constraint-Fluctuation-Attention-Resolution strategy to balance
 exploration (novel actions) against exploitation (known-good trails).
 
-Two operational modes:
+Three operational modes:
     FLUCTUATION:  high exploration — random action, weighted by diversity
     CONSTRAINT:   trail following — pick action with best trail score
+    GUIDED:       dimension targeting — pick action that improves the
+                  weakest coherence dimension, closing the feedback loop
 
 Mode switching is driven by recent coherence deltas: if coherence is
-improving, exploit the trail.  If stagnant or declining, fluctuate.
+improving, exploit the trail.  If stagnant or declining, either fluctuate
+or use guided mode to target the specific dimension pulling the score down.
 """
 
 from __future__ import annotations
@@ -25,11 +28,12 @@ from real.boundary.vocabulary import ActionDef, VOCABULARY
 class SelectionMode(str, Enum):
     FLUCTUATION = "fluctuation"
     CONSTRAINT = "constraint"
+    GUIDED = "guided"
 
 
 class ActionSelector:
     """
-    CFAR-based action selection.
+    CFAR-based action selection with dimension guidance.
 
     Parameters
     ----------
@@ -40,6 +44,8 @@ class ActionSelector:
         Number of recent cycles to check for improvement.
     stagnation_threshold : float
         If mean recent delta is below this, switch to FLUCTUATION.
+    guided_threshold : int
+        Minimum log entries before GUIDED mode activates.
     """
 
     def __init__(
@@ -47,10 +53,13 @@ class ActionSelector:
         exploration_rate: float = 0.40,
         stagnation_window: int = 5,
         stagnation_threshold: float = 0.005,
+        guided_threshold: int = 12,
     ) -> None:
         self.base_exploration_rate = exploration_rate
         self.stagnation_window = stagnation_window
         self.stagnation_threshold = stagnation_threshold
+        self.guided_threshold = guided_threshold
+        self._weakest_dim: Optional[str] = None  # last identified weakest
 
     def select(
         self,
@@ -69,13 +78,15 @@ class ActionSelector:
 
         if mode == SelectionMode.FLUCTUATION:
             action = self._fluctuate(available, log)
+        elif mode == SelectionMode.GUIDED:
+            action = self._guided(available, log)
         else:
             action = self._exploit(available, log)
 
         return action, mode
 
     def _choose_mode(self, log: EpisodicLog) -> SelectionMode:
-        """Decide between exploration and exploitation."""
+        """Decide between exploration, exploitation, and guided targeting."""
         if log.size < 3:
             return SelectionMode.FLUCTUATION  # Too early to exploit
 
@@ -85,13 +96,25 @@ class ActionSelector:
 
         # Check for stagnation
         recent = log.recent(self.stagnation_window)
+        stagnating = False
         if len(recent) >= self.stagnation_window:
             mean_delta = sum(e.delta_coherence for e in recent) / len(recent)
             if abs(mean_delta) < self.stagnation_threshold:
-                current_rate = min(0.8, current_rate + 0.3)  # Force exploration
+                stagnating = True
+                current_rate = min(0.8, current_rate + 0.3)
 
-        if random.random() < current_rate:
+        # Roll for exploration vs exploitation
+        roll = random.random()
+        if roll < current_rate:
             return SelectionMode.FLUCTUATION
+
+        # When not exploring and we have enough data, use GUIDED 30% of the time
+        # GUIDED is most valuable when stagnating — target the bottleneck
+        if log.size >= self.guided_threshold:
+            guided_chance = 0.45 if stagnating else 0.25
+            if random.random() < guided_chance:
+                return SelectionMode.GUIDED
+
         return SelectionMode.CONSTRAINT
 
     def _fluctuate(self, available: list[ActionDef], log: EpisodicLog) -> ActionDef:
@@ -142,3 +165,42 @@ class ActionSelector:
                 best_action = a
 
         return best_action
+
+    def _guided(self, available: list[ActionDef], log: EpisodicLog) -> ActionDef:
+        """
+        Dimension-guided selection: target the weakest coherence dimension.
+
+        1. Find the dimension with the lowest recent mean score
+        2. Find which available action historically improves that dimension most
+        3. Select that action
+
+        This closes the introspect → selector feedback loop:
+        the agent's coherence analysis directly steers future behavior.
+        """
+        # Step 1: Find the weakest dimension
+        trends = log.dimension_trends(window=8)
+        if not trends:
+            return self._exploit(available, log)  # fallback
+
+        weakest_dim = min(trends, key=lambda d: trends[d]["recent"])
+        self._weakest_dim = weakest_dim
+
+        # Step 2: Find which action most improves the weakest dimension
+        rankings = log.best_actions_by_dimension()
+        dim_rankings = rankings.get(weakest_dim, [])
+
+        if not dim_rankings:
+            return self._exploit(available, log)  # fallback
+
+        # Build a set of available action names for quick lookup
+        available_names = {a.name for a in available}
+        available_by_name = {a.name: a for a in available}
+
+        # Pick the highest-ranked available action for this dimension
+        for action_name, score in dim_rankings:
+            if action_name in available_names:
+                return available_by_name[action_name]
+
+        # No match — fall back to trail-based exploit
+        return self._exploit(available, log)
+
