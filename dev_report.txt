@@ -1,0 +1,144 @@
+
+============================================================
+  SESSION 1
+============================================================
+  Cycles: 40
+  Mean coherence: 0.863
+  Final coherence: 0.855
+  GCO: STABLE=22  PARTIAL=16  DEGRADED=2  CRITICAL=0
+  Exploration ratio: 48%
+  Actions used: ['checkpoint', 'cleanup_temp', 'compare_state', 'deep_scan', 'introspect', 'list_terrain', 'query_memory', 'read_terrain', 'rest', 'shallow_scan', 'sort_terrain', 'write_memory']
+  Action counts: {'write_memory': 13, 'deep_scan': 6, 'rest': 6, 'shallow_scan': 4, 'read_terrain': 3, 'introspect': 2, 'checkpoint': 1, 'compare_state': 1, 'list_terrain': 1, 'sort_terrain': 1, 'query_memory': 1, 'cleanup_temp': 1}
+  Tier counts: {'build': 16, 'explore': 8, 'regulate': 7, 'reflex': 8, 'spawn': 1}
+  Compute: 0.0012s
+  Log size: 52
+  World: 3 entities, 43 relations
+
+============================================================
+  SESSION 2
+============================================================
+  Cycles: 40
+  Mean coherence: 0.850
+  Final coherence: 0.882
+  GCO: STABLE=18  PARTIAL=20  DEGRADED=2  CRITICAL=0
+  Exploration ratio: 48%
+  Actions used: ['checkpoint', 'cleanup_temp', 'compare_state', 'deep_scan', 'digest_log', 'introspect', 'list_terrain', 'mark_terrain', 'query_memory', 'read_terrain', 'rest', 'shallow_scan', 'sort_terrain', 'write_memory']
+  Action counts: {'write_memory': 9, 'read_terrain': 6, 'checkpoint': 4, 'rest': 4, 'compare_state': 3, 'cleanup_temp': 3, 'deep_scan': 2, 'list_terrain': 2, 'shallow_scan': 2, 'digest_log': 1, 'sort_terrain': 1, 'mark_terrain': 1, 'introspect': 1, 'query_memory': 1}
+  Tier counts: {'explore': 6, 'spawn': 2, 'build': 15, 'reflex': 10, 'regulate': 7}
+  Compute: 0.0011s
+  Log size: 38
+  World: 3 entities, 43 relations
+
+============================================================
+  SESSION 3
+============================================================
+  Cycles: 20
+  Mean coherence: 0.794
+  Final coherence: 0.911
+  GCO: STABLE=3  PARTIAL=15  DEGRADED=2  CRITICAL=0
+  Exploration ratio: 35%
+  Actions used: ['checkpoint', 'deep_scan', 'digest_log', 'introspect', 'mark_terrain', 'query_memory', 'read_terrain', 'rest', 'shallow_scan', 'write_memory']
+  Action counts: {'write_memory': 6, 'read_terrain': 5, 'rest': 2, 'query_memory': 1, 'shallow_scan': 1, 'introspect': 1, 'mark_terrain': 1, 'digest_log': 1, 'deep_scan': 1, 'checkpoint': 1}
+  Tier counts: {'build': 9, 'explore': 2, 'reflex': 6, 'regulate': 2, 'spawn': 1}
+  Compute: 0.0005s
+  Log size: 35
+  World: 3 entities, 23 relations
+
+============================================================
+  DEVELOPMENTAL ARC
+============================================================
+  Total sessions: 18
+  Total cycles:   955
+
+  Coherence trend:
+    Session 1: 0.708  ############################
+    Session 2: 0.866  ##################################
+    Session 3: 0.854  ##################################
+    Session 4: 0.877  ###################################
+    Session 5: 0.871  ##################################
+    Session 6: 0.879  ###################################
+    Session 7: 0.849  #################################
+    Session 8: 0.848  #################################
+    Session 9: 0.848  #################################
+    Session 10: 0.862  ##################################
+    Session 11: 0.852  ##################################
+    Session 12: 0.837  #################################
+    Session 13: 0.768  ##############################
+    Session 14: 0.769  ##############################
+    Session 15: 0.759  ##############################
+    Session 16: 0.863  ##################################
+    Session 17: 0.850  #################################
+    Session 18: 0.794  ###############################
+
+  Exploration trend:
+    Session 1: 56%   ######################
+    Session 2: 36%   ##############
+    Session 3: 18%   #######
+    Session 4: 40%   ################
+    Session 5: 40%   ################
+    Session 6: 34%   #############
+    Session 7: 40%   ################
+    Session 8: 24%   #########
+    Session 9: 32%   ############
+    Session 10: 35%   ##############
+    Session 11: 35%   ##############
+    Session 12: 35%   ##############
+    Session 13: 40%   ################
+    Session 14: 20%   ########
+    Session 15: 33%   #############
+    Session 16: 48%   ###################
+    Session 17: 48%   ###################
+    Session 18: 35%   ##############
+
+  Vocabulary growth:
+    Session 1: 10 distinct actions
+    Session 2: 14 distinct actions
+    Session 3: 13 distinct actions
+    Session 4: 14 distinct actions
+    Session 5: 14 distinct actions
+    Session 6: 14 distinct actions
+    Session 7: 12 distinct actions
+    Session 8: 11 distinct actions
+    Session 9: 11 distinct actions
+    Session 10: 14 distinct actions
+    Session 11: 13 distinct actions
+    Session 12: 13 distinct actions
+    Session 13: 9 distinct actions
+    Session 14: 6 distinct actions
+    Session 15: 8 distinct actions
+    Session 16: 12 distinct actions
+    Session 17: 14 distinct actions
+    Session 18: 10 distinct actions
+
+============================================================
+  AGENT SELF-MODEL
+============================================================
+=== REAL Agent Self-Model ===
+Entries analyzed: 39
+Consolidations: 41
+
+Behavioral Profile:
+  Dominant action: write_memory
+  Action diversity: 100%
+
+Coherence:
+  Mean: 0.8438
+  Trajectory: +0.1586
+  GCO proximity: 15%
+
+Dimensions:
+  Strongest: contextual_fit
+  Weakest: vitality
+    continuity: 0.9240
+    vitality: 0.7496
+    contextual_fit: 0.9902
+    differentiation: 0.8981
+    accountability: 0.7923
+    reflexivity: 0.8311
+
+Metabolic:
+  Total compute: 6.0690s
+  Mean per cycle: 0.15562s
+
+============================================================
+DONE

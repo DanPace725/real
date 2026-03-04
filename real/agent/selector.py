@@ -54,11 +54,13 @@ class ActionSelector:
         stagnation_window: int = 5,
         stagnation_threshold: float = 0.005,
         guided_threshold: int = 12,
+        budget_mode: bool = True,
     ) -> None:
         self.base_exploration_rate = exploration_rate
         self.stagnation_window = stagnation_window
         self.stagnation_threshold = stagnation_threshold
         self.guided_threshold = guided_threshold
+        self.budget_mode = budget_mode
         self._weakest_dim: Optional[str] = None  # last identified weakest
 
     def select(
@@ -143,10 +145,15 @@ class ActionSelector:
         """
         Exploitation: choose the action with the best trail score.
 
-        Trail score = mean delta coherence for this action.
-        Actions with no trail history get a moderate default to
-        encourage eventual sampling.
+        Trail score = mean delta coherence for this action, optionally
+        adjusted by metabolic efficiency (Phase 3d).  When budget_mode
+        is enabled, high-cost actions must earn proportionally better
+        coherence improvement to win over cheaper equivalents.
+
+        Efficiency weight = 1 / (1 + mean_cost / session_mean_cost)
+        When no cost data is available the weight is 1.0 (neutral).
         """
+        session_mean = self._session_mean_cost(log)
         best_score = -float("inf")
         best_action = available[0]
 
@@ -160,6 +167,13 @@ class ActionSelector:
                 # Never tried — give moderate default
                 trail_score = 0.01
 
+            # Metabolic efficiency weighting (Phase 3d)
+            if self.budget_mode and session_mean > 0:
+                mean_cost = log.mean_cost_for_action(a.name)
+                if mean_cost > 0:
+                    efficiency_weight = 1.0 / (1.0 + mean_cost / session_mean)
+                    trail_score = trail_score * efficiency_weight
+
             if trail_score > best_score:
                 best_score = trail_score
                 best_action = a
@@ -172,7 +186,7 @@ class ActionSelector:
 
         1. Find the dimension with the lowest recent mean score
         2. Find which available action historically improves that dimension most
-        3. Select that action
+        3. Among tied candidates, prefer the cheaper one (Phase 3d)
 
         This closes the introspect → selector feedback loop:
         the agent's coherence analysis directly steers future behavior.
@@ -196,11 +210,45 @@ class ActionSelector:
         available_names = {a.name for a in available}
         available_by_name = {a.name: a for a in available}
 
-        # Pick the highest-ranked available action for this dimension
-        for action_name, score in dim_rankings:
-            if action_name in available_names:
-                return available_by_name[action_name]
+        # Step 3: Pick the highest-ranked available action for this dimension
+        # If budget_mode is on, apply efficiency weighting to scores before
+        # ranking so cheaper actions can beat marginally-better expensive ones.
+        session_mean = self._session_mean_cost(log)
+        best_action: Optional[ActionDef] = None
+        best_weighted = -float("inf")
+
+        for action_name, dim_score in dim_rankings:
+            if action_name not in available_names:
+                continue
+            weighted = dim_score
+            if self.budget_mode and session_mean > 0:
+                mean_cost = log.mean_cost_for_action(action_name)
+                if mean_cost > 0:
+                    efficiency_weight = 1.0 / (1.0 + mean_cost / session_mean)
+                    weighted = dim_score * efficiency_weight
+            if weighted > best_weighted:
+                best_weighted = weighted
+                best_action = available_by_name[action_name]
+
+        if best_action is not None:
+            return best_action
 
         # No match — fall back to trail-based exploit
         return self._exploit(available, log)
 
+    # ── Helpers ───────────────────────────────────────────────────────────
+
+    def _session_mean_cost(self, log: EpisodicLog) -> float:
+        """
+        Mean compute_cost_secs across all logged entries.
+
+        Used as the denominator in the efficiency weight so that the
+        relative cost of each action is calibrated to the session baseline
+        rather than an absolute constant (which would be hardware-dependent).
+
+        Returns 0.0 when the log is empty (no weighting applied).
+        """
+        if not log.entries:
+            return 0.0
+        total = sum(e.compute_cost_secs for e in log.entries)
+        return total / len(log.entries)

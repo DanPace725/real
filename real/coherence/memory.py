@@ -125,6 +125,22 @@ class EpisodicLog:
             efficiencies.append(e.delta_coherence / cost)
         return sum(efficiencies) / len(efficiencies)
 
+    def mean_cost_for_action(self, action: str) -> float:
+        """Average compute_cost_secs for a given action type.
+
+        Returns 0.0 when the action has never been taken (selector falls
+        back to no efficiency weighting in that case).
+        """
+        entries = self.entries_for_action(action)
+        if not entries:
+            return 0.0
+        return sum(e.compute_cost_secs for e in entries) / len(entries)
+
+    def self_model(self) -> dict:
+        """Alias for build_self_model() — convenience accessor."""
+        return self.build_self_model()
+
+
     # ── Analytical queries ─────────────────────────────────────────────
     # These power the query_memory, compare_state, and introspect actions.
 

@@ -31,6 +31,8 @@ from real.core.relation import Relation
 from real.core.world import World
 from real.boundary.sandbox import Sandbox, TERRAIN_DIR
 from real.coherence.memory import EpisodicLog
+from real.boundary.environment import EnvironmentDynamics
+
 
 
 # ── Metabolic tiers ──────────────────────────────────────────────────
@@ -173,7 +175,14 @@ class ActionExecutor:
         elif action == "read_terrain":
             name = params.get("name", "")
             content = self.sandbox.read_terrain(name)
-            return {"success": content is not None, "content": content}
+            result: dict = {"success": content is not None, "content": content}
+            # Enrich event file reads with structured metadata (Phase 3e)
+            if content is not None and EnvironmentDynamics.is_event_file(name):
+                cycle_hint = params.get("current_cycle", 0)
+                meta = EnvironmentDynamics.parse_event_file(content, name, cycle_hint)
+                result.update(meta)
+            return result
+
 
         elif action == "rest":
             # Rest is handled by the agent loop (triggers consolidation)

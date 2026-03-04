@@ -28,6 +28,7 @@ from real.coherence.biases import (
     THRESHOLDS,
     select_weights,
 )
+from real.coherence.regulatory_mesh import RegulatoryMesh
 
 
 # ── System State Vector ──────────────────────────────────────────────
@@ -162,6 +163,16 @@ class CoherenceEngine:
         self._recent_states: list[SystemState] = []
         self._max_recent: int = 20
         self._log = None  # EpisodicLog reference, set by agent loop
+        self._mesh = RegulatoryMesh(enabled=True)
+
+    @property
+    def mesh_enabled(self) -> bool:
+        """Toggle the TCL regulatory mesh on/off (useful for A/B testing)."""
+        return self._mesh.enabled
+
+    @mesh_enabled.setter
+    def mesh_enabled(self, value: bool) -> None:
+        self._mesh.enabled = value
 
     def set_log(self, log) -> None:
         """Wire in the episodic log for reflexivity scoring."""
@@ -209,13 +220,23 @@ class CoherenceEngine:
         Inverted parabola: both idle (load ≈ 0) and fully loaded (≈ 1)
         are low vitality.  Productive middle range is optimal.
         Penalizes memory pressure as metabolic waste.
+
+        CPU load is smoothed over the last 5 readings to prevent short
+        bursts (e.g. digest_log hashing) from causing a single-cycle
+        vitality spike that distorts selection and trail learning.
         """
-        load = state.cpu_load_avg
+        # Rolling mean over up to 5 recent states (Phase 3d: metabolic smoothing)
+        if len(self._recent_states) >= 2:
+            window = self._recent_states[-5:]
+            load = _mean([s.cpu_load_avg for s in window])
+        else:
+            load = state.cpu_load_avg
+
         # Peak vitality at load ≈ 0.4
         vitality = 1.0 - ((load - 0.4) ** 2) / 0.25
         vitality = max(0.0, min(1.0, vitality))
 
-        # Penalize memory pressure
+        # Penalize memory pressure (always from current state — no smoothing)
         pressure_penalty = state.memory_pressure * 0.3
         return max(0.0, vitality - pressure_penalty)
 
@@ -332,8 +353,14 @@ class CoherenceEngine:
     # ── Composite scoring ─────────────────────────────────────────────
 
     def score_all(self, state: SystemState) -> Dict[str, float]:
-        """Score all six dimensions, return name → score mapping."""
-        return {
+        """Score all six dimensions and apply the TCL regulatory mesh.
+
+        Raw scores are computed independently per dimension, then the
+        RegulatoryMesh applies tilt coupling between adjacent primitive
+        pairs.  GCO status and composite scoring operate on the
+        mesh-adjusted values.
+        """
+        raw = {
             "continuity":       self.score_continuity(state),
             "vitality":         self.score_vitality(state),
             "contextual_fit":   self.score_contextual_fit(state),
@@ -341,6 +368,7 @@ class CoherenceEngine:
             "accountability":   self.score_accountability(state),
             "reflexivity":      self.score_reflexivity(state),
         }
+        return self._mesh.apply(raw)
 
     def composite_score(
         self,

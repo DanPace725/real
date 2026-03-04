@@ -149,6 +149,11 @@ class World:
     def relation_count(self) -> int:
         return len(self.relations)
 
+    @property
+    def historical_relation_count(self) -> int:
+        """Number of inactive (historical action-record) relations."""
+        return sum(1 for r in self.relations.values() if not r.active)
+
     def summary(self) -> Dict[str, Any]:
         """Quick stats about the current world state."""
         by_prim = {
@@ -158,8 +163,55 @@ class World:
         return {
             "entities": self.entity_count,
             "relations": self.relation_count,
+            "historical_relations": self.historical_relation_count,
             "by_primitive": by_prim,
         }
+
+    # ── Consolidation ─────────────────────────────────────────────────
+
+    def prune_historical(self, keep_last: int = 100) -> int:
+        """
+        Remove the oldest inactive (historical) relations, keeping only the
+        ``keep_last`` most recent.
+
+        Active relations (sensor, constraint, and other live relations) are
+        never touched.  Only relations with ``active=False`` are candidates.
+
+        Ordering uses the ``timestamp`` field in the relation payload when
+        present (written by ActionExecutor._record_in_world).  Falls back to
+        numeric extraction from ids of the form ``action_<N>`` so that older
+        action records are still sorted correctly even if the payload field is
+        absent (e.g. relations loaded from an old checkpoint).
+
+        Returns
+        -------
+        int
+            Number of relations removed.
+        """
+        # Collect inactive relations
+        inactive = [r for r in self.relations.values() if not r.active]
+        if len(inactive) <= keep_last:
+            return 0  # Nothing to prune
+
+        def _sort_key(rel: Relation) -> float:
+            """Return a numeric sort key; lower = older."""
+            ts = rel.payload.get("timestamp")
+            if ts is not None:
+                return float(ts)
+            # Fallback: try to parse action_<N>
+            rid = str(rel.id)
+            if rid.startswith("action_"):
+                try:
+                    return float(rid.split("_", 1)[1])
+                except (ValueError, IndexError):
+                    pass
+            return 0.0
+
+        inactive_sorted = sorted(inactive, key=_sort_key)
+        to_remove = inactive_sorted[: len(inactive_sorted) - keep_last]
+        for rel in to_remove:
+            self.remove_relation(rel.id)
+        return len(to_remove)
 
     # ── Index maintenance ─────────────────────────────────────────────
 

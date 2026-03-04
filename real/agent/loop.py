@@ -37,6 +37,8 @@ from real.coherence.memory import EpisodicLog, LogEntry
 from real.coherence.biases import THRESHOLDS
 from real.boundary.sandbox import Sandbox, SANDBOX_DIR, MEMORY_DIR
 from real.boundary.vocabulary import ActionExecutor
+from real.boundary.environment import EnvironmentDynamics
+from real.agent.avia import AVIATracker
 from real.agent.selector import ActionSelector, SelectionMode
 from real.agent.session import SessionLogger
 
@@ -73,11 +75,15 @@ class REALAgent:
         self.sandbox = Sandbox()
         self.executor = ActionExecutor(self.sandbox, self.world, log=self.log, agent_id="agent")
         self.selector = ActionSelector()
+        self.env = EnvironmentDynamics()
 
         # ── Session tracking ──────────────────────────────────────────
         self.session_logger = SessionLogger(
             MEMORY_DIR / "session_history.json"
         )
+
+        # ── Developmental stage ───────────────────────────────────────
+        self.avia = AVIATracker()
 
         # ── Agent state ───────────────────────────────────────────────
         self.cycle: int = 0
@@ -147,6 +153,7 @@ class REALAgent:
             print(f"  Sandbox: {SANDBOX_DIR}")
             print(f"  Prior sessions: {self.session_logger.session_count - 1}")
             print(f"  Log entries: {self.log.size}")
+            print(f"  Developmental stage: {self.avia.stage.value}")
             print(f"{'='*60}\n")
 
         coherence_sum = 0.0
@@ -154,6 +161,9 @@ class REALAgent:
         try:
             for self.cycle in range(1, self.cycle_limit + 1):
                 self.coherence.cycle_number = self.cycle
+
+                # Environment tick: generate events, mark decay, prune stale
+                self.env.tick(self.cycle)
 
                 # Phase 1: Read real system state BEFORE action
                 state_before = self.sandbox.read_system_state(self.cycle)
@@ -225,8 +235,13 @@ class REALAgent:
                 if action_def.name == "rest" and self.log.size > 40:
                     pruned = self.log.consolidate()
                     session.consolidation_count += 1
+                    world_pruned = 0
+                    if self.world.historical_relation_count > 50:
+                        world_pruned = self.world.prune_historical(keep_last=100)
                     if self.verbose:
-                        print(f"  [REST] Consolidated log: pruned {pruned} entries")
+                        world_msg = f", world pruned {world_pruned}" if world_pruned else ""
+                        print(f"  [REST] Consolidated log: pruned {pruned} entries{world_msg}")
+
 
                 # Update session stats
                 coherence_sum += composite
@@ -280,6 +295,9 @@ class REALAgent:
 
         self.session_logger.close_session(session)
 
+        # Advance developmental stage after session data is finalised
+        self.avia.advance(self.session_logger, self.log)
+
         # Save episodic log
         log_result = self.log.save(MEMORY_DIR / "episodic_log.json")
 
@@ -299,6 +317,17 @@ class REALAgent:
             print(f"  Log: {log_result}")
             print(f"  World: {self.world.entity_count} entities, "
                   f"{self.world.relation_count} relations")
+            # AVIA stage report
+            summary = self.avia.stage_summary()
+            stage_line = f"  Developmental stage: {summary['stage']}"
+            if self.avia.advanced_this_session:
+                stage_line += f"  *** STAGE ADVANCE ***"
+            print(stage_line)
+            m = summary.get("metrics", {})
+            print(f"    coherence={m.get('mean_coherence', 0):.3f}  "
+                  f"reflexivity={m.get('reflexivity', 0):.3f}  "
+                  f"diversity={m.get('action_diversity', 0):.0%}  "
+                  f"sessions={m.get('n_sessions', 0)}")
             dev = self.session_logger.developmental_summary()
             if dev["sessions"] > 1:
                 print(f"  Coherence trend: {dev['coherence_trend']}")
