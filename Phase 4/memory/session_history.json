@@ -1,0 +1,226 @@
+[
+  {
+    "session_id": 1,
+    "timestamp": 1772757035.8339393,
+    "domain": "hardware",
+    "cycles": 50,
+    "mean_coherence": 0.7549738787640013,
+    "final_coherence": 0.9352631633683445,
+    "gco_counts": {
+      "STABLE": 7,
+      "PARTIAL": 35,
+      "DEGRADED": 8,
+      "CRITICAL": 0
+    }
+  },
+  {
+    "session_id": 2,
+    "timestamp": 1772757035.8537798,
+    "domain": "llm_api",
+    "cycles": 40,
+    "mean_coherence": 0.7784228983923285,
+    "final_coherence": 0.8199483597764413,
+    "gco_counts": {
+      "STABLE": 6,
+      "PARTIAL": 30,
+      "DEGRADED": 4,
+      "CRITICAL": 0
+    }
+  },
+  {
+    "session_id": 3,
+    "timestamp": 1772757035.8835764,
+    "domain": "repo_health",
+    "cycles": 30,
+    "mean_coherence": 0.6118055555555555,
+    "final_coherence": 0.63125,
+    "gco_counts": {
+      "STABLE": 0,
+      "PARTIAL": 0,
+      "DEGRADED": 30,
+      "CRITICAL": 0
+    }
+  },
+  {
+    "session_id": 4,
+    "timestamp": 1772757081.7599053,
+    "domain": "hardware",
+    "cycles": 50,
+    "mean_coherence": 0.7443893348832024,
+    "final_coherence": 0.8957631633683444,
+    "gco_counts": {
+      "STABLE": 3,
+      "PARTIAL": 40,
+      "DEGRADED": 7,
+      "CRITICAL": 0
+    }
+  },
+  {
+    "session_id": 5,
+    "timestamp": 1772757081.778007,
+    "domain": "llm_api",
+    "cycles": 40,
+    "mean_coherence": 0.7872447199906892,
+    "final_coherence": 0.8164267848308016,
+    "gco_counts": {
+      "STABLE": 3,
+      "PARTIAL": 33,
+      "DEGRADED": 4,
+      "CRITICAL": 0
+    }
+  },
+  {
+    "session_id": 6,
+    "timestamp": 1772757081.804908,
+    "domain": "repo_health",
+    "cycles": 30,
+    "mean_coherence": 0.6118055555555555,
+    "final_coherence": 0.63125,
+    "gco_counts": {
+      "STABLE": 0,
+      "PARTIAL": 0,
+      "DEGRADED": 30,
+      "CRITICAL": 0
+    }
+  },
+  {
+    "session_id": 7,
+    "timestamp": 1772757091.0809855,
+    "domain": "hardware",
+    "cycles": 50,
+    "mean_coherence": 0.7533219459943133,
+    "final_coherence": 0.9204506633683444,
+    "gco_counts": {
+      "STABLE": 6,
+      "PARTIAL": 39,
+      "DEGRADED": 5,
+      "CRITICAL": 0
+    }
+  },
+  {
+    "session_id": 8,
+    "timestamp": 1772757091.1082218,
+    "domain": "llm_api",
+    "cycles": 40,
+    "mean_coherence": 0.7852375625162471,
+    "final_coherence": 0.6874211556526241,
+    "gco_counts": {
+      "STABLE": 8,
+      "PARTIAL": 28,
+      "DEGRADED": 4,
+      "CRITICAL": 0
+    }
+  },
+  {
+    "session_id": 9,
+    "timestamp": 1772757120.8754284,
+    "domain": "hardware",
+    "cycles": 50,
+    "mean_coherence": 0.7539100067245941,
+    "final_coherence": 0.8365131633683444,
+    "gco_counts": {
+      "STABLE": 5,
+      "PARTIAL": 37,
+      "DEGRADED": 8,
+      "CRITICAL": 0
+    }
+  },
+  {
+    "session_id": 10,
+    "timestamp": 1772757120.9022233,
+    "domain": "llm_api",
+    "cycles": 40,
+    "mean_coherence": 0.7682094542863827,
+    "final_coherence": 0.8120316487343763,
+    "gco_counts": {
+      "STABLE": 2,
+      "PARTIAL": 34,
+      "DEGRADED": 4,
+      "CRITICAL": 0
+    }
+  },
+  {
+    "session_id": 11,
+    "timestamp": 1772757120.9297068,
+    "domain": "repo_health",
+    "cycles": 30,
+    "mean_coherence": 0.6118055555555555,
+    "final_coherence": 0.63125,
+    "gco_counts": {
+      "STABLE": 0,
+      "PARTIAL": 0,
+      "DEGRADED": 30,
+      "CRITICAL": 0
+    }
+  },
+  {
+    "session_id": 12,
+    "timestamp": 1772757680.0835078,
+    "domain": "llm_api",
+    "cycles": 40,
+    "mean_coherence": 0.7498084413241365,
+    "final_coherence": 0.7018641898148149,
+    "gco_counts": {
+      "STABLE": 4,
+      "PARTIAL": 33,
+      "DEGRADED": 3,
+      "CRITICAL": 0
+    }
+  },
+  {
+    "session_id": 13,
+    "timestamp": 1772757680.1384702,
+    "domain": "hardware",
+    "cycles": 50,
+    "mean_coherence": 0.7572962365311422,
+    "final_coherence": 0.9056381633683444,
+    "gco_counts": {
+      "STABLE": 5,
+      "PARTIAL": 40,
+      "DEGRADED": 5,
+      "CRITICAL": 0
+    }
+  },
+  {
+    "session_id": 14,
+    "timestamp": 1772757680.1760445,
+    "domain": "hardware",
+    "cycles": 50,
+    "mean_coherence": 0.7607984255972957,
+    "final_coherence": 0.9056381633683444,
+    "gco_counts": {
+      "STABLE": 7,
+      "PARTIAL": 37,
+      "DEGRADED": 6,
+      "CRITICAL": 0
+    }
+  },
+  {
+    "session_id": 15,
+    "timestamp": 1772757680.2216506,
+    "domain": "llm_api",
+    "cycles": 40,
+    "mean_coherence": 0.7552497607685807,
+    "final_coherence": 0.7393641898148148,
+    "gco_counts": {
+      "STABLE": 4,
+      "PARTIAL": 33,
+      "DEGRADED": 3,
+      "CRITICAL": 0
+    }
+  },
+  {
+    "session_id": 16,
+    "timestamp": 1772757680.2473366,
+    "domain": "repo_health",
+    "cycles": 30,
+    "mean_coherence": 0.6118055555555555,
+    "final_coherence": 0.63125,
+    "gco_counts": {
+      "STABLE": 0,
+      "PARTIAL": 0,
+      "DEGRADED": 30,
+      "CRITICAL": 0
+    }
+  }
+]

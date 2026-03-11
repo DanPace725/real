@@ -1,0 +1,33 @@
+domain = "llm_api"
+
+[session]
+cycles = 40
+consolidate_on_action = "rest"
+
+[selector]
+exploration_rate = 0.42
+stagnation_window = 5
+stagnation_threshold = 0.005
+guided_threshold = 10
+budget_mode = true
+
+[mesh]
+enabled = true
+viability_floor = 0.757
+parametric_wall = 0.289
+
+[memory]
+maxlen = 500
+
+[history]
+enabled = true
+path = "../memory/session_history.json"
+
+[domain_config]
+seed = 19
+mode = "replay"
+trace_input_path = "./llm_api_sample_trace.jsonl"
+trace_output_path = "../memory/llm_api_captured_trace.jsonl"
+strict_action_match = false
+loop_replay = true
+observation_noise = 0.0

@@ -1,0 +1,27 @@
+domain = "hardware"
+
+[session]
+cycles = 50
+consolidate_on_action = "rest"
+
+[selector]
+exploration_rate = 0.40
+stagnation_window = 5
+stagnation_threshold = 0.005
+guided_threshold = 12
+budget_mode = true
+
+[mesh]
+enabled = true
+viability_floor = 0.757
+parametric_wall = 0.289
+
+[memory]
+maxlen = 500
+
+[history]
+enabled = true
+path = "../memory/session_history.json"
+
+[domain_config]
+seed = 7

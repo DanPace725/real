@@ -1,0 +1,28 @@
+domain = "repo_health"
+
+[session]
+cycles = 30
+consolidate_on_action = "rest"
+
+[selector]
+exploration_rate = 0.45
+stagnation_window = 5
+stagnation_threshold = 0.004
+guided_threshold = 10
+budget_mode = true
+
+[mesh]
+enabled = true
+viability_floor = 0.757
+parametric_wall = 0.289
+
+[memory]
+maxlen = 500
+
+[history]
+enabled = true
+path = "../memory/session_history.json"
+
+[domain_config]
+root_path = "../Phase 2"
+max_scan_files = 3000
