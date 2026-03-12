@@ -1,0 +1,28 @@
+{
+  "timestamp_utc": "2026-03-12T17:11:33.445738+00:00",
+  "phase5_root": "/content/Phase 5",
+  "results_dir": "/content/Phase 5/experiments/m2/minimal/pythia_1b_full_v1_active",
+  "experiment_tag": "pythia_1b_full_v1_active",
+  "run_mode": "full",
+  "prompt_id": "cp_001",
+  "prompt_topic": "remote_work_policy",
+  "prompt_text": "Write a concise memo that argues remote work is the best policy and also that in-office work is the best policy. Reconcile both claims into one actionable recommendation.",
+  "requested_model_key": "pythia_1b",
+  "fallback_model_keys": [
+    "qwen3_0_6b"
+  ],
+  "requested_model_keys_in_order": [
+    "pythia_1b",
+    "qwen3_0_6b"
+  ],
+  "resolved_model_key": "pythia_1b",
+  "resolved_model_name": "EleutherAI/pythia-1b",
+  "device": "cuda",
+  "dtype": "torch.float16",
+  "seed": 42,
+  "initial_temperature": 0.8,
+  "segment_tokens": 24,
+  "max_total_new_tokens": 240,
+  "cycles": 10,
+  "interventions_enabled": true
+}

@@ -222,5 +222,47 @@
       "DEGRADED": 30,
       "CRITICAL": 0
     }
+  },
+  {
+    "session_id": 17,
+    "timestamp": 1773276790.4287984,
+    "domain": "hardware",
+    "cycles": 50,
+    "mean_coherence": 0.75529672313609,
+    "final_coherence": 0.8562631633683444,
+    "gco_counts": {
+      "STABLE": 4,
+      "PARTIAL": 40,
+      "DEGRADED": 6,
+      "CRITICAL": 0
+    }
+  },
+  {
+    "session_id": 18,
+    "timestamp": 1773276790.5018446,
+    "domain": "llm_api",
+    "cycles": 40,
+    "mean_coherence": 0.7427241010463586,
+    "final_coherence": 0.7393641898148148,
+    "gco_counts": {
+      "STABLE": 3,
+      "PARTIAL": 34,
+      "DEGRADED": 3,
+      "CRITICAL": 0
+    }
+  },
+  {
+    "session_id": 19,
+    "timestamp": 1773276790.5593743,
+    "domain": "repo_health",
+    "cycles": 30,
+    "mean_coherence": 0.6118055555555555,
+    "final_coherence": 0.63125,
+    "gco_counts": {
+      "STABLE": 0,
+      "PARTIAL": 0,
+      "DEGRADED": 30,
+      "CRITICAL": 0
+    }
   }
 ]

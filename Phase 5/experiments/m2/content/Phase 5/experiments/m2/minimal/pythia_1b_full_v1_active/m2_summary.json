@@ -1,0 +1,17 @@
+{
+  "cycles": 10,
+  "mean_coherence": 0.46320783109946617,
+  "final_coherence": 0.4770734177030413,
+  "gco_counts": {
+    "STABLE": 0,
+    "PARTIAL": 0,
+    "DEGRADED": 8,
+    "CRITICAL": 2
+  },
+  "unique_gco_states": [
+    "CRITICAL",
+    "DEGRADED"
+  ],
+  "m2_success_gco_variation": true,
+  "generation_complete": false
+}

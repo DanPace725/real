@@ -1,0 +1,14 @@
+{
+  "timestamp_utc": "2026-03-12T04:18:36.232759+00:00",
+  "run_tag": "pythia2.8b_full",
+  "metrics_path": "c:\\Users\\nscha\\Coding\\Relationally Embedded Allostatic Learning\\Phase 2\\Phase 5\\experiments\\m0\\results\\pythia2.8b_full\\metrics_raw.jsonl",
+  "cycles": 20,
+  "mean_coherence": 0.6077969205476448,
+  "final_coherence": 0.5861037866792331,
+  "gco_counts": {
+    "STABLE": 0,
+    "PARTIAL": 5,
+    "DEGRADED": 15,
+    "CRITICAL": 0
+  }
+}

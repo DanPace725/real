@@ -1,0 +1,66 @@
+{
+  "run_mode": "full",
+  "samples_per_class": 12,
+  "primary_metrics": [
+    "final_layer_token_entropy_mean",
+    "token_entropy_volatility_std"
+  ],
+  "secondary_metrics": [
+    "per_head_attention_entropy_mean",
+    "hidden_state_delta_norm_mean"
+  ],
+  "summary_by_metric": {
+    "final_layer_token_entropy_mean": {
+      "competing_mean": 1.9734731419310874,
+      "non_competing_mean": 1.8413792536234899,
+      "mean_diff_competing_minus_non_competing": 0.1320938883075975,
+      "bootstrap_95_ci": [
+        -0.19240653944434893,
+        0.4685259643894543
+      ],
+      "cliffs_delta": 0.2638888888888889,
+      "permutation_pvalue_greater": 0.2299233588803732
+    },
+    "token_entropy_volatility_std": {
+      "competing_mean": 1.455836364521149,
+      "non_competing_mean": 1.3483828195777685,
+      "mean_diff_competing_minus_non_competing": 0.10745354494338044,
+      "bootstrap_95_ci": [
+        -0.02813930194264501,
+        0.22531572542609932
+      ],
+      "cliffs_delta": 0.5,
+      "permutation_pvalue_greater": 0.06797734088637121
+    },
+    "per_head_attention_entropy_mean": {
+      "competing_mean": 1.9798672435662805,
+      "non_competing_mean": 1.9185329236113213,
+      "mean_diff_competing_minus_non_competing": 0.06133431995495919,
+      "bootstrap_95_ci": [
+        -0.03177540947793179,
+        0.15283598239858404
+      ],
+      "cliffs_delta": 0.3194444444444444,
+      "permutation_pvalue_greater": 0.10796401199600134
+    },
+    "hidden_state_delta_norm_mean": {
+      "competing_mean": 113.97262092003056,
+      "non_competing_mean": 113.38200770643864,
+      "mean_diff_competing_minus_non_competing": 0.5906132135919222,
+      "bootstrap_95_ci": [
+        -3.1948900946388363,
+        4.503866466803503
+      ],
+      "cliffs_delta": 0.0,
+      "permutation_pvalue_greater": 0.3855381539486838
+    }
+  },
+  "acceptance": {
+    "both_primary_differences_positive": true,
+    "bootstrap_ci_excludes_zero_for_at_least_one_primary": false,
+    "cliffs_delta_gt_0_2_for_at_least_one_primary": true,
+    "directional_support_at_pythia_1b": false
+  },
+  "failure_handling_note": "No directional support at EleutherAI/pythia-1b scale.",
+  "next_decision": "Queue Pythia-2.8B replication as next decision (not automatic in M0)."
+}

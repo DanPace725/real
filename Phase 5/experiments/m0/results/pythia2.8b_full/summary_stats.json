@@ -1,0 +1,66 @@
+{
+  "run_mode": "full",
+  "samples_per_class": 12,
+  "primary_metrics": [
+    "final_layer_token_entropy_mean",
+    "token_entropy_volatility_std"
+  ],
+  "secondary_metrics": [
+    "per_head_attention_entropy_mean",
+    "hidden_state_delta_norm_mean"
+  ],
+  "summary_by_metric": {
+    "final_layer_token_entropy_mean": {
+      "competing_mean": 1.9514876662855443,
+      "non_competing_mean": 1.7737518374902512,
+      "mean_diff_competing_minus_non_competing": 0.17773582879529304,
+      "bootstrap_95_ci": [
+        -0.0015267930501944792,
+        0.36843291862823724
+      ],
+      "cliffs_delta": 0.3194444444444444,
+      "permutation_pvalue_greater": 0.04665111629456848
+    },
+    "token_entropy_volatility_std": {
+      "competing_mean": 1.3036529379686133,
+      "non_competing_mean": 1.2674429712063142,
+      "mean_diff_competing_minus_non_competing": 0.03620996676229904,
+      "bootstrap_95_ci": [
+        -0.05445604154589942,
+        0.12231798591822443
+      ],
+      "cliffs_delta": 0.19444444444444445,
+      "permutation_pvalue_greater": 0.23025658113962014
+    },
+    "per_head_attention_entropy_mean": {
+      "competing_mean": 0.6648523652848477,
+      "non_competing_mean": 0.5937476653345409,
+      "mean_diff_competing_minus_non_competing": 0.07110469995030677,
+      "bootstrap_95_ci": [
+        -0.031085548778247415,
+        0.17557622777479753
+      ],
+      "cliffs_delta": 0.3194444444444444,
+      "permutation_pvalue_greater": 0.09930023325558147
+    },
+    "hidden_state_delta_norm_mean": {
+      "competing_mean": 169.71027774398212,
+      "non_competing_mean": 161.4654498287289,
+      "mean_diff_competing_minus_non_competing": 8.244827915253211,
+      "bootstrap_95_ci": [
+        2.643632653777912,
+        13.734192302945141
+      ],
+      "cliffs_delta": 0.5555555555555556,
+      "permutation_pvalue_greater": 0.007664111962679107
+    }
+  },
+  "acceptance": {
+    "both_primary_differences_positive": true,
+    "bootstrap_ci_excludes_zero_for_at_least_one_primary": false,
+    "cliffs_delta_gt_0_2_for_at_least_one_primary": true,
+    "directional_support_at_pythia_2_8b": false
+  },
+  "failure_handling_note": "Partial directional support at EleutherAI/pythia-2.8b scale: entropy mean p=0.047, hidden state delta p=0.008; bootstrap CI on primary metric grazes zero.",
+  "next_decision": "Consider N=24 replication at Pythia-2.8B or step up to a 7B model to test whether entropy mean CI clears zero cleanly."
+}

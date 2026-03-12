@@ -1,0 +1,154 @@
+{
+  "version": "1.0",
+  "description": "M0 paired prompts for entropy observation baseline.",
+  "classes": [
+    "non_competing",
+    "competing"
+  ],
+  "prompts": [
+    {
+      "id": "nc_001",
+      "class": "non_competing",
+      "topic": "remote_work_policy",
+      "prompt": "Write a concise memo recommending one clear remote work policy for a mid-sized software team. Focus on practical benefits and implementation steps."
+    },
+    {
+      "id": "cp_001",
+      "class": "competing",
+      "topic": "remote_work_policy",
+      "prompt": "Write a concise memo that argues remote work is the best policy and also that in-office work is the best policy. Reconcile both claims into one actionable recommendation."
+    },
+    {
+      "id": "nc_002",
+      "class": "non_competing",
+      "topic": "city_transport",
+      "prompt": "Give a clear recommendation for reducing urban traffic congestion in one city. Prioritize one intervention and explain why it is likely to work."
+    },
+    {
+      "id": "cp_002",
+      "class": "competing",
+      "topic": "city_transport",
+      "prompt": "Argue that private cars should be prioritized and that private cars should be deprioritized in urban transport policy. Resolve the contradiction with a concrete city plan."
+    },
+    {
+      "id": "nc_003",
+      "class": "non_competing",
+      "topic": "education_assessment",
+      "prompt": "Propose one effective approach for assessing student learning in high school science classes. Keep the recommendation concrete."
+    },
+    {
+      "id": "cp_003",
+      "class": "competing",
+      "topic": "education_assessment",
+      "prompt": "Argue that standardized testing is essential and also that standardized testing should be minimized. Reconcile both views into one coherent assessment framework."
+    },
+    {
+      "id": "nc_004",
+      "class": "non_competing",
+      "topic": "healthcare_triage",
+      "prompt": "Describe a practical triage protocol for a busy urgent care clinic to reduce wait times while maintaining safety."
+    },
+    {
+      "id": "cp_004",
+      "class": "competing",
+      "topic": "healthcare_triage",
+      "prompt": "Argue that triage should maximize speed and also that triage should maximize deliberation. Reconcile both priorities into one protocol."
+    },
+    {
+      "id": "nc_005",
+      "class": "non_competing",
+      "topic": "energy_policy",
+      "prompt": "Recommend one realistic strategy for improving grid reliability over the next five years."
+    },
+    {
+      "id": "cp_005",
+      "class": "competing",
+      "topic": "energy_policy",
+      "prompt": "Argue that grid policy should prioritize lowest cost and also prioritize highest resilience regardless of cost. Resolve the tension in one policy package."
+    },
+    {
+      "id": "nc_006",
+      "class": "non_competing",
+      "topic": "hiring",
+      "prompt": "Provide a clear hiring rubric for an entry-level data analyst role with three weighted criteria."
+    },
+    {
+      "id": "cp_006",
+      "class": "competing",
+      "topic": "hiring",
+      "prompt": "Argue that hiring should prioritize culture fit and also that hiring should ignore culture fit. Reconcile both positions into one rubric."
+    },
+    {
+      "id": "nc_007",
+      "class": "non_competing",
+      "topic": "climate_adaptation",
+      "prompt": "Recommend one near-term climate adaptation action for a coastal city and explain expected impact."
+    },
+    {
+      "id": "cp_007",
+      "class": "competing",
+      "topic": "climate_adaptation",
+      "prompt": "Argue that a coastal city should retreat from shorelines and also continue shoreline development. Reconcile both into a coherent adaptation strategy."
+    },
+    {
+      "id": "nc_008",
+      "class": "non_competing",
+      "topic": "product_roadmap",
+      "prompt": "Draft a short product roadmap recommendation for a startup that has one engineering team and limited runway."
+    },
+    {
+      "id": "cp_008",
+      "class": "competing",
+      "topic": "product_roadmap",
+      "prompt": "Argue that the roadmap should prioritize rapid feature expansion and also strict feature minimization. Reconcile both into one roadmap."
+    },
+    {
+      "id": "nc_009",
+      "class": "non_competing",
+      "topic": "food_systems",
+      "prompt": "Recommend one policy to reduce food waste in a large metropolitan region."
+    },
+    {
+      "id": "cp_009",
+      "class": "competing",
+      "topic": "food_systems",
+      "prompt": "Argue that food policy should maximize consumer choice and also strongly constrain consumer choice to reduce waste. Resolve this into one policy design."
+    },
+    {
+      "id": "nc_010",
+      "class": "non_competing",
+      "topic": "cybersecurity",
+      "prompt": "Provide a clear cybersecurity baseline for a small business with limited IT staff."
+    },
+    {
+      "id": "cp_010",
+      "class": "competing",
+      "topic": "cybersecurity",
+      "prompt": "Argue that security policy should maximize usability and also maximize strict control. Reconcile these priorities into one baseline."
+    },
+    {
+      "id": "nc_011",
+      "class": "non_competing",
+      "topic": "public_communication",
+      "prompt": "Write a clear communication strategy for a public health agency during a seasonal outbreak."
+    },
+    {
+      "id": "cp_011",
+      "class": "competing",
+      "topic": "public_communication",
+      "prompt": "Argue that public messaging should avoid uncertainty and also explicitly foreground uncertainty. Reconcile both approaches into one communication strategy."
+    },
+    {
+      "id": "nc_012",
+      "class": "non_competing",
+      "topic": "ai_governance",
+      "prompt": "Recommend one practical governance mechanism for enterprise AI deployments over the next year."
+    },
+    {
+      "id": "cp_012",
+      "class": "competing",
+      "topic": "ai_governance",
+      "prompt": "Argue that AI governance should maximize innovation speed and also maximize precautionary control. Reconcile both into one operational governance mechanism."
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "timestamp_utc": "2026-03-12T02:44:39.852898+00:00",
+  "phase5_root": "/content/Phase 5",
+  "prompt_path": "/content/Phase 5/experiments/m0/prompts_m0.json",
+  "results_dir": "/content/Phase 5/experiments/m0/results/eleutherai_pythia_2_8b_full",
+  "run_mode": "full",
+  "resolved_model_name": "EleutherAI/pythia-2.8b",
+  "primary_model_requested": "EleutherAI/pythia-2.8b",
+  "fallback_model": null,
+  "seed": 42,
+  "temperature": 0.8,
+  "max_new_tokens": 128,
+  "samples_per_class": 12,
+  "git_commit": null
+}

@@ -1,0 +1,66 @@
+{
+  "run_mode": "smoke",
+  "samples_per_class": 2,
+  "primary_metrics": [
+    "final_layer_token_entropy_mean",
+    "token_entropy_volatility_std"
+  ],
+  "secondary_metrics": [
+    "per_head_attention_entropy_mean",
+    "hidden_state_delta_norm_mean"
+  ],
+  "summary_by_metric": {
+    "final_layer_token_entropy_mean": {
+      "competing_mean": 1.8300076718028562,
+      "non_competing_mean": 1.2410676129032865,
+      "mean_diff_competing_minus_non_competing": 0.5889400588995697,
+      "bootstrap_95_ci": [
+        0.19815652712900622,
+        0.9797235906701331
+      ],
+      "cliffs_delta": 1.0,
+      "permutation_pvalue_greater": 0.16127957347550817
+    },
+    "token_entropy_volatility_std": {
+      "competing_mean": 1.0992347394093112,
+      "non_competing_mean": 1.0494652370848943,
+      "mean_diff_competing_minus_non_competing": 0.0497695023244169,
+      "bootstrap_95_ci": [
+        -0.1000181457126208,
+        0.1995571503614545
+      ],
+      "cliffs_delta": 0.5,
+      "permutation_pvalue_greater": 0.3232255914695102
+    },
+    "per_head_attention_entropy_mean": {
+      "competing_mean": 0.7750152409517843,
+      "non_competing_mean": 0.769595947349444,
+      "mean_diff_competing_minus_non_competing": 0.0054192936023402805,
+      "bootstrap_95_ci": [
+        -0.004827440814360151,
+        0.015666028019040823
+      ],
+      "cliffs_delta": 0.5,
+      "permutation_pvalue_greater": 0.3232255914695102
+    },
+    "hidden_state_delta_norm_mean": {
+      "competing_mean": 302.0439846704877,
+      "non_competing_mean": 336.3653255644299,
+      "mean_diff_competing_minus_non_competing": -34.32134089394219,
+      "bootstrap_95_ci": [
+        -43.62328084309894,
+        -25.019400944785446
+      ],
+      "cliffs_delta": -1.0,
+      "permutation_pvalue_greater": 1.0
+    }
+  },
+  "acceptance": {
+    "both_primary_differences_positive": true,
+    "bootstrap_ci_excludes_zero_for_at_least_one_primary": true,
+    "cliffs_delta_gt_0_2_for_at_least_one_primary": true,
+    "directional_support_at_qwen_0_6b": true
+  },
+  "failure_handling_note": "Directional support observed at Qwen 0.6B scale.",
+  "next_decision": "Proceed to M1 adapter implementation decision."
+}

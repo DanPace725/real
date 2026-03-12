@@ -1,0 +1,66 @@
+{
+  "run_mode": "full",
+  "samples_per_class": 12,
+  "primary_metrics": [
+    "final_layer_token_entropy_mean",
+    "token_entropy_volatility_std"
+  ],
+  "secondary_metrics": [
+    "per_head_attention_entropy_mean",
+    "hidden_state_delta_norm_mean"
+  ],
+  "summary_by_metric": {
+    "final_layer_token_entropy_mean": {
+      "competing_mean": 1.2142236335969845,
+      "non_competing_mean": 1.2397134625365451,
+      "mean_diff_competing_minus_non_competing": -0.025489828939560644,
+      "bootstrap_95_ci": [
+        -0.32271048113622114,
+        0.2373721768532388
+      ],
+      "cliffs_delta": 0.05555555555555555,
+      "permutation_pvalue_greater": 0.5618127290903032
+    },
+    "token_entropy_volatility_std": {
+      "competing_mean": 1.0272994881671142,
+      "non_competing_mean": 0.9680405293886712,
+      "mean_diff_competing_minus_non_competing": 0.059258958778443005,
+      "bootstrap_95_ci": [
+        -0.06453025524383856,
+        0.15992575674463674
+      ],
+      "cliffs_delta": 0.4861111111111111,
+      "permutation_pvalue_greater": 0.1792735754748417
+    },
+    "per_head_attention_entropy_mean": {
+      "competing_mean": 0.8126282930801002,
+      "non_competing_mean": 0.8126221586717293,
+      "mean_diff_competing_minus_non_competing": 6.134408370939148e-06,
+      "bootstrap_95_ci": [
+        -0.03543198661548862,
+        0.03626730195537676
+      ],
+      "cliffs_delta": 0.0,
+      "permutation_pvalue_greater": 0.49650116627790736
+    },
+    "hidden_state_delta_norm_mean": {
+      "competing_mean": 294.3946841019659,
+      "non_competing_mean": 322.03092545036253,
+      "mean_diff_competing_minus_non_competing": -27.636241348396652,
+      "bootstrap_95_ci": [
+        -75.11839460788438,
+        2.7458071268137045
+      ],
+      "cliffs_delta": -0.3055555555555556,
+      "permutation_pvalue_greater": 0.9040319893368877
+    }
+  },
+  "acceptance": {
+    "both_primary_differences_positive": false,
+    "bootstrap_ci_excludes_zero_for_at_least_one_primary": false,
+    "cliffs_delta_gt_0_2_for_at_least_one_primary": true,
+    "directional_support_at_qwen_0_6b": false
+  },
+  "failure_handling_note": "No directional support at Qwen 0.6B scale.",
+  "next_decision": "Queue TinyLlama replication as next decision (not automatic in M0)."
+}

@@ -67,3 +67,69 @@ Phase 5/
 ```
 
 The Phase 4 `real_core/` engine is imported directly; no modifications needed.
+
+## Colab Workflow (Low Friction)
+
+If copying folders into Colab keeps breaking structure or persistence, use the tools workflow:
+
+1. Build one bundle locally (preserves folders):
+```bash
+python "Phase 5/tools/package_phase5_bundle.py"
+```
+
+2. Upload that single zip to Drive, then bootstrap in Colab:
+```bash
+python "/content/Phase 5/tools/bootstrap_colab_workspace.py" \
+  --bundle "/content/drive/MyDrive/REAL_Phase5/phase5_colab_bundle_<timestamp>.zip" \
+  --workspace-root "/content/drive/MyDrive/REAL_Phase5/workspace" \
+  --mount-drive \
+  --link-content \
+  --install-deps
+```
+
+3. In notebook Cell 1, bootstrap paths:
+```python
+exec(open("/content/Phase 5/colab_setup.py").read())
+```
+
+This avoids manual folder creation and survives runtime resets if your workspace root is on Drive.
+
+### Artifact Sync
+
+To copy current experiment artifacts to a persistent location (and optionally zip them):
+```bash
+python "Phase 5/tools/sync_phase5_artifacts.py" \
+  --dest "/content/drive/MyDrive/REAL_Phase5/exports" \
+  --zip
+```
+
+## M2 Quick Start (Minimal Loop)
+
+Use this when you want a single end-to-end M2 run with consistent artifacts.
+
+Notebook:
+- `notebooks/02_real_loop_minimal.ipynb`
+
+CLI:
+```bash
+python "Phase 5/tools/run_m2_minimal.py" \
+  --model-key pythia_1b \
+  --fallback-model-keys qwen3_0_6b \
+  --prompt-id cp_001 \
+  --run-mode full \
+  --output-tag-suffix v1
+```
+
+Control (passive) run:
+```bash
+python "Phase 5/tools/run_m2_minimal.py" \
+  --model-key tinyllama_1_1b \
+  --fallback-model-keys qwen3_0_6b \
+  --prompt-id cp_001 \
+  --run-mode smoke \
+  --passive \
+  --output-tag-suffix control
+```
+
+Artifacts are written to:
+- `experiments/m2/minimal/<model>_<mode>_<suffix>_<active|passive>/`

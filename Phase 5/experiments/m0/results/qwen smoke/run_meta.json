@@ -1,0 +1,15 @@
+{
+  "timestamp_utc": "2026-03-12T01:40:54.874936+00:00",
+  "phase5_root": "/content/Phase 5",
+  "prompt_path": "/content/Phase 5/experiments/m0/prompts_m0.json",
+  "results_dir": "/content/Phase 5/experiments/m0/results",
+  "run_mode": "smoke",
+  "resolved_model_name": "Qwen/Qwen3-0.6B",
+  "primary_model_requested": "Qwen/Qwen3-0.6B",
+  "fallback_model": "Qwen/Qwen2.5-0.5B",
+  "seed": 42,
+  "temperature": 0.8,
+  "max_new_tokens": 64,
+  "samples_per_class": 2,
+  "git_commit": null
+}

@@ -1,0 +1,15 @@
+{
+  "timestamp_utc": "2026-03-12T04:14:31.912157+00:00",
+  "run_tag": "pythia_1b_full",
+  "metrics_path": "C:\\Users\\nscha\\Coding\\Relationally Embedded Allostatic Learning\\Phase 2\\Phase 5\\experiments\\m0\\results\\pythia_1b_full\\metrics_raw.jsonl",
+  "cycles": 20,
+  "mean_coherence": 0.5209,
+  "final_coherence": 0.5665,
+  "gco_counts": {
+    "STABLE": 0,
+    "PARTIAL": 0,
+    "DEGRADED": 20,
+    "CRITICAL": 0
+  },
+  "note": "Quick offline replay through RealCoreEngine using real_inference scaffold."
+}
