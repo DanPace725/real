@@ -1,0 +1,1354 @@
+{
+  "meta": {
+    "exported_at": "2026-03-12T23:54:42.038Z",
+    "tick": 516,
+    "real_agent_id": 1,
+    "log_entries": 64
+  },
+  "real_log": [
+    {
+      "tick": 453,
+      "cfa_mode": "A",
+      "weakest_dim": "vitality",
+      "coherence": 0.5981421952292552,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.8842130426711386,
+        "accountability": 0.5083557382458821
+      },
+      "chi_norm": 2.6480267489182907,
+      "chi_delta": 0.1496176602682242,
+      "obs_trail_mean": 0.0016711476491764188,
+      "bias": {
+        "explore": 0.6,
+        "conserve": 1.8,
+        "follow": 1.3
+      }
+    },
+    {
+      "tick": 454,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.6188879752567704,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.9591754116611428,
+        "accountability": 0.516376489365939
+      },
+      "chi_norm": 2.6477088671819877,
+      "chi_delta": -0.0003178817363029829,
+      "obs_trail_mean": 0.0036844895221292973,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 455,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.6228895165586927,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.9706420603472139,
+        "accountability": 0.5209160058875568
+      },
+      "chi_norm": 2.6473987948482796,
+      "chi_delta": -0.0003100723337081668,
+      "obs_trail_mean": 0.005583755322732031,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 456,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.6264991191036252,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.9757484288633608,
+        "accountability": 0.5302480475511402
+      },
+      "chi_norm": 2.6467935906654243,
+      "chi_delta": -0.0006052041828552568,
+      "obs_trail_mean": 0.00744804902933538,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 457,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.6297630411236805,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.9956891262956998,
+        "accountability": 0.5233630381990224
+      },
+      "chi_norm": 2.6460769826937054,
+      "chi_delta": -0.0007166079717189078,
+      "obs_trail_mean": 0.005374173633754253,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 458,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.6237674994691915,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.9969295468149941,
+        "accountability": 0.4981404510617722
+      },
+      "chi_norm": 2.6457823991926213,
+      "chi_delta": -0.00029458350108413356,
+      "obs_trail_mean": 0.0016433584969490767,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 459,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.6208099581795271,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.9715807122175552,
+        "accountability": 0.5116591205005534
+      },
+      "chi_norm": 2.6452138802015406,
+      "chi_delta": -0.0005685189910806798,
+      "obs_trail_mean": 0.004544095601886511,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 460,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.6177259589218687,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.98195612677109,
+        "accountability": 0.4889477089163847
+      },
+      "chi_norm": 2.6445162095766577,
+      "chi_delta": -0.0006976706248829068,
+      "obs_trail_mean": 0,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 461,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.6181613689544835,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.9778941124073195,
+        "accountability": 0.49475136341061443
+      },
+      "chi_norm": 2.644242743552284,
+      "chi_delta": -0.00027346602437372525,
+      "obs_trail_mean": 0.000621420331299305,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 462,
+      "cfa_mode": "A",
+      "weakest_dim": "vitality",
+      "coherence": 0.6175917951270768,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.9393345044564708,
+        "accountability": 0.5310326760518365
+      },
+      "chi_norm": 2.643715468760506,
+      "chi_delta": -0.000527274791778165,
+      "obs_trail_mean": 0.00989102473249659,
+      "bias": {
+        "explore": 0.6,
+        "conserve": 1.8,
+        "follow": 1.3
+      }
+    },
+    {
+      "tick": 463,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.6173863104358057,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.9681298662977189,
+        "accountability": 0.5014153754455037
+      },
+      "chi_norm": 2.6430350821183852,
+      "chi_delta": -0.0006803866421205562,
+      "obs_trail_mean": 0.00586683041183278,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 464,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.6121613302107972,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.9664392267062616,
+        "accountability": 0.4822060941369273
+      },
+      "chi_norm": 2.6427834413162103,
+      "chi_delta": -0.0002516408021748795,
+      "obs_trail_mean": 0.003889267856720835,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 465,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.6179312454829164,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.9640337819239811,
+        "accountability": 0.5076912000076845
+      },
+      "chi_norm": 2.6425347091898157,
+      "chi_delta": -0.00024873212639464626,
+      "obs_trail_mean": 0.006912413635291159,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 466,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.6200564672147473,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.9628703828068785,
+        "accountability": 0.5173554860521108
+      },
+      "chi_norm": 2.641883798072288,
+      "chi_delta": -0.0006509111175279081,
+      "obs_trail_mean": 0.005114455707371235,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 467,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.6067450627340732,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.9151686301476443,
+        "accountability": 0.5118116207886487
+      },
+      "chi_norm": 2.6414264486093773,
+      "chi_delta": -0.000457349462910539,
+      "obs_trail_mean": 0.006906419759616256,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 468,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.6229968799947121,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.957497307704599,
+        "accountability": 0.5344902122742496
+      },
+      "chi_norm": 2.6412029851716325,
+      "chi_delta": -0.00022346343774470867,
+      "obs_trail_mean": 0.006898042454849929,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 469,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.6171222672893035,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.9567727378019405,
+        "accountability": 0.5117163313552737
+      },
+      "chi_norm": 2.640988752741685,
+      "chi_delta": -0.0002142324299474474,
+      "obs_trail_mean": 0.0029646866023540497,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 470,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.5963904382230287,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.9046024633594942,
+        "accountability": 0.48095928953262046
+      },
+      "chi_norm": 2.6405865204510994,
+      "chi_delta": -0.000402232290585669,
+      "obs_trail_mean": 0.006082882639020681,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 471,
+      "cfa_mode": "A",
+      "weakest_dim": "vitality",
+      "coherence": 0.613427772374954,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.9526643603421374,
+        "accountability": 0.5010467291576788
+      },
+      "chi_norm": 2.6403907307311845,
+      "chi_delta": -0.00019578971991496275,
+      "obs_trail_mean": 0.006076176243368536,
+      "bias": {
+        "explore": 0.6,
+        "conserve": 1.8,
+        "follow": 1.3
+      }
+    },
+    {
+      "tick": 472,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.5959122027175545,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.896086856102775,
+        "accountability": 0.48756195476744324
+      },
+      "chi_norm": 2.7900315649737566,
+      "chi_delta": 0.14964083424257213,
+      "obs_trail_mean": 0.001401658810209483,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 473,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.609472762034956,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.9608376995827319,
+        "accountability": 0.47705334855709225
+      },
+      "chi_norm": 2.7897364237828413,
+      "chi_delta": -0.00029514119091533786,
+      "obs_trail_mean": 0.002323083346709609,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 474,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.6168925608968007,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.9687396919563853,
+        "accountability": 0.49883055163081735
+      },
+      "chi_norm": 2.7896085147873895,
+      "chi_delta": -0.00012790899545178647,
+      "obs_trail_mean": 0.004880566033534706,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 475,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.6150982854728,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.9755470931356285,
+        "accountability": 0.48484604875557125
+      },
+      "chi_norm": 2.78931554102881,
+      "chi_delta": -0.0002929737585795067,
+      "obs_trail_mean": 0.003875629510730505,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 476,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.6158305965810256,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.9819199551750664,
+        "accountability": 0.4814024311490357
+      },
+      "chi_norm": 2.7886148681359755,
+      "chi_delta": -0.0007006728928344863,
+      "obs_trail_mean": 0.003178528684657067,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 477,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.618873075388344,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.987188584152963,
+        "accountability": 0.488303717400413
+      },
+      "chi_norm": 2.78833314599727,
+      "chi_delta": -0.0002817221387054758,
+      "obs_trail_mean": 0.000625430082436651,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 478,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.616273850784965,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.9920349444159388,
+        "accountability": 0.47306045872392133
+      },
+      "chi_norm": 2.788053867458319,
+      "chi_delta": -0.00027927853895093335,
+      "obs_trail_mean": 0.0006949743838049471,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 479,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.6188226224340666,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.9962965268681495,
+        "accountability": 0.4789939628681168
+      },
+      "chi_norm": 2.787361365258304,
+      "chi_delta": -0.0006925022000152659,
+      "obs_trail_mean": 0.0018749688169918954,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 480,
+      "cfa_mode": "A",
+      "weakest_dim": "vitality",
+      "coherence": 0.6266936570980703,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.9978394512174189,
+        "accountability": 0.5089351771748625
+      },
+      "chi_norm": 2.787219931143615,
+      "chi_delta": -0.00014143411468880984,
+      "obs_trail_mean": 0.0031886942451819777,
+      "bias": {
+        "explore": 0.6,
+        "conserve": 1.8,
+        "follow": 1.3
+      }
+    },
+    {
+      "tick": 481,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.626438890071912,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.9952026749275635,
+        "accountability": 0.5105528853600845
+      },
+      "chi_norm": 2.786952267770015,
+      "chi_delta": -0.00026766337360006887,
+      "obs_trail_mean": 0.004433660418726504,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 482,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.627669797052272,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.9923140227575462,
+        "accountability": 0.5183651654515415
+      },
+      "chi_norm": 2.786273339601348,
+      "chi_delta": -0.0006789281686669923,
+      "obs_trail_mean": 0.008553599123843014,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 483,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.6275371609457029,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.9896372972628869,
+        "accountability": 0.5205113465199247
+      },
+      "chi_norm": 2.7862208904307453,
+      "chi_delta": -0.000052449170602653084,
+      "obs_trail_mean": 0.007977898814715445,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 484,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.6206593901999056,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.9867995773571521,
+        "accountability": 0.49583798344247043
+      },
+      "chi_norm": 2.786091591848888,
+      "chi_delta": -0.0001292985818572845,
+      "obs_trail_mean": 0.0023461253731511533,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 485,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.625681844989898,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.9848173262388943,
+        "accountability": 0.5179100537206978
+      },
+      "chi_norm": 2.9358461256841055,
+      "chi_delta": 0.14975453383521753,
+      "obs_trail_mean": 0.004207440826576203,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 486,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.629249942110055,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.9994581380720058,
+        "accountability": 0.5175416303682141
+      },
+      "chi_norm": 2.9350718787354966,
+      "chi_delta": -0.0007742469486089476,
+      "obs_trail_mean": 0.004203300457447767,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 487,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.6250679782092219,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.9871851679617063,
+        "accountability": 0.5130867448751815
+      },
+      "chi_norm": 2.934715628042936,
+      "chi_delta": -0.00035625069256051134,
+      "obs_trail_mean": 0.004492317792028189,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 488,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.6164227510693483,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.974689416508842,
+        "accountability": 0.49100158776855096
+      },
+      "chi_norm": 2.934357814364155,
+      "chi_delta": -0.0003578136787809605,
+      "obs_trail_mean": 0.0013890117988921702,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 489,
+      "cfa_mode": "A",
+      "weakest_dim": "vitality",
+      "coherence": 0.6142631469118672,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.9642883051415095,
+        "accountability": 0.4927642825059593
+      },
+      "chi_norm": 2.9340070207771576,
+      "chi_delta": -0.00035079358699752206,
+      "obs_trail_mean": 0.0029865169199183583,
+      "bias": {
+        "explore": 0.6,
+        "conserve": 1.8,
+        "follow": 1.3
+      }
+    },
+    {
+      "tick": 490,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.5893758765604935,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.8822520234132211,
+        "accountability": 0.47525148282875307
+      },
+      "chi_norm": 2.9333024832443564,
+      "chi_delta": -0.0007045375328011971,
+      "obs_trail_mean": 0.003603895689593628,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 491,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.6002031060424519,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.9348281142045285,
+        "accountability": 0.46598430996527895
+      },
+      "chi_norm": 2.9329459574249164,
+      "chi_delta": -0.00035652581944001227,
+      "obs_trail_mean": 0.0011747608077712357,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 492,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.6082606224800176,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.9389083940151874,
+        "accountability": 0.494134095904883
+      },
+      "chi_norm": 2.9325968932035678,
+      "chi_delta": -0.00034906422134861614,
+      "obs_trail_mean": 0.0011729445541277528,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 493,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.5935458051940796,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.8823046935597052,
+        "accountability": 0.4918785272166133
+      },
+      "chi_norm": 2.9319045962716643,
+      "chi_delta": -0.0006922969319034245,
+      "obs_trail_mean": 0.0025831462698988616,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 494,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.6172203672836847,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.945931803699149,
+        "accountability": 0.5229496654355898
+      },
+      "chi_norm": 2.9315560127781874,
+      "chi_delta": -0.0003485834934768839,
+      "obs_trail_mean": 0.008793233544565737,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 495,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.595092460861726,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.8972050934364303,
+        "accountability": 0.48316475001047365
+      },
+      "chi_norm": 2.930873077983045,
+      "chi_delta": -0.0006829347951424758,
+      "obs_trail_mean": 0.0011252677941229194,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 496,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.5995110559474284,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.9049892827841745,
+        "accountability": 0.49305494100553915
+      },
+      "chi_norm": 2.930193468773436,
+      "chi_delta": -0.0006796092096088557,
+      "obs_trail_mean": 0,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 497,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.6113642828773012,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.9576033945432877,
+        "accountability": 0.48785373696591705
+      },
+      "chi_norm": 2.9298642018391834,
+      "chi_delta": -0.00032926693425272546,
+      "obs_trail_mean": 0.0005572643131017685,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 498,
+      "cfa_mode": "A",
+      "weakest_dim": "vitality",
+      "coherence": 0.6107285775131222,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.9581517518919063,
+        "accountability": 0.48476255816058256
+      },
+      "chi_norm": 2.9295296170560254,
+      "chi_delta": -0.00033458478315795404,
+      "obs_trail_mean": 0.0005564073217101395,
+      "bias": {
+        "explore": 0.6,
+        "conserve": 1.8,
+        "follow": 1.3
+      }
+    },
+    {
+      "tick": 499,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.6144147271259963,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.9607548505877315,
+        "accountability": 0.4969040579162538
+      },
+      "chi_norm": 2.9292057147434862,
+      "chi_delta": -0.00032390231253920376,
+      "obs_trail_mean": 0.0005555723910219967,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 500,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.6150415944395224,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.9612421810603182,
+        "accountability": 0.49892419669777155
+      },
+      "chi_norm": 2.928876894703383,
+      "chi_delta": -0.00032882004010303945,
+      "obs_trail_mean": 0.0009577838936820626,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 501,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.6158382391462855,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.9629705859495081,
+        "accountability": 0.5003823706356343
+      },
+      "chi_norm": 2.928555023508717,
+      "chi_delta": -0.0003218711946662012,
+      "obs_trail_mean": 0.0026596203970257193,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 502,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.6038838366788892,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.9263426801714436,
+        "accountability": 0.4891926665441133
+      },
+      "chi_norm": 2.9279204846170055,
+      "chi_delta": -0.0006345388917115002,
+      "obs_trail_mean": 0.006631766853388399,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 503,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.631298926987876,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.9663378006723425,
+        "accountability": 0.5588579072791617
+      },
+      "chi_norm": 2.927608483434482,
+      "chi_delta": -0.0003120011825235025,
+      "obs_trail_mean": 0.012896849249955267,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 504,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.631180708422672,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.9676172402491683,
+        "accountability": 0.5571055934415199
+      },
+      "chi_norm": 2.926880611207044,
+      "chi_delta": -0.0007278722274381977,
+      "obs_trail_mean": 0.011421118688303977,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 505,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.6280984545569384,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.96848813408538,
+        "accountability": 0.5439056841423735
+      },
+      "chi_norm": 2.9265738412258893,
+      "chi_delta": -0.000306769981154531,
+      "obs_trail_mean": 0.009338401141576469,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 506,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.6302016050439219,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.969529899204246,
+        "accountability": 0.5512765209714416
+      },
+      "chi_norm": 2.9262707614983547,
+      "chi_delta": -0.0003030797275345165,
+      "obs_trail_mean": 0.010811711515998468,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 507,
+      "cfa_mode": "A",
+      "weakest_dim": "vitality",
+      "coherence": 0.6271134457460753,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.9698963475111068,
+        "accountability": 0.5385574354731943
+      },
+      "chi_norm": 2.9259696856692967,
+      "chi_delta": -0.00030107582905802843,
+      "obs_trail_mean": 0.008267059485660866,
+      "bias": {
+        "explore": 0.6,
+        "conserve": 1.8,
+        "follow": 1.3
+      }
+    },
+    {
+      "tick": 508,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.6296497823735328,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.9710143413770388,
+        "accountability": 0.5475847881170921
+      },
+      "chi_norm": 2.9256759989273435,
+      "chi_delta": -0.0002936867419531808,
+      "obs_trail_mean": 0.010474741517100483,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 509,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.6211405261300135,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.9716744247520263,
+        "accountability": 0.5128876797680277
+      },
+      "chi_norm": 2.9253844663204704,
+      "chi_delta": -0.00029153260687309057,
+      "obs_trail_mean": 0.005237156350631267,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 510,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.6212191888605874,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.9720892127872166,
+        "accountability": 0.5127875426551327
+      },
+      "chi_norm": 2.9251905561214855,
+      "chi_delta": -0.00019391019898495898,
+      "obs_trail_mean": 0.009189275384414941,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 511,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.612341962830057,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.9726931566941015,
+        "accountability": 0.47667469462612644
+      },
+      "chi_norm": 2.9249087444608453,
+      "chi_delta": -0.0002818116606402299,
+      "obs_trail_mean": 0.008231788175180554,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 512,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.6024010240505653,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.9440643335684086,
+        "accountability": 0.46553976263385266
+      },
+      "chi_norm": 2.924358852582521,
+      "chi_delta": -0.0005498918783244378,
+      "obs_trail_mean": 0.004529071215074509,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 513,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.6091795518116393,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.9466508730993871,
+        "accountability": 0.4900673341471702
+      },
+      "chi_norm": 2.923827382527396,
+      "chi_delta": -0.0005314700551246609,
+      "obs_trail_mean": 0.007351867971010506,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 514,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.6124735587203751,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.9752034775097826,
+        "accountability": 0.47469075737171806
+      },
+      "chi_norm": 2.9235695397397303,
+      "chi_delta": -0.0002578427876658296,
+      "obs_trail_mean": 0.005749862990342081,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 515,
+      "cfa_mode": "F",
+      "weakest_dim": "vitality",
+      "coherence": 0.6119932512539376,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.9475588762803215,
+        "accountability": 0.5004141287354287
+      },
+      "chi_norm": 2.9230668570094958,
+      "chi_delta": -0.0005026827302345716,
+      "obs_trail_mean": 0.008349885232746601,
+      "bias": {
+        "explore": 1.8,
+        "conserve": 0.7,
+        "follow": 0.4
+      }
+    },
+    {
+      "tick": 516,
+      "cfa_mode": "A",
+      "weakest_dim": "vitality",
+      "coherence": 0.6125763420447623,
+      "gco": "PARTIAL",
+      "dims": {
+        "vitality": 0,
+        "contextualFit": 1,
+        "continuity": 0.975770241066873,
+        "accountability": 0.47453512711217627
+      },
+      "chi_norm": 2.922940440558083,
+      "chi_delta": -0.0001264164514127586,
+      "obs_trail_mean": 0.005381766939535737,
+      "bias": {
+        "explore": 0.6,
+        "conserve": 1.8,
+        "follow": 1.3
+      }
+    }
+  ]
+}
