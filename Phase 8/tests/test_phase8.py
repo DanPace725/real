@@ -22,7 +22,7 @@ from phase8 import (
     SignalSpec,
     phase8_scenarios,
 )
-from compare_task_transfer import transfer_metrics
+from compare_task_transfer import aggregate_transfer, transfer_metrics
 from real_core.types import CycleEntry, GCOStatus
 
 
@@ -99,6 +99,123 @@ class TestConnectionSubstrate(unittest.TestCase):
             substrate.contextual_action_support("n1", "rotate_left_1", 1),
             0.0,
         )
+
+    def test_maintenance_avoids_high_debt_context_support_when_budget_is_tight(self) -> None:
+        substrate = ConnectionSubstrate(("n1",))
+        substrate.seed_action_support(
+            "n1",
+            "xor_mask_1010",
+            value=0.45,
+            context_bit=1,
+        )
+        substrate.seed_action_support(
+            "n1",
+            "xor_mask_0101",
+            value=0.45,
+            context_bit=1,
+        )
+
+        result = substrate.maintain_supports(
+            0.04,
+            transform_credit={"xor_mask_1010": 0.5, "xor_mask_0101": 0.5},
+            context_transform_credit={
+                "xor_mask_1010:context_1": 0.5,
+                "xor_mask_0101:context_1": 0.5,
+            },
+            transform_debt={"xor_mask_1010": 0.8},
+            context_transform_debt={"xor_mask_1010:context_1": 1.0},
+            context_bit=1,
+        )
+
+        self.assertIn("n1:xor_mask_0101:context_1", result["maintained_actions"])
+        self.assertNotIn("n1:xor_mask_1010:context_1", result["maintained_actions"])
+
+    def test_maintenance_avoids_high_branch_context_debt_when_budget_is_tight(self) -> None:
+        substrate = ConnectionSubstrate(("n1", "n2"))
+        substrate.seed_support(("n1", "n2"), value=0.45)
+        substrate.seed_action_support(
+            "n1",
+            "xor_mask_0101",
+            value=0.45,
+            context_bit=1,
+        )
+        substrate.seed_action_support(
+            "n2",
+            "xor_mask_0101",
+            value=0.45,
+            context_bit=1,
+        )
+
+        result = substrate.maintain_supports(
+            0.03,
+            transform_credit={"xor_mask_0101": 0.5},
+            context_transform_credit={"xor_mask_0101:context_1": 0.5},
+            branch_context_debt={"n1:context_1": 1.0},
+            context_bit=1,
+        )
+
+        self.assertNotIn("n1:xor_mask_0101:context_1", result["maintained_actions"])
+        self.assertIn("n2:xor_mask_0101:context_1", result["maintained_actions"])
+
+    def test_maintenance_prefers_high_branch_context_credit_when_budget_is_tight(self) -> None:
+        substrate = ConnectionSubstrate(("n1", "n2"))
+        substrate.seed_support(("n1", "n2"), value=0.45)
+        substrate.seed_action_support(
+            "n1",
+            "xor_mask_0101",
+            value=0.45,
+            context_bit=1,
+        )
+        substrate.seed_action_support(
+            "n2",
+            "xor_mask_0101",
+            value=0.45,
+            context_bit=1,
+        )
+
+        result = substrate.maintain_supports(
+            0.03,
+            transform_credit={"xor_mask_0101": 0.5},
+            context_transform_credit={"xor_mask_0101:context_1": 0.5},
+            branch_context_credit={"n2:context_1": 1.0},
+            context_bit=1,
+        )
+
+        self.assertNotIn("n1:xor_mask_0101:context_1", result["maintained_actions"])
+        self.assertIn("n2:xor_mask_0101:context_1", result["maintained_actions"])
+
+    def test_maintenance_prefers_high_context_branch_transform_credit_when_budget_is_tight(self) -> None:
+        substrate = ConnectionSubstrate(("n1",))
+        substrate.seed_action_support(
+            "n1",
+            "xor_mask_1010",
+            value=0.45,
+            context_bit=1,
+        )
+        substrate.seed_action_support(
+            "n1",
+            "xor_mask_0101",
+            value=0.45,
+            context_bit=1,
+        )
+
+        result = substrate.maintain_supports(
+            0.03,
+            transform_credit={"xor_mask_1010": 0.5, "xor_mask_0101": 0.5},
+            context_transform_credit={
+                "xor_mask_1010:context_1": 0.5,
+                "xor_mask_0101:context_1": 0.5,
+            },
+            branch_transform_credit={
+                "n1:xor_mask_1010": 0.5,
+                "n1:xor_mask_0101": 0.5,
+            },
+            context_branch_transform_credit={"n1:xor_mask_0101:context_1": 1.0},
+            context_bit=1,
+        )
+
+        self.assertIn("n1:xor_mask_0101:context_1", result["maintained_actions"])
+        self.assertNotIn("n1:xor_mask_1010:context_1", result["maintained_actions"])
 
     def test_low_match_context_feedback_demotes_context_action_support(self) -> None:
         substrate = ConnectionSubstrate(("n1",))
@@ -546,6 +663,36 @@ class TestRoutingEnvironment(unittest.TestCase):
         self.assertEqual(packet.target_bits, [1, 1, 1, 0])
         self.assertAlmostEqual(result["feedback_award"], env.feedback_amount, places=6)
 
+    def test_sink_scores_task_c_exact_match(self) -> None:
+        env = RoutingEnvironment(
+            adjacency={
+                "n0": ("sink",),
+            },
+            positions={"n0": 0, "sink": 1},
+            source_id="n0",
+            sink_id="sink",
+            max_atp=1.0,
+        )
+        env.inject_signal(
+            count=1,
+            cycle=0,
+            packet_payloads=[[1, 0, 1, 1]],
+            context_bits=[0],
+            task_id="task_c",
+        )
+
+        result = env.route_signal(
+            "n0",
+            "sink",
+            cost=0.05,
+            transform_name="xor_mask_1010",
+        )
+
+        packet = env.delivered_packets[0]
+        self.assertTrue(packet.matched_target)
+        self.assertEqual(packet.target_bits, [0, 0, 0, 1])
+        self.assertAlmostEqual(result["feedback_award"], env.feedback_amount, places=6)
+
     def test_feedback_pulse_updates_transform_credit_on_returning_node(self) -> None:
         env = RoutingEnvironment(
             adjacency={
@@ -657,6 +804,87 @@ class TestRoutingEnvironment(unittest.TestCase):
         self.assertLess(state.transform_credit["identity"], 0.9)
         self.assertLess(state.context_transform_credit["identity:context_0"], 0.8)
         self.assertLess(state.context_transform_credit["identity:context_0"], 0.3)
+        self.assertGreater(state.transform_debt["identity"], 0.0)
+        self.assertGreater(state.context_transform_debt["identity:context_0"], 0.0)
+        self.assertGreater(state.branch_transform_debt["sink:identity"], 0.0)
+        self.assertGreater(state.context_branch_transform_debt["sink:identity:context_0"], 0.0)
+        self.assertGreater(state.branch_context_debt["sink:context_0"], 0.0)
+
+    def test_low_match_feedback_without_prior_commitment_does_not_build_large_debt(self) -> None:
+        env = RoutingEnvironment(
+            adjacency={
+                "n0": ("sink",),
+            },
+            positions={"n0": 0, "sink": 1},
+            source_id="n0",
+            sink_id="sink",
+            max_atp=1.0,
+        )
+        env.inject_signal(
+            count=1,
+            cycle=0,
+            packet_payloads=[[1, 0, 1, 1]],
+            context_bits=[0],
+            task_id="task_a",
+        )
+
+        env.route_signal(
+            "n0",
+            "sink",
+            cost=0.05,
+            transform_name="identity",
+        )
+        env.advance_feedback()
+        state = env.state_for("n0")
+
+        self.assertLessEqual(state.transform_debt.get("identity", 0.0), 1e-6)
+        self.assertLessEqual(state.context_transform_debt.get("identity:context_0", 0.0), 1e-6)
+        self.assertLessEqual(state.branch_transform_debt.get("sink:identity", 0.0), 1e-6)
+        self.assertLessEqual(
+            state.context_branch_transform_debt.get("sink:identity:context_0", 0.0),
+            1e-6,
+        )
+        self.assertLessEqual(state.branch_context_debt.get("sink:context_0", 0.0), 1e-6)
+
+    def test_good_match_feedback_clears_context_transform_debt(self) -> None:
+        env = RoutingEnvironment(
+            adjacency={
+                "n0": ("sink",),
+            },
+            positions={"n0": 0, "sink": 1},
+            source_id="n0",
+            sink_id="sink",
+            max_atp=1.0,
+        )
+        state = env.state_for("n0")
+        state.transform_debt["rotate_left_1"] = 0.8
+        state.context_transform_debt["rotate_left_1:context_0"] = 0.9
+        state.branch_context_debt["sink:context_0"] = 0.7
+        env.inject_signal(
+            count=1,
+            cycle=0,
+            packet_payloads=[[1, 0, 1, 1]],
+            context_bits=[0],
+            task_id="task_a",
+        )
+
+        env.route_signal(
+            "n0",
+            "sink",
+            cost=0.05,
+            transform_name="rotate_left_1",
+        )
+        env.advance_feedback()
+
+        self.assertLess(state.transform_debt["rotate_left_1"], 0.8)
+        self.assertLess(state.context_transform_debt["rotate_left_1:context_0"], 0.9)
+        self.assertLess(state.branch_context_debt["sink:context_0"], 0.7)
+        self.assertGreater(state.branch_transform_credit["sink:rotate_left_1"], 0.0)
+        self.assertGreater(
+            state.context_branch_transform_credit["sink:rotate_left_1:context_0"],
+            0.0,
+        )
+        self.assertGreater(state.branch_context_credit["sink:context_0"], 0.0)
 
 
 class TestNativeSubstrateSystem(unittest.TestCase):
@@ -883,6 +1111,201 @@ class TestNativeSubstrateSystem(unittest.TestCase):
         action, _ = agent.engine.selector.select(available, history=[])
 
         self.assertEqual(action, "route:n1")
+
+    def test_selector_avoids_context_transform_with_high_feedback_debt(self) -> None:
+        system = NativeSubstrateSystem(
+            adjacency={
+                "n0": ("n1",),
+                "n1": ("sink",),
+            },
+            positions={"n0": 0, "n1": 1, "sink": 2},
+            source_id="n0",
+            sink_id="sink",
+            selector_seed=53,
+        )
+        system.environment.inject_signal(
+            count=1,
+            cycle=0,
+            packet_payloads=[[1, 0, 1, 1]],
+            context_bits=[1],
+            task_id="task_b",
+        )
+        agent = system.agents["n0"]
+        agent.substrate.seed_support(("n1",), value=0.8)
+        agent.substrate.seed_action_support(
+            "n1",
+            "xor_mask_1010",
+            value=1.0,
+            context_bit=1,
+        )
+        agent.substrate.seed_action_support(
+            "n1",
+            "xor_mask_0101",
+            value=0.45,
+            context_bit=1,
+        )
+        state = system.environment.state_for("n0")
+        state.context_transform_debt["xor_mask_1010:context_1"] = 1.0
+        state.transform_debt["xor_mask_1010"] = 0.8
+
+        available = agent.engine.actions.available_actions(history_size=0)
+        action, _ = agent.engine.selector.select(available, history=[])
+
+        self.assertNotEqual(action, "route_transform:n1:xor_mask_1010")
+
+    def test_selector_avoids_branch_with_high_context_branch_debt(self) -> None:
+        system = NativeSubstrateSystem(
+            adjacency={
+                "n0": ("n1", "n2"),
+                "n1": ("sink",),
+                "n2": ("sink",),
+            },
+            positions={"n0": 0, "n1": 1, "n2": 1, "sink": 2},
+            source_id="n0",
+            sink_id="sink",
+            selector_seed=59,
+        )
+        system.environment.inject_signal(
+            count=1,
+            cycle=0,
+            packet_payloads=[[1, 0, 1, 1]],
+            context_bits=[1],
+            task_id="task_b",
+        )
+        agent = system.agents["n0"]
+        agent.substrate.seed_support(("n1", "n2"), value=0.8)
+        agent.substrate.seed_action_support(
+            "n1",
+            "xor_mask_0101",
+            value=0.6,
+            context_bit=1,
+        )
+        agent.substrate.seed_action_support(
+            "n2",
+            "xor_mask_0101",
+            value=0.45,
+            context_bit=1,
+        )
+        state = system.environment.state_for("n0")
+        state.branch_transform_debt["n1:xor_mask_0101"] = 0.8
+        state.context_branch_transform_debt["n1:xor_mask_0101:context_1"] = 1.0
+
+        available = agent.engine.actions.available_actions(history_size=0)
+        action, _ = agent.engine.selector.select(available, history=[])
+
+        self.assertNotEqual(action, "route_transform:n1:xor_mask_0101")
+
+    def test_selector_avoids_branch_with_high_context_branch_debt_even_for_alternate_transform(self) -> None:
+        system = NativeSubstrateSystem(
+            adjacency={
+                "n0": ("n1", "n2"),
+                "n1": ("sink",),
+                "n2": ("sink",),
+            },
+            positions={"n0": 0, "n1": 1, "n2": 1, "sink": 2},
+            source_id="n0",
+            sink_id="sink",
+            selector_seed=61,
+        )
+        system.environment.inject_signal(
+            count=1,
+            cycle=0,
+            packet_payloads=[[1, 0, 1, 1]],
+            context_bits=[1],
+            task_id="task_b",
+        )
+        agent = system.agents["n0"]
+        agent.substrate.seed_support(("n1", "n2"), value=0.8)
+        agent.substrate.seed_action_support(
+            "n1",
+            "rotate_left_1",
+            value=0.65,
+            context_bit=1,
+        )
+        agent.substrate.seed_action_support(
+            "n2",
+            "xor_mask_0101",
+            value=0.40,
+            context_bit=1,
+        )
+        state = system.environment.state_for("n0")
+        state.branch_context_debt["n1:context_1"] = 1.0
+
+        available = agent.engine.actions.available_actions(history_size=0)
+        action, _ = agent.engine.selector.select(available, history=[])
+
+        self.assertNotEqual(action.split(":")[1], "n1")
+
+    def test_selector_prefers_branch_with_positive_context_credit(self) -> None:
+        system = NativeSubstrateSystem(
+            adjacency={
+                "n0": ("n1", "n2"),
+                "n1": ("sink",),
+                "n2": ("sink",),
+            },
+            positions={"n0": 0, "n1": 1, "n2": 1, "sink": 2},
+            source_id="n0",
+            sink_id="sink",
+            selector_seed=67,
+        )
+        system.environment.inject_signal(
+            count=1,
+            cycle=0,
+            packet_payloads=[[1, 0, 1, 1]],
+            context_bits=[1],
+            task_id="task_b",
+        )
+        agent = system.agents["n0"]
+        agent.substrate.seed_support(("n1", "n2"), value=0.6)
+        agent.substrate.seed_action_support(
+            "n1",
+            "xor_mask_0101",
+            value=0.45,
+            context_bit=1,
+        )
+        agent.substrate.seed_action_support(
+            "n2",
+            "xor_mask_0101",
+            value=0.45,
+            context_bit=1,
+        )
+        state = system.environment.state_for("n0")
+        state.branch_context_credit["n2:context_1"] = 1.0
+
+        available = agent.engine.actions.available_actions(history_size=0)
+        action, _ = agent.engine.selector.select(available, history=[])
+
+        self.assertEqual(action.split(":")[1], "n2")
+
+    def test_selector_prefers_transform_with_positive_context_branch_credit(self) -> None:
+        system = NativeSubstrateSystem(
+            adjacency={
+                "n0": ("n1",),
+                "n1": ("sink",),
+            },
+            positions={"n0": 0, "n1": 1, "sink": 2},
+            source_id="n0",
+            sink_id="sink",
+            selector_seed=71,
+        )
+        system.environment.inject_signal(
+            count=1,
+            cycle=0,
+            packet_payloads=[[1, 0, 1, 1]],
+            context_bits=[1],
+            task_id="task_b",
+        )
+        agent = system.agents["n0"]
+        agent.substrate.seed_support(("n1",), value=0.7)
+        agent.substrate.seed_action_support("n1", "xor_mask_1010", value=0.45, context_bit=1)
+        agent.substrate.seed_action_support("n1", "xor_mask_0101", value=0.45, context_bit=1)
+        state = system.environment.state_for("n0")
+        state.context_branch_transform_credit["n1:xor_mask_0101:context_1"] = 1.0
+
+        available = agent.engine.actions.available_actions(history_size=0)
+        action, _ = agent.engine.selector.select(available, history=[])
+
+        self.assertEqual(action, "route_transform:n1:xor_mask_0101")
 
     def test_consolidation_promotes_route_history_into_substrate(self) -> None:
         system = NativeSubstrateSystem(
@@ -1214,6 +1637,44 @@ class TestNativeSubstrateSystem(unittest.TestCase):
         self.assertIn("substrate_maintenance", summary)
         self.assertIn("n0", summary["substrate_maintenance"])
 
+    def test_summary_reports_task_diagnostics_for_transform_mismatches(self) -> None:
+        system = NativeSubstrateSystem(
+            adjacency={
+                "n0": ("sink",),
+            },
+            positions={"n0": 0, "sink": 1},
+            source_id="n0",
+            sink_id="sink",
+            selector_seed=39,
+        )
+        system.environment.inject_signal(
+            count=1,
+            cycle=0,
+            packet_payloads=[[1, 0, 1, 1]],
+            context_bits=[0],
+            task_id="task_a",
+        )
+        system.environment.route_signal(
+            "n0",
+            "sink",
+            cost=0.05,
+            transform_name="identity",
+        )
+
+        summary = system.summarize()
+        diagnostics = summary["task_diagnostics"]
+
+        self.assertEqual(diagnostics["overall"]["identity_fallbacks"], 1)
+        self.assertEqual(diagnostics["overall"]["wrong_transform_family"], 1)
+        self.assertEqual(
+            diagnostics["contexts"]["context_0"]["mismatch_transform_counts"]["identity"],
+            1,
+        )
+        self.assertEqual(
+            diagnostics["contexts"]["context_0"]["branch_counts"]["sink"],
+            1,
+        )
+
 
 class TestScenarioCatalog(unittest.TestCase):
     def test_cvt1_stage1_scenario_is_available(self) -> None:
@@ -1234,6 +1695,16 @@ class TestScenarioCatalog(unittest.TestCase):
         self.assertGreater(len(scenario.signal_schedule_specs or {}), 0)
         first_signal = scenario.initial_signal_specs[0]
         self.assertEqual(first_signal.task_id, "task_b")
+        self.assertIsNotNone(first_signal.context_bit)
+
+    def test_cvt1_task_c_stage1_scenario_is_available(self) -> None:
+        scenarios = phase8_scenarios()
+        scenario = scenarios["cvt1_task_c_stage1"]
+
+        self.assertGreater(len(scenario.initial_signal_specs), 0)
+        self.assertGreater(len(scenario.signal_schedule_specs or {}), 0)
+        first_signal = scenario.initial_signal_specs[0]
+        self.assertEqual(first_signal.task_id, "task_c")
         self.assertIsNotNone(first_signal.context_bit)
 
 
@@ -1269,6 +1740,84 @@ class TestTransferHarness(unittest.TestCase):
         self.assertTrue(metrics["criterion_reached"])
         self.assertEqual(metrics["examples_to_criterion"], 8)
         self.assertGreaterEqual(metrics["best_rolling_exact_rate"], 1.0)
+
+    def test_transfer_aggregate_reports_context_and_error_diagnostics(self) -> None:
+        results = [
+            {
+                "cold_task_b": {
+                    "summary": {
+                        "exact_matches": 1,
+                        "mean_bit_accuracy": 0.4,
+                        "mean_route_cost": 0.05,
+                        "task_diagnostics": {
+                            "overall": {
+                                "wrong_transform_family": 2,
+                                "identity_fallbacks": 1,
+                                "stale_context_support_suspicions": 1,
+                            },
+                            "contexts": {
+                                "context_1": {"mean_bit_accuracy": 0.25},
+                            },
+                        },
+                    }
+                },
+                "warm_full_task_b": {
+                    "summary": {
+                        "exact_matches": 2,
+                        "mean_bit_accuracy": 0.45,
+                        "mean_route_cost": 0.04,
+                        "task_diagnostics": {
+                            "overall": {
+                                "wrong_transform_family": 1,
+                                "identity_fallbacks": 0,
+                                "stale_context_support_suspicions": 0,
+                            },
+                            "contexts": {
+                                "context_1": {"mean_bit_accuracy": 0.5},
+                            },
+                        },
+                    }
+                },
+                "warm_substrate_task_b": {
+                    "summary": {
+                        "exact_matches": 3,
+                        "mean_bit_accuracy": 0.5,
+                        "mean_route_cost": 0.03,
+                        "task_diagnostics": {
+                            "overall": {
+                                "wrong_transform_family": 0,
+                                "identity_fallbacks": 0,
+                                "stale_context_support_suspicions": 0,
+                            },
+                            "contexts": {
+                                "context_1": {"mean_bit_accuracy": 0.625},
+                            },
+                        },
+                    }
+                },
+                "delta_full_task_b": {
+                    "exact_matches": 1,
+                    "mean_bit_accuracy": 0.05,
+                    "mean_route_cost": -0.01,
+                    "best_rolling_exact_rate": 0.125,
+                    "best_rolling_bit_accuracy": 0.125,
+                },
+                "delta_substrate_task_b": {
+                    "exact_matches": 2,
+                    "mean_bit_accuracy": 0.1,
+                    "mean_route_cost": -0.02,
+                    "best_rolling_exact_rate": 0.25,
+                    "best_rolling_bit_accuracy": 0.25,
+                },
+            }
+        ]
+
+        aggregate = aggregate_transfer(results)
+
+        self.assertEqual(aggregate["avg_cold_task_b_context_1_bit_accuracy"], 0.25)
+        self.assertEqual(aggregate["avg_warm_full_task_b_wrong_transform_family"], 1.0)
+        self.assertEqual(aggregate["avg_warm_substrate_task_b_identity_fallbacks"], 0.0)
+        self.assertEqual(aggregate["avg_cold_task_b_stale_support_suspicions"], 1.0)
 
 
 if __name__ == "__main__":

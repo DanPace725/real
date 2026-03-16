@@ -164,6 +164,10 @@ def cvt1_task_b_stage1_signals() -> Tuple[SignalSpec, ...]:
     return cvt1_stage1_signals("task_b")
 
 
+def cvt1_task_c_stage1_signals() -> Tuple[SignalSpec, ...]:
+    return cvt1_stage1_signals("task_c")
+
+
 @dataclass(frozen=True)
 class ScenarioSpec:
     name: str
@@ -198,6 +202,11 @@ def phase8_scenarios() -> Dict[str, ScenarioSpec]:
     cvt_b_schedule = {
         cycle: (signal_spec,)
         for cycle, signal_spec in enumerate(cvt_b_signals[1:], start=2)
+    }
+    cvt_c_signals = cvt1_task_c_stage1_signals()
+    cvt_c_schedule = {
+        cycle: (signal_spec,)
+        for cycle, signal_spec in enumerate(cvt_c_signals[1:], start=2)
     }
 
     return {
@@ -295,5 +304,22 @@ def phase8_scenarios() -> Dict[str, ScenarioSpec]:
             source_admission_max_rate=2,
             initial_signal_specs=(cvt_b_signals[0],),
             signal_schedule_specs=cvt_b_schedule,
+        ),
+        "cvt1_task_c_stage1": ScenarioSpec(
+            name="cvt1_task_c_stage1",
+            description="Nearby Stage 1 variant where even-context uses xor_mask_1010 and odd-context uses xor_mask_0101.",
+            adjacency=branch_adjacency,
+            positions=branch_positions,
+            source_id=branch_source,
+            sink_id=branch_sink,
+            cycles=len(cvt_c_signals) + 6,
+            initial_packets=0,
+            packet_schedule={},
+            packet_ttl=10,
+            source_admission_policy="adaptive",
+            source_admission_min_rate=1,
+            source_admission_max_rate=2,
+            initial_signal_specs=(cvt_c_signals[0],),
+            signal_schedule_specs=cvt_c_schedule,
         ),
     }

@@ -27,6 +27,7 @@ Current focus:
 - returned transform credit is now context-bound as well as transform-bound, which helps reduce warm-start interference across task contexts
 - repeated local context-bound credit can now promote durable context-specific action support and reinforce the supporting edge, so substrate-only carryover inherits more of the learned task structure
 - Phase 8 now includes the first explicit `Task A -> Task B` transfer harness for CVT-1 Stage 1
+- Phase 8 now includes a nearby `Task C` Stage 1 variant plus a `compare_transfer_matrix.py` runner for pairwise transfer checks across `Task A`, `Task B`, and `Task C`
 - comparisons and demos now cover multiple routing scenarios instead of one smoke run
 - the initial environment is a small routing graph, not a dense network
 
@@ -69,14 +70,30 @@ Current focus:
 - substrate-only warm starts can now recover part of the task benefit by carrying forward promoted context-action support plus its local routing scaffold
 - transfer feedback now relaxes contradictory context-transform credit, and selector history is only strongly trusted when maintained substrate still supports it
 - the first Task B transfer loop now shows warm full carryover improving exact-match counts over cold start in the aggregate, but mean bit accuracy is still slightly behind cold and still needs stabilization
+- transfer summaries and demos now expose per-context mismatch diagnostics, first-hop branch counts, wrong-transform counts, identity fallbacks, and heuristic stale-support suspicions
+- contradictory feedback now also builds local transform-debt and reduces maintenance priority for debt-heavy context-action supports, but the first aggregate pass was mixed: it fixed some previously sticky seeds while reducing 5-seed transfer performance overall
+- contradiction-debt accumulation is now gated by prior local commitment instead of firing on every mismatch, which restores a modest aggregate full-carryover advantage over cold Task B while still leaving the odd-context branch behind substrate-only carryover
+- branch-specific contradiction debt now lets nodes penalize stale neighbor-plus-transform habits instead of damping whole transform families, which improves 5-seed warm-full Task B transfer over cold on both exact matches (`3.8 -> 5.0`) and mean bit accuracy (`0.4333 -> 0.4944`) and nudges warm-full `context_1` bit accuracy above cold (`0.3375 -> 0.3500`)
+- branch-context contradiction debt now lets nodes back away from a stale branch in a specific context during both selection and maintenance, keeping warm full Task B ahead of cold on the current 5-seed aggregate (`2.2 -> 4.4` exact matches, `0.3889 -> 0.4278` mean bit accuracy) while nudging `context_1` bit accuracy above cold (`0.2500 -> 0.2750`)
+- positive branch-context evidence now complements contradiction debt, so warm full no longer learns only by retreat; the current 5-seed Task B transfer run reaches `5.2` exact matches and `0.4722` mean bit accuracy versus cold `2.2` and `0.3722`, with `context_1` mean bit accuracy rising to `0.3500` versus cold `0.2250`
+- branch-plus-transform credit now ties the preferred branch to the correct transform family more directly, pushing the current 5-seed Task B transfer run to `8.8` exact matches and `0.6333` mean bit accuracy for warm full versus cold `3.0` and `0.4445`, with `context_1` mean bit accuracy rising to `0.5500` and warm-full stale-support suspicion dropping below cold (`4.2` vs `5.6`)
+- the first small transfer matrix now shows that this carryover is strong but directional:
+  - `Task A -> Task B` is robustly positive
+  - `Task A -> Task C` is also positive
+  - `Task B -> Task A` remains mixed or slightly negative
+  - `Task B -> Task C` is mildly positive
+  - `Task C -> Task A` is near parity
+  - `Task C -> Task B` is modestly positive but less stable
 
 ## Next likely steps
 
 - deepen Phase 7-style pattern merging and pruning inside the connection substrate
 - improve Task B transfer quality so warm full carryover beats cold on mean bit accuracy as well as exact matches
 - keep strengthening carryover by promoting and maintaining context-specific transform support, not just route support
-- add clearer per-context transfer diagnostics so we can see whether remaining error is branch choice, transform persistence, or overuse of partial-match actions
-- retune Task B adaptation so full carryover preserves useful route and transform scaffold while reducing partial-match drift under the new task
+- keep the new branch-context debt path, but tune it to reduce overall stale-support suspicion under warm full carryover without losing the new `context_1` edge over cold start
+- keep refining the new branch-plus-transform credit path so the gains hold under larger seed sets and more transfer variants
+- use the new matrix runner to study transfer directionality instead of assuming symmetry from one successful pair
+- add one more nearby variant or latent-context precursor only after the current directional transfer pattern is better understood
 - add explicit neighbor inhibition effects to routing pressure
 - let admission substrate learn richer tradeoffs such as latency sensitivity, not just energy efficiency
 - measure specialization and path emergence over longer runs

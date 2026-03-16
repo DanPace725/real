@@ -73,6 +73,14 @@ def transfer_metrics(system) -> dict[str, object]:
     }
 
 
+def _context_stat(summary: dict[str, object], context_key: str, field: str) -> float:
+    return float(summary.get("task_diagnostics", {}).get("contexts", {}).get(context_key, {}).get(field, 0.0))
+
+
+def _overall_stat(summary: dict[str, object], field: str) -> float:
+    return float(summary.get("task_diagnostics", {}).get("overall", {}).get(field, 0.0))
+
+
 def _run_transfer_system(seed: int, scenario_name: str):
     system = build_system(seed, scenario_name)
     summary = run_workload(system, scenario_name)
@@ -186,6 +194,18 @@ def aggregate_transfer(results: list[dict[str, object]]) -> dict[str, float]:
         "avg_delta_substrate_task_b_best_exact_rate": round(mean(item["delta_substrate_task_b"]["best_rolling_exact_rate"] for item in results), 4),
         "avg_delta_full_task_b_best_bit_accuracy": round(mean(item["delta_full_task_b"]["best_rolling_bit_accuracy"] for item in results), 4),
         "avg_delta_substrate_task_b_best_bit_accuracy": round(mean(item["delta_substrate_task_b"]["best_rolling_bit_accuracy"] for item in results), 4),
+        "avg_cold_task_b_context_1_bit_accuracy": round(mean(_context_stat(item["cold_task_b"]["summary"], "context_1", "mean_bit_accuracy") for item in results), 4),
+        "avg_warm_full_task_b_context_1_bit_accuracy": round(mean(_context_stat(item["warm_full_task_b"]["summary"], "context_1", "mean_bit_accuracy") for item in results), 4),
+        "avg_warm_substrate_task_b_context_1_bit_accuracy": round(mean(_context_stat(item["warm_substrate_task_b"]["summary"], "context_1", "mean_bit_accuracy") for item in results), 4),
+        "avg_cold_task_b_wrong_transform_family": round(mean(_overall_stat(item["cold_task_b"]["summary"], "wrong_transform_family") for item in results), 4),
+        "avg_warm_full_task_b_wrong_transform_family": round(mean(_overall_stat(item["warm_full_task_b"]["summary"], "wrong_transform_family") for item in results), 4),
+        "avg_warm_substrate_task_b_wrong_transform_family": round(mean(_overall_stat(item["warm_substrate_task_b"]["summary"], "wrong_transform_family") for item in results), 4),
+        "avg_cold_task_b_identity_fallbacks": round(mean(_overall_stat(item["cold_task_b"]["summary"], "identity_fallbacks") for item in results), 4),
+        "avg_warm_full_task_b_identity_fallbacks": round(mean(_overall_stat(item["warm_full_task_b"]["summary"], "identity_fallbacks") for item in results), 4),
+        "avg_warm_substrate_task_b_identity_fallbacks": round(mean(_overall_stat(item["warm_substrate_task_b"]["summary"], "identity_fallbacks") for item in results), 4),
+        "avg_cold_task_b_stale_support_suspicions": round(mean(_overall_stat(item["cold_task_b"]["summary"], "stale_context_support_suspicions") for item in results), 4),
+        "avg_warm_full_task_b_stale_support_suspicions": round(mean(_overall_stat(item["warm_full_task_b"]["summary"], "stale_context_support_suspicions") for item in results), 4),
+        "avg_warm_substrate_task_b_stale_support_suspicions": round(mean(_overall_stat(item["warm_substrate_task_b"]["summary"], "stale_context_support_suspicions") for item in results), 4),
     }
 
 

@@ -109,6 +109,14 @@ class NodeRuntimeState:
     last_match_ratio: float = 0.0
     transform_credit: Dict[str, float] = field(default_factory=dict)
     context_transform_credit: Dict[str, float] = field(default_factory=dict)
+    branch_transform_credit: Dict[str, float] = field(default_factory=dict)
+    context_branch_transform_credit: Dict[str, float] = field(default_factory=dict)
+    transform_debt: Dict[str, float] = field(default_factory=dict)
+    context_transform_debt: Dict[str, float] = field(default_factory=dict)
+    branch_transform_debt: Dict[str, float] = field(default_factory=dict)
+    context_branch_transform_debt: Dict[str, float] = field(default_factory=dict)
+    branch_context_credit: Dict[str, float] = field(default_factory=dict)
+    branch_context_debt: Dict[str, float] = field(default_factory=dict)
 
     @property
     def dormant(self) -> bool:

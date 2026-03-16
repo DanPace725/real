@@ -296,6 +296,12 @@ class ConnectionSubstrate:
         *,
         transform_credit: Dict[str, float] | None = None,
         context_transform_credit: Dict[str, float] | None = None,
+        branch_transform_credit: Dict[str, float] | None = None,
+        context_branch_transform_credit: Dict[str, float] | None = None,
+        transform_debt: Dict[str, float] | None = None,
+        context_transform_debt: Dict[str, float] | None = None,
+        branch_context_credit: Dict[str, float] | None = None,
+        branch_context_debt: Dict[str, float] | None = None,
         context_bit: int | None = None,
     ) -> dict[str, object]:
         total = 0.0
@@ -303,6 +309,12 @@ class ConnectionSubstrate:
         maintained_actions: List[str] = []
         credit = transform_credit or {}
         context_credit = context_transform_credit or {}
+        branch_transform = branch_transform_credit or {}
+        context_branch_transform = context_branch_transform_credit or {}
+        debt = transform_debt or {}
+        context_debt = context_transform_debt or {}
+        branch_credit = branch_context_credit or {}
+        branch_debt = branch_context_debt or {}
         candidates: List[tuple[float, str, str, str, str | None, int | None]] = []
 
         for neighbor_id in self.active_neighbors():
@@ -313,6 +325,15 @@ class ConnectionSubstrate:
                 + 0.05 * min(self.support_age(neighbor_id), 6)
                 + max(0.0, -self.velocity(neighbor_id)) * 4.0
             )
+            if context_bit in SUPPORTED_CONTEXTS:
+                priority += 0.40 * max(
+                    0.0,
+                    branch_credit.get(f"{neighbor_id}:context_{context_bit}", 0.0),
+                )
+                priority -= 0.35 * max(
+                    0.0,
+                    branch_debt.get(f"{neighbor_id}:context_{context_bit}", 0.0),
+                )
             candidates.append((priority, key, "edge", neighbor_id, None, None))
 
         for neighbor_id, transform_name, action_context in self.active_action_supports():
@@ -325,6 +346,11 @@ class ConnectionSubstrate:
             age = self._inner.slow_age.get(key, 0)
             priority = 0.8 + support + 0.05 * min(age, 6) + max(0.0, -velocity) * 4.0
             priority += 0.50 * max(0.0, credit.get(transform_name, 0.0))
+            priority += 0.24 * max(
+                0.0,
+                branch_transform.get(f"{neighbor_id}:{transform_name}", 0.0),
+            )
+            priority -= 0.40 * max(0.0, debt.get(transform_name, 0.0))
             if (
                 action_context in SUPPORTED_CONTEXTS
                 and context_bit in SUPPORTED_CONTEXTS
@@ -334,6 +360,25 @@ class ConnectionSubstrate:
                 priority += 0.75 * max(
                     0.0,
                     context_credit.get(f"{transform_name}:context_{action_context}", 0.0),
+                )
+                priority += 0.28 * max(
+                    0.0,
+                    branch_credit.get(f"{neighbor_id}:context_{action_context}", 0.0),
+                )
+                priority += 0.42 * max(
+                    0.0,
+                    context_branch_transform.get(
+                        f"{neighbor_id}:{transform_name}:context_{action_context}",
+                        0.0,
+                    ),
+                )
+                priority -= 0.28 * max(
+                    0.0,
+                    branch_debt.get(f"{neighbor_id}:context_{action_context}", 0.0),
+                )
+                priority -= 0.90 * max(
+                    0.0,
+                    context_debt.get(f"{transform_name}:context_{action_context}", 0.0),
                 )
             candidates.append(
                 (priority, key, "action", neighbor_id, transform_name, action_context)

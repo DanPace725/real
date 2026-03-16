@@ -12,6 +12,9 @@ from .models import FeedbackPulse, NodeRuntimeState, SignalPacket, SignalSpec
 
 TRANSFORM_NAMES = ("identity", "rotate_left_1", "xor_mask_1010", "xor_mask_0101")
 TASK_CONTEXT_MATCH_FLOOR = 0.75
+DEBT_ACTIVATION_CREDIT = 0.30
+DEBT_ACTIVATION_CONTEXT_CREDIT = 0.22
+DEBT_ACTIVATION_EXISTING = 0.18
 
 
 def _edge_id(source_id: str, target_id: str) -> str:
@@ -24,6 +27,18 @@ def _normalize_transform_name(transform_name: str | None) -> str:
 
 def _context_credit_key(transform_name: str, context_bit: int) -> str:
     return f"{transform_name}:context_{int(context_bit)}"
+
+
+def _branch_debt_key(neighbor_id: str, transform_name: str) -> str:
+    return f"{neighbor_id}:{transform_name}"
+
+
+def _context_branch_debt_key(neighbor_id: str, transform_name: str, context_bit: int) -> str:
+    return f"{neighbor_id}:{transform_name}:context_{int(context_bit)}"
+
+
+def _branch_context_debt_key(neighbor_id: str, context_bit: int) -> str:
+    return f"{neighbor_id}:context_{int(context_bit)}"
 
 
 def _apply_transform(bits: Sequence[int], transform_name: str | None) -> List[int]:
@@ -58,6 +73,24 @@ def _target_bits_for_task(
     if task_id == "task_b":
         transform = "rotate_left_1" if context_bit == 0 else "xor_mask_0101"
         return _apply_transform(input_bits, transform)
+    if task_id == "task_c":
+        transform = "xor_mask_1010" if context_bit == 0 else "xor_mask_0101"
+        return _apply_transform(input_bits, transform)
+    return None
+
+
+def _expected_transform_for_task(
+    task_id: str | None,
+    context_bit: int | None,
+) -> str | None:
+    if task_id is None or context_bit is None:
+        return None
+    if task_id == "task_a":
+        return "rotate_left_1" if context_bit == 0 else "xor_mask_1010"
+    if task_id == "task_b":
+        return "rotate_left_1" if context_bit == 0 else "xor_mask_0101"
+    if task_id == "task_c":
+        return "xor_mask_1010" if context_bit == 0 else "xor_mask_0101"
     return None
 
 
@@ -277,15 +310,28 @@ class RoutingEnvironment:
                 1.0,
                 max(0.0, state.transform_credit.get(transform_name, 0.0)),
             )
+            local[f"feedback_debt_{transform_name}"] = min(
+                1.0,
+                max(0.0, state.transform_debt.get(transform_name, 0.0)),
+            )
             context_credit = 0.0
+            context_debt = 0.0
             if head_packet is not None and head_packet.context_bit is not None:
                 context_credit = state.context_transform_credit.get(
+                    _context_credit_key(transform_name, int(head_packet.context_bit)),
+                    0.0,
+                )
+                context_debt = state.context_transform_debt.get(
                     _context_credit_key(transform_name, int(head_packet.context_bit)),
                     0.0,
                 )
             local[f"context_feedback_credit_{transform_name}"] = min(
                 1.0,
                 max(0.0, context_credit),
+            )
+            local[f"context_feedback_debt_{transform_name}"] = min(
+                1.0,
+                max(0.0, context_debt),
             )
         sink_position = self.positions[self.sink_id]
         span = max(abs(sink_position - self.positions[self.source_id]), 1)
@@ -297,6 +343,69 @@ class RoutingEnvironment:
             local[f"congestion_{neighbor_id}"] = min(
                 1.0,
                 len(self.inboxes[neighbor_id]) / max(self.inbox_capacity, 1),
+            )
+            for transform_name in TRANSFORM_NAMES:
+                branch_credit = state.branch_transform_credit.get(
+                    _branch_debt_key(neighbor_id, transform_name),
+                    0.0,
+                )
+                branch_debt = state.branch_transform_debt.get(
+                    _branch_debt_key(neighbor_id, transform_name),
+                    0.0,
+                )
+                context_branch_credit = 0.0
+                context_branch_debt = 0.0
+                if head_packet is not None and head_packet.context_bit is not None:
+                    context_branch_credit = state.context_branch_transform_credit.get(
+                        _context_branch_debt_key(
+                            neighbor_id,
+                            transform_name,
+                            int(head_packet.context_bit),
+                        ),
+                        0.0,
+                    )
+                    context_branch_debt = state.context_branch_transform_debt.get(
+                        _context_branch_debt_key(
+                            neighbor_id,
+                            transform_name,
+                            int(head_packet.context_bit),
+                        ),
+                        0.0,
+                    )
+                local[f"branch_feedback_credit_{neighbor_id}_{transform_name}"] = min(
+                    1.0,
+                    max(0.0, branch_credit),
+                )
+                local[f"branch_feedback_debt_{neighbor_id}_{transform_name}"] = min(
+                    1.0,
+                    max(0.0, branch_debt),
+                )
+                local[f"context_branch_feedback_credit_{neighbor_id}_{transform_name}"] = min(
+                    1.0,
+                    max(0.0, context_branch_credit),
+                )
+                local[f"context_branch_feedback_debt_{neighbor_id}_{transform_name}"] = min(
+                    1.0,
+                    max(0.0, context_branch_debt),
+                )
+            branch_context_debt = 0.0
+            branch_context_credit = 0.0
+            if head_packet is not None and head_packet.context_bit is not None:
+                branch_context_credit = state.branch_context_credit.get(
+                    _branch_context_debt_key(neighbor_id, int(head_packet.context_bit)),
+                    0.0,
+                )
+                branch_context_debt = state.branch_context_debt.get(
+                    _branch_context_debt_key(neighbor_id, int(head_packet.context_bit)),
+                    0.0,
+                )
+            local[f"branch_context_feedback_credit_{neighbor_id}"] = min(
+                1.0,
+                max(0.0, branch_context_credit),
+            )
+            local[f"branch_context_feedback_debt_{neighbor_id}"] = min(
+                1.0,
+                max(0.0, branch_context_debt),
             )
             if neighbor_id == self.sink_id:
                 local[f"inhibited_{neighbor_id}"] = 0.0
@@ -430,7 +539,7 @@ class RoutingEnvironment:
             edge = pulse.next_edge()
             if edge is None:
                 continue
-            source_id, _ = edge.split("->", 1)
+            source_id, neighbor_id = edge.split("->", 1)
             state = self.state_for(source_id)
             state.atp = min(state.max_atp, state.atp + pulse.amount)
             state.reward_buffer = min(state.max_atp, state.reward_buffer + pulse.amount)
@@ -440,14 +549,50 @@ class RoutingEnvironment:
             transform_name = pulse.next_transform() or "identity"
             credit_signal = min(1.0, pulse.amount / max(self.feedback_amount, 1e-9))
             prior_credit = state.transform_credit.get(transform_name, 0.0)
+            prior_debt = state.transform_debt.get(transform_name, 0.0)
+            branch_key = _branch_debt_key(neighbor_id, transform_name)
             if pulse.context_bit is None:
                 state.transform_credit[transform_name] = min(
                     1.0,
                     0.55 * prior_credit + 0.45 * credit_signal,
                 )
+                state.branch_transform_credit[branch_key] = min(
+                    1.0,
+                    0.55 * state.branch_transform_credit.get(branch_key, 0.0)
+                    + 0.45 * credit_signal,
+                )
+                state.transform_debt[transform_name] = max(0.0, prior_debt * 0.65)
             else:
                 context_key = _context_credit_key(transform_name, int(pulse.context_bit))
+                context_branch_key = _context_branch_debt_key(
+                    neighbor_id,
+                    transform_name,
+                    int(pulse.context_bit),
+                )
+                branch_context_key = _branch_context_debt_key(
+                    neighbor_id,
+                    int(pulse.context_bit),
+                )
                 prior_context_credit = state.context_transform_credit.get(context_key, 0.0)
+                prior_branch_credit = state.branch_transform_credit.get(branch_key, 0.0)
+                prior_context_branch_credit = state.context_branch_transform_credit.get(
+                    context_branch_key,
+                    0.0,
+                )
+                prior_context_debt = state.context_transform_debt.get(context_key, 0.0)
+                prior_branch_debt = state.branch_transform_debt.get(branch_key, 0.0)
+                prior_context_branch_debt = state.context_branch_transform_debt.get(
+                    context_branch_key,
+                    0.0,
+                )
+                prior_branch_context_credit = state.branch_context_credit.get(
+                    branch_context_key,
+                    0.0,
+                )
+                prior_branch_context_debt = state.branch_context_debt.get(
+                    branch_context_key,
+                    0.0,
+                )
                 match_ratio = max(0.0, min(1.0, pulse.bit_match_ratio))
                 if match_ratio < TASK_CONTEXT_MATCH_FLOOR:
                     contradiction = (
@@ -469,10 +614,100 @@ class RoutingEnvironment:
                             prior_context_credit * max(0.05, 0.32 - 0.18 * contradiction),
                         ),
                     )
+                    state.branch_transform_credit[branch_key] = min(
+                        1.0,
+                        max(
+                            residual_context,
+                            prior_branch_credit * max(0.08, 0.40 - 0.20 * contradiction),
+                        ),
+                    )
+                    state.context_branch_transform_credit[context_branch_key] = min(
+                        1.0,
+                        max(
+                            residual_context,
+                            prior_context_branch_credit
+                            * max(0.04, 0.28 - 0.16 * contradiction),
+                        ),
+                    )
+                    state.branch_context_credit[branch_context_key] = min(
+                        1.0,
+                        max(
+                            residual_context,
+                            prior_branch_context_credit
+                            * max(0.06, 0.34 - 0.20 * contradiction),
+                        ),
+                    )
+                    debt_signal = max(contradiction, 1.0 - match_ratio)
+                    stale_commitment = max(
+                        prior_credit,
+                        prior_context_credit,
+                        prior_branch_credit,
+                        prior_context_branch_credit,
+                        prior_branch_context_credit,
+                        prior_debt,
+                        prior_context_debt,
+                    )
+                    if (
+                        prior_credit >= DEBT_ACTIVATION_CREDIT
+                        or prior_context_credit >= DEBT_ACTIVATION_CONTEXT_CREDIT
+                        or prior_branch_credit >= DEBT_ACTIVATION_CONTEXT_CREDIT
+                        or prior_context_branch_credit >= DEBT_ACTIVATION_CONTEXT_CREDIT
+                        or prior_branch_context_credit >= DEBT_ACTIVATION_CONTEXT_CREDIT
+                        or prior_debt >= DEBT_ACTIVATION_EXISTING
+                        or prior_context_debt >= DEBT_ACTIVATION_EXISTING
+                        or prior_branch_debt >= DEBT_ACTIVATION_EXISTING
+                        or prior_context_branch_debt >= DEBT_ACTIVATION_EXISTING
+                        or prior_branch_context_debt >= DEBT_ACTIVATION_EXISTING
+                    ):
+                        state.transform_debt[transform_name] = min(
+                            1.0,
+                            0.70 * prior_debt + 0.30 * debt_signal,
+                        )
+                        state.context_transform_debt[context_key] = min(
+                            1.0,
+                            0.55 * prior_context_debt + 0.45 * debt_signal,
+                        )
+                        state.branch_transform_debt[branch_key] = min(
+                            1.0,
+                            0.65 * prior_branch_debt + 0.35 * debt_signal,
+                        )
+                        state.context_branch_transform_debt[context_branch_key] = min(
+                            1.0,
+                            0.50 * prior_context_branch_debt + 0.50 * debt_signal,
+                        )
+                        state.branch_context_debt[branch_context_key] = min(
+                            1.0,
+                            0.45 * prior_branch_context_debt + 0.55 * debt_signal,
+                        )
+                    else:
+                        mild_decay = max(0.0, 0.55 - 0.20 * stale_commitment)
+                        state.transform_debt[transform_name] = max(
+                            0.0,
+                            prior_debt * mild_decay,
+                        )
+                        state.context_transform_debt[context_key] = max(
+                            0.0,
+                            prior_context_debt * max(0.45, mild_decay - 0.05),
+                        )
+                        state.branch_transform_debt[branch_key] = max(
+                            0.0,
+                            prior_branch_debt * 0.60,
+                        )
+                        state.context_branch_transform_debt[context_branch_key] = max(
+                            0.0,
+                            prior_context_branch_debt * 0.55,
+                        )
+                        state.branch_context_debt[branch_context_key] = max(
+                            0.0,
+                            prior_branch_context_debt * 0.52,
+                        )
                 else:
                     quality_credit = _quality_scaled_credit(match_ratio)
                     generic_mix = 0.18 + 0.12 * quality_credit
                     context_mix = 0.42 + 0.23 * quality_credit
+                    branch_mix = 0.30 + 0.18 * quality_credit
+                    context_branch_mix = 0.46 + 0.24 * quality_credit
+                    branch_context_mix = 0.34 + 0.24 * quality_credit
                     effective_credit = 0.55 * credit_signal + 0.45 * quality_credit
                     state.transform_credit[transform_name] = min(
                         1.0,
@@ -481,6 +716,40 @@ class RoutingEnvironment:
                     state.context_transform_credit[context_key] = min(
                         1.0,
                         (1.0 - context_mix) * prior_context_credit + context_mix * effective_credit,
+                    )
+                    state.branch_transform_credit[branch_key] = min(
+                        1.0,
+                        (1.0 - branch_mix) * prior_branch_credit + branch_mix * effective_credit,
+                    )
+                    state.context_branch_transform_credit[context_branch_key] = min(
+                        1.0,
+                        (1.0 - context_branch_mix) * prior_context_branch_credit
+                        + context_branch_mix * effective_credit,
+                    )
+                    state.branch_context_credit[branch_context_key] = min(
+                        1.0,
+                        (1.0 - branch_context_mix) * prior_branch_context_credit
+                        + branch_context_mix * effective_credit,
+                    )
+                    state.transform_debt[transform_name] = max(
+                        0.0,
+                        prior_debt * max(0.10, 0.55 - 0.30 * quality_credit),
+                    )
+                    state.context_transform_debt[context_key] = max(
+                        0.0,
+                        prior_context_debt * max(0.05, 0.45 - 0.35 * quality_credit),
+                    )
+                    state.branch_transform_debt[branch_key] = max(
+                        0.0,
+                        prior_branch_debt * max(0.10, 0.55 - 0.35 * quality_credit),
+                    )
+                    state.context_branch_transform_debt[context_branch_key] = max(
+                        0.0,
+                        prior_context_branch_debt * max(0.05, 0.40 - 0.35 * quality_credit),
+                    )
+                    state.branch_context_debt[branch_context_key] = max(
+                        0.0,
+                        prior_branch_context_debt * max(0.04, 0.38 - 0.30 * quality_credit),
                     )
             delivered.append(
                 {
@@ -511,10 +780,42 @@ class RoutingEnvironment:
                 state.transform_credit[transform_name] *= 0.92
                 if state.transform_credit[transform_name] < 1e-4:
                     del state.transform_credit[transform_name]
+            for transform_name in list(state.transform_debt.keys()):
+                state.transform_debt[transform_name] *= 0.90
+                if state.transform_debt[transform_name] < 1e-4:
+                    del state.transform_debt[transform_name]
             for key in list(state.context_transform_credit.keys()):
                 state.context_transform_credit[key] *= 0.94
                 if state.context_transform_credit[key] < 1e-4:
                     del state.context_transform_credit[key]
+            for key in list(state.branch_transform_credit.keys()):
+                state.branch_transform_credit[key] *= 0.93
+                if state.branch_transform_credit[key] < 1e-4:
+                    del state.branch_transform_credit[key]
+            for key in list(state.context_branch_transform_credit.keys()):
+                state.context_branch_transform_credit[key] *= 0.95
+                if state.context_branch_transform_credit[key] < 1e-4:
+                    del state.context_branch_transform_credit[key]
+            for key in list(state.context_transform_debt.keys()):
+                state.context_transform_debt[key] *= 0.92
+                if state.context_transform_debt[key] < 1e-4:
+                    del state.context_transform_debt[key]
+            for key in list(state.branch_transform_debt.keys()):
+                state.branch_transform_debt[key] *= 0.90
+                if state.branch_transform_debt[key] < 1e-4:
+                    del state.branch_transform_debt[key]
+            for key in list(state.context_branch_transform_debt.keys()):
+                state.context_branch_transform_debt[key] *= 0.91
+                if state.context_branch_transform_debt[key] < 1e-4:
+                    del state.context_branch_transform_debt[key]
+            for key in list(state.branch_context_debt.keys()):
+                state.branch_context_debt[key] *= 0.92
+                if state.branch_context_debt[key] < 1e-4:
+                    del state.branch_context_debt[key]
+            for key in list(state.branch_context_credit.keys()):
+                state.branch_context_credit[key] *= 0.94
+                if state.branch_context_credit[key] < 1e-4:
+                    del state.branch_context_credit[key]
         self._update_admission_substrate()
         self._expire_stale_packets()
         self._admit_source_packets()
@@ -872,6 +1173,7 @@ class NativeSubstrateSystem:
         ]
         context_breakdown = {}
         transform_counts = {}
+        task_diagnostics = self._task_diagnostics(scored_packets)
         for packet in scored_packets:
             context_key = f"context_{packet.context_bit}"
             stats = context_breakdown.setdefault(
@@ -986,6 +1288,7 @@ class NativeSubstrateSystem:
             "max_source_backlog": self.environment.max_source_backlog,
             "context_breakdown": context_breakdown,
             "final_transform_counts": transform_counts,
+            "task_diagnostics": task_diagnostics,
             "active_edges": {
                 node_id: agent.substrate.active_neighbors()
                 for node_id, agent in self.agents.items()
@@ -1042,6 +1345,154 @@ class NativeSubstrateSystem:
                 for node_id, agent in self.agents.items()
             },
         }
+
+    def _task_diagnostics(self, scored_packets: Sequence[SignalPacket]) -> dict[str, object]:
+        diagnostics: dict[str, object] = {
+            "packets_evaluated": len(scored_packets),
+            "contexts": {},
+            "overall": {
+                "exact_matches": 0,
+                "partial_matches": 0,
+                "zero_matches": 0,
+                "identity_fallbacks": 0,
+                "wrong_transform_family": 0,
+                "stale_context_support_suspicions": 0,
+                "branch_counts": {},
+                "mismatch_branch_counts": {},
+                "final_transform_counts": {},
+                "mismatch_transform_counts": {},
+            },
+        }
+        overall = diagnostics["overall"]
+        for packet in scored_packets:
+            context_key = f"context_{packet.context_bit}"
+            expected_transform = _expected_transform_for_task(packet.task_id, packet.context_bit)
+            final_transform = packet.transform_trace[-1] if packet.transform_trace else "identity"
+            first_hop = self._packet_first_hop(packet)
+            stats = diagnostics["contexts"].setdefault(
+                context_key,
+                {
+                    "count": 0,
+                    "expected_transform": expected_transform,
+                    "exact_matches": 0,
+                    "partial_matches": 0,
+                    "zero_matches": 0,
+                    "identity_fallbacks": 0,
+                    "wrong_transform_family": 0,
+                    "stale_context_support_suspicions": 0,
+                    "mean_bit_accuracy_total": 0.0,
+                    "final_transform_counts": {},
+                    "mismatch_transform_counts": {},
+                    "branch_counts": {},
+                    "mismatch_branch_counts": {},
+                },
+            )
+            stats["count"] += 1
+            stats["mean_bit_accuracy_total"] += float(packet.bit_match_ratio or 0.0)
+            self._increment_count(stats["final_transform_counts"], final_transform)
+            self._increment_count(overall["final_transform_counts"], final_transform)
+            self._increment_count(stats["branch_counts"], first_hop)
+            self._increment_count(overall["branch_counts"], first_hop)
+
+            bit_match_ratio = float(packet.bit_match_ratio or 0.0)
+            if packet.matched_target:
+                stats["exact_matches"] += 1
+                overall["exact_matches"] += 1
+            elif bit_match_ratio > 0.0:
+                stats["partial_matches"] += 1
+                overall["partial_matches"] += 1
+            else:
+                stats["zero_matches"] += 1
+                overall["zero_matches"] += 1
+
+            if not packet.matched_target:
+                self._increment_count(stats["mismatch_transform_counts"], final_transform)
+                self._increment_count(overall["mismatch_transform_counts"], final_transform)
+                self._increment_count(stats["mismatch_branch_counts"], first_hop)
+                self._increment_count(overall["mismatch_branch_counts"], first_hop)
+                if final_transform == "identity":
+                    stats["identity_fallbacks"] += 1
+                    overall["identity_fallbacks"] += 1
+                if expected_transform is not None and final_transform != expected_transform:
+                    stats["wrong_transform_family"] += 1
+                    overall["wrong_transform_family"] += 1
+                    if self._suspect_stale_context_support(
+                        packet,
+                        expected_transform=expected_transform,
+                        final_transform=final_transform,
+                        first_hop=first_hop,
+                    ):
+                        stats["stale_context_support_suspicions"] += 1
+                        overall["stale_context_support_suspicions"] += 1
+
+        for stats in diagnostics["contexts"].values():
+            stats["mean_bit_accuracy"] = round(
+                stats["mean_bit_accuracy_total"] / max(stats["count"], 1),
+                4,
+            )
+            del stats["mean_bit_accuracy_total"]
+        diagnostics["admission"] = {
+            "mean_source_admission": round(
+                self.environment.admitted_packets
+                / max(1, self.global_cycle - self.session_start_cycle),
+                4,
+            ),
+            "max_source_backlog": self.environment.max_source_backlog,
+            "mean_latency": round(
+                sum(
+                    max(0, (packet.delivered_cycle or self.global_cycle) - packet.created_cycle)
+                    for packet in scored_packets
+                )
+                / max(len(scored_packets), 1),
+                4,
+            ),
+            "overload_events": self.environment.overload_events,
+        }
+        return diagnostics
+
+    @staticmethod
+    def _increment_count(counter: dict[str, int], key: str) -> None:
+        counter[key] = counter.get(key, 0) + 1
+
+    def _packet_first_hop(self, packet: SignalPacket) -> str:
+        if not packet.edge_path:
+            return "none"
+        edge = packet.edge_path[0]
+        if "->" not in edge:
+            return "none"
+        source_id, neighbor_id = edge.split("->", 1)
+        if source_id != self.environment.source_id:
+            return "none"
+        return neighbor_id
+
+    def _suspect_stale_context_support(
+        self,
+        packet: SignalPacket,
+        *,
+        expected_transform: str,
+        final_transform: str,
+        first_hop: str,
+    ) -> bool:
+        if (
+            packet.context_bit is None
+            or first_hop == "none"
+            or self.environment.source_id not in self.agents
+        ):
+            return False
+        source_agent = self.agents[self.environment.source_id]
+        if first_hop not in source_agent.neighbor_ids:
+            return False
+        chosen_support = source_agent.substrate.action_support(
+            first_hop,
+            final_transform,
+            packet.context_bit,
+        )
+        expected_support = source_agent.substrate.action_support(
+            first_hop,
+            expected_transform,
+            packet.context_bit,
+        )
+        return chosen_support > expected_support + 0.05
 
     def run_workload(
         self,

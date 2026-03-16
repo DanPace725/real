@@ -146,8 +146,37 @@ class Phase8Selector:
             context_bit if has_context >= 0.5 else None,
         )
         feedback_credit = observation.get(f"feedback_credit_{transform_name}", 0.0)
+        feedback_debt = observation.get(f"feedback_debt_{transform_name}", 0.0)
         context_feedback_credit = observation.get(
             f"context_feedback_credit_{transform_name}",
+            0.0,
+        )
+        context_feedback_debt = observation.get(
+            f"context_feedback_debt_{transform_name}",
+            0.0,
+        )
+        branch_feedback_debt = observation.get(
+            f"branch_feedback_debt_{neighbor_id}_{transform_name}",
+            0.0,
+        )
+        branch_feedback_credit = observation.get(
+            f"branch_feedback_credit_{neighbor_id}_{transform_name}",
+            0.0,
+        )
+        context_branch_feedback_debt = observation.get(
+            f"context_branch_feedback_debt_{neighbor_id}_{transform_name}",
+            0.0,
+        )
+        context_branch_feedback_credit = observation.get(
+            f"context_branch_feedback_credit_{neighbor_id}_{transform_name}",
+            0.0,
+        )
+        branch_context_feedback_debt = observation.get(
+            f"branch_context_feedback_debt_{neighbor_id}",
+            0.0,
+        )
+        branch_context_feedback_credit = observation.get(
+            f"branch_context_feedback_credit_{neighbor_id}",
             0.0,
         )
         last_match_ratio = observation.get("last_match_ratio", 0.0)
@@ -157,6 +186,9 @@ class Phase8Selector:
         context_support_bonus = 0.0
         context_support_penalty = 0.0
         history_alignment = 1.0
+        branch_context_pressure = 0.0
+        branch_context_bonus = 0.0
+        branch_transform_bonus = 0.0
         if has_context >= 0.5:
             context_action_support = self.substrate.contextual_action_support(
                 neighbor_id,
@@ -178,11 +210,31 @@ class Phase8Selector:
             ) * 0.12
             context_evidence = min(
                 1.0,
-                context_action_support
-                + context_feedback_credit
-                + 0.35 * max(0.0, last_match_ratio - 0.5),
+                max(
+                    0.0,
+                    context_action_support
+                    + context_feedback_credit
+                    + 0.35 * branch_feedback_credit
+                    + 0.60 * context_branch_feedback_credit
+                    + 0.55 * branch_context_feedback_credit
+                    - 0.55 * context_feedback_debt
+                    - 0.25 * context_branch_feedback_debt
+                    + 0.35 * max(0.0, last_match_ratio - 0.5),
+                ),
+            )
+            branch_context_pressure = max(
+                0.0,
+                branch_context_feedback_debt
+                - 0.40 * branch_context_feedback_credit
+                - 0.25 * context_feedback_credit
+                - 0.20 * context_action_support,
+            )
+            branch_context_bonus = 0.20 * branch_context_feedback_credit
+            branch_transform_bonus = (
+                0.10 * branch_feedback_credit + 0.22 * context_branch_feedback_credit
             )
             history_alignment = 0.35 + 0.65 * context_evidence
+            history_alignment *= max(0.30, 1.0 - 0.40 * branch_context_pressure)
             if (
                 transform_name == "identity"
                 and action_support < 0.35
@@ -190,8 +242,22 @@ class Phase8Selector:
                 and context_feedback_credit < 0.30
             ):
                 identity_penalty = 0.14
-            elif transform_name != "identity":
+            elif transform_name != "identity" and context_feedback_debt < 0.45:
                 task_transform_bonus = 0.08
+        branch_escape_bonus = 0.0
+        if has_context >= 0.5:
+            competing_branch_debt = max(
+                (
+                    observation.get(f"branch_context_feedback_debt_{candidate_neighbor}", 0.0)
+                    for candidate_neighbor in self.environment.neighbors_of(self.node_id)
+                    if candidate_neighbor != neighbor_id
+                ),
+                default=0.0,
+            )
+            branch_escape_bonus = 0.24 * max(
+                0.0,
+                competing_branch_debt - branch_context_pressure,
+            )
         progress = observation.get(f"progress_{neighbor_id}", 0.0)
         congestion = observation.get(f"congestion_{neighbor_id}", 0.0)
         inhibited = observation.get(f"inhibited_{neighbor_id}", 0.0)
@@ -223,6 +289,9 @@ class Phase8Selector:
             + 0.06 * maintenance["action_maintenance_ratio"]
             + context_support_bonus
             + task_transform_bonus
+            + branch_context_bonus
+            + branch_transform_bonus
+            + branch_escape_bonus
             + 0.20 * urgency
             + 0.10 * ingress_backlog
             - 0.22 * congestion
@@ -230,6 +299,11 @@ class Phase8Selector:
             - 0.35 * inhibited
             - 0.12 * queue_pressure * congestion
             - context_support_penalty
+            - 0.18 * feedback_debt
+            - 0.42 * context_feedback_debt
+            - 0.20 * branch_feedback_debt
+            - 0.48 * context_branch_feedback_debt
+            - 0.26 * branch_context_pressure
             - identity_penalty
             - stale_penalty
         )

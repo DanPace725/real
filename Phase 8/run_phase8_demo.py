@@ -41,6 +41,15 @@ def _compact(summary: dict[str, object]) -> dict[str, object]:
     }
 
 
+def _task_diagnostic_compact(summary: dict[str, object]) -> dict[str, object]:
+    diagnostics = summary.get("task_diagnostics", {})
+    return {
+        "overall": diagnostics.get("overall", {}),
+        "contexts": diagnostics.get("contexts", {}),
+        "admission": diagnostics.get("admission", {}),
+    }
+
+
 def run_comparison_demo(seed: int, scenario_name: str) -> None:
     scenario = SCENARIOS[scenario_name]
     training = build_system(seed, scenario_name)
@@ -199,12 +208,15 @@ def run_transfer_demo(seed: int) -> None:
     print("Cold Task B")
     pprint(_compact(result["cold_task_b"]["summary"]))
     pprint(result["cold_task_b"]["transfer_metrics"])
+    pprint(_task_diagnostic_compact(result["cold_task_b"]["summary"]))
     print("Warm full Task B")
     pprint(_compact(result["warm_full_task_b"]["summary"]))
     pprint(result["warm_full_task_b"]["transfer_metrics"])
+    pprint(_task_diagnostic_compact(result["warm_full_task_b"]["summary"]))
     print("Warm substrate-only Task B")
     pprint(_compact(result["warm_substrate_task_b"]["summary"]))
     pprint(result["warm_substrate_task_b"]["transfer_metrics"])
+    pprint(_task_diagnostic_compact(result["warm_substrate_task_b"]["summary"]))
     print()
     print("Transfer deltas")
     print(f"Full carryover Task B delta: {result['delta_full_task_b']}")

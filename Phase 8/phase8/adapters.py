@@ -325,6 +325,12 @@ class LocalNodeMemoryBinding:
                 state.atp,
                 transform_credit=dict(state.transform_credit),
                 context_transform_credit=dict(state.context_transform_credit),
+                branch_transform_credit=dict(state.branch_transform_credit),
+                context_branch_transform_credit=dict(state.context_branch_transform_credit),
+                transform_debt=dict(state.transform_debt),
+                context_transform_debt=dict(state.context_transform_debt),
+                branch_context_credit=dict(state.branch_context_credit),
+                branch_context_debt=dict(state.branch_context_debt),
                 context_bit=context_bit,
             )
             spent = float(maintenance["spent"])
