@@ -1307,6 +1307,43 @@ class TestNativeSubstrateSystem(unittest.TestCase):
 
         self.assertEqual(action, "route_transform:n1:xor_mask_0101")
 
+    def test_selector_resolves_multi_candidate_conflict_toward_dominant_context_branch_evidence(self) -> None:
+        system = NativeSubstrateSystem(
+            adjacency={
+                "n0": ("n1", "n2"),
+                "n1": ("sink",),
+                "n2": ("sink",),
+            },
+            positions={"n0": 0, "n1": 1, "n2": 1, "sink": 2},
+            source_id="n0",
+            sink_id="sink",
+            selector_seed=73,
+        )
+        system.environment.inject_signal(
+            count=1,
+            cycle=0,
+            packet_payloads=[[1, 0, 1, 1]],
+            context_bits=[1],
+            task_id="task_b",
+        )
+        agent = system.agents["n0"]
+        agent.substrate.seed_support(("n1", "n2"), value=0.78)
+        agent.substrate.seed_action_support("n1", "rotate_left_1", value=0.82, context_bit=1)
+        agent.substrate.seed_action_support("n1", "xor_mask_0101", value=0.76, context_bit=1)
+        agent.substrate.seed_action_support("n2", "xor_mask_0101", value=0.74, context_bit=1)
+
+        state = system.environment.state_for("n0")
+        state.branch_context_debt["n1:context_1"] = 0.7
+        state.context_branch_transform_debt["n1:rotate_left_1:context_1"] = 0.75
+        state.context_branch_transform_debt["n1:xor_mask_0101:context_1"] = 0.6
+        state.branch_context_credit["n2:context_1"] = 0.85
+        state.context_branch_transform_credit["n2:xor_mask_0101:context_1"] = 0.95
+
+        available = agent.engine.actions.available_actions(history_size=0)
+        action, _ = agent.engine.selector.select(available, history=[])
+
+        self.assertEqual(action, "route_transform:n2:xor_mask_0101")
+
     def test_consolidation_promotes_route_history_into_substrate(self) -> None:
         system = NativeSubstrateSystem(
             adjacency={

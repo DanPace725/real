@@ -8,6 +8,8 @@ from typing import List, Tuple
 from .environment import RoutingEnvironment
 from .substrate import ConnectionSubstrate
 
+ROUTE_TRANSFORMS = ("identity", "rotate_left_1", "xor_mask_1010", "xor_mask_0101")
+
 
 def _route_neighbor(action: str) -> str | None:
     if action.startswith("route_transform:"):
@@ -97,12 +99,14 @@ class Phase8Selector:
         )
 
     def _best_route(self, route_actions: List[str], history: List[object]) -> str:
-        scored = [(self._score_route(action, history), action) for action in route_actions]
+        route_scores = self._score_routes(route_actions, history)
+        scored = [(route_scores[action], action) for action in route_actions]
         scored.sort(key=lambda item: item[0], reverse=True)
         return scored[0][1]
 
     def _sample_routes(self, route_actions: List[str], history: List[object]) -> str:
-        scores = [max(0.01, self._score_route(action, history) + 1.0) for action in route_actions]
+        route_scores = self._score_routes(route_actions, history)
+        scores = [max(0.01, route_scores[action] + 1.0) for action in route_actions]
         return self.rng.choices(route_actions, weights=scores, k=1)[0]
 
     def _best_invest(self, invest_actions: List[str], history: List[object]) -> str:
@@ -189,6 +193,8 @@ class Phase8Selector:
         branch_context_pressure = 0.0
         branch_context_bonus = 0.0
         branch_transform_bonus = 0.0
+        competition_penalty = 0.0
+        competition_bonus = 0.0
         if has_context >= 0.5:
             context_action_support = self.substrate.contextual_action_support(
                 neighbor_id,
@@ -244,6 +250,24 @@ class Phase8Selector:
                 identity_penalty = 0.14
             elif transform_name != "identity" and context_feedback_debt < 0.45:
                 task_transform_bonus = 0.08
+            competition_penalty, competition_bonus = self._competition_adjustment(
+                neighbor_id=neighbor_id,
+                transform_name=transform_name,
+                context_bit=context_bit,
+                observation=observation,
+                action_support=action_support,
+                generic_action_support=generic_action_support,
+                feedback_credit=feedback_credit,
+                context_feedback_credit=context_feedback_credit,
+                branch_feedback_credit=branch_feedback_credit,
+                context_branch_feedback_credit=context_branch_feedback_credit,
+                branch_context_feedback_credit=branch_context_feedback_credit,
+                feedback_debt=feedback_debt,
+                context_feedback_debt=context_feedback_debt,
+                branch_feedback_debt=branch_feedback_debt,
+                context_branch_feedback_debt=context_branch_feedback_debt,
+                branch_context_feedback_debt=branch_context_feedback_debt,
+            )
         branch_escape_bonus = 0.0
         if has_context >= 0.5:
             competing_branch_debt = max(
@@ -305,7 +329,9 @@ class Phase8Selector:
             - 0.48 * context_branch_feedback_debt
             - 0.26 * branch_context_pressure
             - identity_penalty
+            - competition_penalty
             - stale_penalty
+            + competition_bonus
         )
         return score
 
@@ -435,3 +461,328 @@ class Phase8Selector:
         if total_weight <= 0.0:
             return default
         return weighted_total / total_weight
+
+    def _score_routes(self, route_actions: List[str], history: List[object]) -> dict[str, float]:
+        scores = {
+            action: self._score_route(action, history)
+            for action in route_actions
+        }
+        observation = self.environment.observe_local(self.node_id)
+        if observation.get("head_has_context", 0.0) < 0.5:
+            return scores
+        context_bit = int(observation.get("head_context_bit", 0.0))
+        evidence = {
+            action: self._candidate_evidence_from_local_state(
+                neighbor_id=_route_neighbor(action) or "",
+                transform_name=_route_transform(action),
+                context_bit=context_bit,
+                observation=observation,
+            )
+            for action in route_actions
+            if _route_neighbor(action) is not None
+        }
+        if not evidence:
+            return scores
+        top_evidence = max(evidence.values())
+        candidate_actions = [
+            action
+            for action in route_actions
+            if _route_neighbor(action) is not None
+            and evidence.get(action, -1.0) >= max(0.12, top_evidence - 0.18)
+        ]
+        candidate_branches = {_route_neighbor(action) for action in candidate_actions}
+        candidate_transforms = {_route_transform(action) for action in candidate_actions}
+        if (
+            len(candidate_actions) < 3
+            or len(candidate_branches) < 2
+            or len(candidate_transforms) < 2
+        ):
+            return scores
+
+        contradictions = {
+            action: self._candidate_contradiction_from_local_state(
+                neighbor_id=_route_neighbor(action) or "",
+                transform_name=_route_transform(action),
+                observation=observation,
+            )
+            for action in candidate_actions
+        }
+        dominant_action = max(
+            candidate_actions,
+            key=lambda action: (evidence[action], scores[action]),
+        )
+        dominant_evidence = evidence[dominant_action]
+        for action in candidate_actions:
+            contradiction = contradictions[action]
+            if contradiction < 0.12:
+                continue
+            neighbor_id = _route_neighbor(action) or ""
+            competitor_count = sum(
+                1
+                for other in candidate_actions
+                if other != action and evidence[other] >= evidence[action] - 0.08
+            )
+            if action == dominant_action:
+                scores[action] += min(
+                    0.18,
+                    contradiction * (0.08 + 0.03 * max(0, competitor_count - 1)),
+                )
+                continue
+            closeness = max(
+                0.0,
+                1.0 - max(0.0, dominant_evidence - evidence[action]) / 0.25,
+            )
+            branch_debt = observation.get(f"branch_context_feedback_debt_{neighbor_id}", 0.0)
+            scores[action] -= min(
+                0.28,
+                contradiction * (0.12 + 0.04 * competitor_count) * closeness
+                + 0.05 * branch_debt,
+            )
+        return scores
+
+    def _competition_adjustment(
+        self,
+        *,
+        neighbor_id: str,
+        transform_name: str,
+        context_bit: int,
+        observation: dict[str, float],
+        action_support: float,
+        generic_action_support: float,
+        feedback_credit: float,
+        context_feedback_credit: float,
+        branch_feedback_credit: float,
+        context_branch_feedback_credit: float,
+        branch_context_feedback_credit: float,
+        feedback_debt: float,
+        context_feedback_debt: float,
+        branch_feedback_debt: float,
+        context_branch_feedback_debt: float,
+        branch_context_feedback_debt: float,
+    ) -> tuple[float, float]:
+        current_evidence = self._candidate_evidence(
+            neighbor_id=neighbor_id,
+            transform_name=transform_name,
+            context_bit=context_bit,
+            observation=observation,
+            action_support=action_support,
+            generic_action_support=generic_action_support,
+            feedback_credit=feedback_credit,
+            context_feedback_credit=context_feedback_credit,
+            branch_feedback_credit=branch_feedback_credit,
+            context_branch_feedback_credit=context_branch_feedback_credit,
+            branch_context_feedback_credit=branch_context_feedback_credit,
+            feedback_debt=feedback_debt,
+            context_feedback_debt=context_feedback_debt,
+            branch_feedback_debt=branch_feedback_debt,
+            context_branch_feedback_debt=context_branch_feedback_debt,
+            branch_context_feedback_debt=branch_context_feedback_debt,
+        )
+        contradiction = max(
+            0.0,
+            0.35 * context_feedback_debt
+            + 0.30 * context_branch_feedback_debt
+            + 0.22 * branch_context_feedback_debt
+            + 0.13 * feedback_debt
+            - 0.10 * context_branch_feedback_credit
+            - 0.08 * branch_context_feedback_credit,
+        )
+        if contradiction < 0.12:
+            return 0.0, 0.0
+
+        competing_evidences = []
+        for candidate_neighbor in self.environment.neighbors_of(self.node_id):
+            for candidate_transform in ROUTE_TRANSFORMS:
+                if candidate_neighbor == neighbor_id and candidate_transform == transform_name:
+                    continue
+                candidate_evidence = self._candidate_evidence_from_local_state(
+                    neighbor_id=candidate_neighbor,
+                    transform_name=candidate_transform,
+                    context_bit=context_bit,
+                    observation=observation,
+                )
+                if candidate_evidence >= max(0.12, current_evidence - 0.10):
+                    competing_evidences.append(candidate_evidence)
+
+        if not competing_evidences:
+            return 0.0, min(0.08, contradiction * 0.10)
+
+        strongest_competitor = max(competing_evidences)
+        competitor_count = len(competing_evidences)
+        conflict_spread = min(
+            1.0,
+            0.35 * max(0, competitor_count - 1)
+            + 0.65 * max(0.0, strongest_competitor - current_evidence + 0.05),
+        )
+        if strongest_competitor > current_evidence + 0.04:
+            penalty = min(
+                0.26,
+                contradiction * (0.12 + 0.18 * conflict_spread),
+            )
+            return penalty, 0.0
+
+        dominance = current_evidence - strongest_competitor
+        bonus = min(0.10, contradiction * max(0.0, 0.08 + 0.18 * dominance))
+        penalty = min(0.10, contradiction * max(0.0, 0.04 * competitor_count - 0.02))
+        return penalty, bonus
+
+    def _candidate_evidence_from_local_state(
+        self,
+        *,
+        neighbor_id: str,
+        transform_name: str,
+        context_bit: int,
+        observation: dict[str, float],
+    ) -> float:
+        action_support = self.substrate.action_support(
+            neighbor_id,
+            transform_name,
+            context_bit,
+        )
+        generic_action_support = self.substrate.base_action_support(
+            neighbor_id,
+            transform_name,
+        )
+        feedback_credit = observation.get(f"feedback_credit_{transform_name}", 0.0)
+        context_feedback_credit = observation.get(
+            f"context_feedback_credit_{transform_name}",
+            0.0,
+        )
+        branch_feedback_credit = observation.get(
+            f"branch_feedback_credit_{neighbor_id}_{transform_name}",
+            0.0,
+        )
+        context_branch_feedback_credit = observation.get(
+            f"context_branch_feedback_credit_{neighbor_id}_{transform_name}",
+            0.0,
+        )
+        branch_context_feedback_credit = observation.get(
+            f"branch_context_feedback_credit_{neighbor_id}",
+            0.0,
+        )
+        feedback_debt = observation.get(f"feedback_debt_{transform_name}", 0.0)
+        context_feedback_debt = observation.get(
+            f"context_feedback_debt_{transform_name}",
+            0.0,
+        )
+        branch_feedback_debt = observation.get(
+            f"branch_feedback_debt_{neighbor_id}_{transform_name}",
+            0.0,
+        )
+        context_branch_feedback_debt = observation.get(
+            f"context_branch_feedback_debt_{neighbor_id}_{transform_name}",
+            0.0,
+        )
+        branch_context_feedback_debt = observation.get(
+            f"branch_context_feedback_debt_{neighbor_id}",
+            0.0,
+        )
+        return self._candidate_evidence(
+            neighbor_id=neighbor_id,
+            transform_name=transform_name,
+            context_bit=context_bit,
+            observation=observation,
+            action_support=action_support,
+            generic_action_support=generic_action_support,
+            feedback_credit=feedback_credit,
+            context_feedback_credit=context_feedback_credit,
+            branch_feedback_credit=branch_feedback_credit,
+            context_branch_feedback_credit=context_branch_feedback_credit,
+            branch_context_feedback_credit=branch_context_feedback_credit,
+            feedback_debt=feedback_debt,
+            context_feedback_debt=context_feedback_debt,
+            branch_feedback_debt=branch_feedback_debt,
+            context_branch_feedback_debt=context_branch_feedback_debt,
+            branch_context_feedback_debt=branch_context_feedback_debt,
+        )
+
+    def _candidate_contradiction_from_local_state(
+        self,
+        *,
+        neighbor_id: str,
+        transform_name: str,
+        observation: dict[str, float],
+    ) -> float:
+        feedback_credit = observation.get(f"feedback_credit_{transform_name}", 0.0)
+        context_feedback_credit = observation.get(
+            f"context_feedback_credit_{transform_name}",
+            0.0,
+        )
+        context_branch_feedback_credit = observation.get(
+            f"context_branch_feedback_credit_{neighbor_id}_{transform_name}",
+            0.0,
+        )
+        branch_context_feedback_credit = observation.get(
+            f"branch_context_feedback_credit_{neighbor_id}",
+            0.0,
+        )
+        feedback_debt = observation.get(f"feedback_debt_{transform_name}", 0.0)
+        context_feedback_debt = observation.get(
+            f"context_feedback_debt_{transform_name}",
+            0.0,
+        )
+        branch_feedback_debt = observation.get(
+            f"branch_feedback_debt_{neighbor_id}_{transform_name}",
+            0.0,
+        )
+        context_branch_feedback_debt = observation.get(
+            f"context_branch_feedback_debt_{neighbor_id}_{transform_name}",
+            0.0,
+        )
+        branch_context_feedback_debt = observation.get(
+            f"branch_context_feedback_debt_{neighbor_id}",
+            0.0,
+        )
+        return max(
+            0.0,
+            0.18 * feedback_debt
+            + 0.28 * context_feedback_debt
+            + 0.14 * branch_feedback_debt
+            + 0.24 * context_branch_feedback_debt
+            + 0.20 * branch_context_feedback_debt
+            - 0.08 * feedback_credit
+            - 0.12 * context_feedback_credit
+            - 0.12 * context_branch_feedback_credit
+            - 0.10 * branch_context_feedback_credit,
+        )
+
+    def _candidate_evidence(
+        self,
+        *,
+        neighbor_id: str,
+        transform_name: str,
+        context_bit: int,
+        observation: dict[str, float],
+        action_support: float,
+        generic_action_support: float,
+        feedback_credit: float,
+        context_feedback_credit: float,
+        branch_feedback_credit: float,
+        context_branch_feedback_credit: float,
+        branch_context_feedback_credit: float,
+        feedback_debt: float,
+        context_feedback_debt: float,
+        branch_feedback_debt: float,
+        context_branch_feedback_debt: float,
+        branch_context_feedback_debt: float,
+    ) -> float:
+        context_action_support = self.substrate.contextual_action_support(
+            neighbor_id,
+            transform_name,
+            context_bit,
+        )
+        return (
+            0.20 * generic_action_support
+            + 0.30 * action_support
+            + 0.16 * context_action_support
+            + 0.10 * feedback_credit
+            + 0.14 * context_feedback_credit
+            + 0.10 * branch_feedback_credit
+            + 0.20 * context_branch_feedback_credit
+            + 0.16 * branch_context_feedback_credit
+            - 0.08 * feedback_debt
+            - 0.16 * context_feedback_debt
+            - 0.08 * branch_feedback_debt
+            - 0.22 * context_branch_feedback_debt
+            - 0.16 * branch_context_feedback_debt
+        )
