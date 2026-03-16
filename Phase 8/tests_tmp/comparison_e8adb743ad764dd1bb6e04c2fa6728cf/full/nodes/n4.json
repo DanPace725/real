@@ -1,0 +1,1456 @@
+{
+  "substrate": {
+    "fast": {
+      "edge:n5": 0.0
+    },
+    "slow": {
+      "edge:n5": 0.8449999999999998
+    },
+    "slow_age": {
+      "edge:n5": 2
+    },
+    "slow_velocity": {
+      "edge:n5": 0.07163479924557538
+    },
+    "metadata": {
+      "active_keys": [
+        "edge:n5"
+      ],
+      "active_count": 1,
+      "pattern_count": 1,
+      "keys": [
+        "edge:n5"
+      ],
+      "patterns": [
+        {
+          "dim_scores": {
+            "edge:n5": 0.85
+          },
+          "dim_trends": {
+            "edge:n5": 0.08
+          },
+          "valence": 0.7261659240366826,
+          "strength": 0.8499999999999999,
+          "coherence_level": 0.6310135888753159,
+          "match_count": 5,
+          "source": "route_attractor"
+        }
+      ],
+      "dim_history": [
+        {
+          "continuity": 0.6454,
+          "vitality": 0.25,
+          "contextual_fit": 0.5463186441033733,
+          "differentiation": 0.35,
+          "accountability": 0.34,
+          "reflexivity": 0.3
+        },
+        {
+          "continuity": 0.6305499999999999,
+          "vitality": 0.25,
+          "contextual_fit": 0.5106048072473178,
+          "differentiation": 1.0,
+          "accountability": 0.41000000000000003,
+          "reflexivity": 0.3
+        },
+        {
+          "continuity": 0.66955,
+          "vitality": 0.313,
+          "contextual_fit": 0.5711426887851268,
+          "differentiation": 1.0,
+          "accountability": 0.48000000000000004,
+          "reflexivity": 0.375
+        },
+        {
+          "continuity": 0.685,
+          "vitality": 0.376,
+          "contextual_fit": 0.5361242835332349,
+          "differentiation": 1.0,
+          "accountability": 0.55,
+          "reflexivity": 0.375
+        },
+        {
+          "continuity": 0.685,
+          "vitality": 0.439,
+          "contextual_fit": 0.5962315931836384,
+          "differentiation": 1.0,
+          "accountability": 0.6200000000000001,
+          "reflexivity": 0.375
+        },
+        {
+          "continuity": 0.685,
+          "vitality": 0.502,
+          "contextual_fit": 0.6325681339462572,
+          "differentiation": 1.0,
+          "accountability": 0.6900000000000001,
+          "reflexivity": 0.375
+        },
+        {
+          "continuity": 0.7,
+          "vitality": 0.5579999999999999,
+          "contextual_fit": 0.48102292733222723,
+          "differentiation": 1.0,
+          "accountability": 0.76,
+          "reflexivity": 0.375
+        },
+        {
+          "continuity": 0.958,
+          "vitality": 0.6,
+          "contextual_fit": 0.7400272395405039,
+          "differentiation": 1.0,
+          "accountability": 0.866992,
+          "reflexivity": 0.725
+        },
+        {
+          "continuity": 0.94894,
+          "vitality": 0.6,
+          "contextual_fit": 0.6509512779881383,
+          "differentiation": 1.0,
+          "accountability": 0.9141436600000001,
+          "reflexivity": 0.725
+        },
+        {
+          "continuity": 0.93958,
+          "vitality": 0.6,
+          "contextual_fit": 0.710905757902405,
+          "differentiation": 1.0,
+          "accountability": 0.97,
+          "reflexivity": 0.725
+        },
+        {
+          "continuity": 0.9995799999999999,
+          "vitality": 0.593,
+          "contextual_fit": 0.731717945001074,
+          "differentiation": 1.0,
+          "accountability": 1.0,
+          "reflexivity": 0.725
+        },
+        {
+          "continuity": 1.0,
+          "vitality": 0.593,
+          "contextual_fit": 0.6863882292232346,
+          "differentiation": 1.0,
+          "accountability": 1.0,
+          "reflexivity": 0.725
+        },
+        {
+          "continuity": 1.0,
+          "vitality": 0.586,
+          "contextual_fit": 0.6803337538264385,
+          "differentiation": 1.0,
+          "accountability": 1.0,
+          "reflexivity": 0.725
+        },
+        {
+          "continuity": 0.98944,
+          "vitality": 0.586,
+          "contextual_fit": 0.5791328883702108,
+          "differentiation": 1.0,
+          "accountability": 1.0,
+          "reflexivity": 0.725
+        },
+        {
+          "continuity": 0.97858,
+          "vitality": 0.586,
+          "contextual_fit": 0.6484925099093686,
+          "differentiation": 1.0,
+          "accountability": 1.0,
+          "reflexivity": 0.725
+        },
+        {
+          "continuity": 0.991,
+          "vitality": 0.6,
+          "contextual_fit": 0.6148459788435419,
+          "differentiation": 1.0,
+          "accountability": 1.0,
+          "reflexivity": 0.725
+        },
+        {
+          "continuity": 0.958,
+          "vitality": 0.6,
+          "contextual_fit": 0.7306528725131052,
+          "differentiation": 1.0,
+          "accountability": 1.0,
+          "reflexivity": 0.725
+        },
+        {
+          "continuity": 0.916,
+          "vitality": 0.6,
+          "contextual_fit": 0.7858906970359275,
+          "differentiation": 1.0,
+          "accountability": 1.0,
+          "reflexivity": 0.725
+        },
+        {
+          "continuity": 0.874,
+          "vitality": 0.6,
+          "contextual_fit": 0.8388474497153333,
+          "differentiation": 1.0,
+          "accountability": 1.0,
+          "reflexivity": 0.725
+        },
+        {
+          "continuity": 0.88,
+          "vitality": 0.593,
+          "contextual_fit": 0.8212861812009659,
+          "differentiation": 1.0,
+          "accountability": 1.0,
+          "reflexivity": 0.725
+        }
+      ],
+      "neighbor_ids": [
+        "n5"
+      ],
+      "active_neighbors": [
+        "n5"
+      ]
+    }
+  },
+  "episodic_entries": [
+    {
+      "cycle": 1,
+      "action": "invest:n5",
+      "mode": "guided",
+      "state_before": {
+        "atp_ratio": 1.0,
+        "inbox_load": 0.0,
+        "reward_buffer": 0.0,
+        "neighbor_density": 0.16666666666666666,
+        "feedback_pending": 0.0,
+        "oldest_packet_age": 0.0,
+        "queue_pressure": 0.0,
+        "ingress_backlog": 0.0,
+        "dormant": 0.0,
+        "progress_n5": 0.6905106675027333,
+        "congestion_n5": 0.3051505382483689,
+        "inhibited_n5": 0.0,
+        "support_n5": 0.0,
+        "support_velocity_n5": 0.0
+      },
+      "state_after": {
+        "atp_ratio": 0.86,
+        "inbox_load": 0.0,
+        "reward_buffer": 0.0,
+        "neighbor_density": 0.16666666666666666,
+        "feedback_pending": 0.0,
+        "oldest_packet_age": 0.0,
+        "queue_pressure": 0.0,
+        "ingress_backlog": 0.0,
+        "dormant": 0.0,
+        "progress_n5": 0.8524323495945231,
+        "congestion_n5": 0.1884038490808141,
+        "inhibited_n5": 0.0,
+        "support_n5": 0.2,
+        "support_velocity_n5": 0.0
+      },
+      "dimensions": {
+        "continuity": 0.658,
+        "vitality": 0.25,
+        "contextual_fit": 0.6662161747972615,
+        "differentiation": 0.35,
+        "accountability": 0.2,
+        "reflexivity": 0.3
+      },
+      "coherence": 0.4040360291328769,
+      "delta": 0.0,
+      "gco": "DEGRADED",
+      "cost_secs": 0.14
+    },
+    {
+      "cycle": 2,
+      "action": "rest",
+      "mode": "constraint",
+      "state_before": {
+        "atp_ratio": 0.86,
+        "inbox_load": 0.0,
+        "reward_buffer": 0.0,
+        "neighbor_density": 0.16666666666666666,
+        "feedback_pending": 0.0,
+        "oldest_packet_age": 0.0,
+        "queue_pressure": 0.0,
+        "ingress_backlog": 0.0,
+        "dormant": 0.0,
+        "progress_n5": 0.7045154210317076,
+        "congestion_n5": 0.13483871690923657,
+        "inhibited_n5": 0.0,
+        "support_n5": 0.1375,
+        "support_velocity_n5": 0.04125
+      },
+      "state_after": {
+        "atp_ratio": 0.865,
+        "inbox_load": 0.0,
+        "reward_buffer": 0.0,
+        "neighbor_density": 0.16666666666666666,
+        "feedback_pending": 0.0,
+        "oldest_packet_age": 0.0,
+        "queue_pressure": 0.0,
+        "ingress_backlog": 0.0,
+        "dormant": 0.0,
+        "progress_n5": 0.7352679515623726,
+        "congestion_n5": 0.12297145204409379,
+        "inhibited_n5": 0.0,
+        "support_n5": 0.1375,
+        "support_velocity_n5": 0.04125
+      },
+      "dimensions": {
+        "continuity": 0.6595,
+        "vitality": 0.25,
+        "contextual_fit": 0.5873214757811862,
+        "differentiation": 0.35,
+        "accountability": 0.27,
+        "reflexivity": 0.3
+      },
+      "coherence": 0.40280357929686433,
+      "delta": -0.0012324498360125613,
+      "gco": "DEGRADED",
+      "cost_secs": 0.0
+    },
+    {
+      "cycle": 3,
+      "action": "route:n5",
+      "mode": "guided",
+      "state_before": {
+        "atp_ratio": 0.865,
+        "inbox_load": 0.25,
+        "reward_buffer": 0.0,
+        "neighbor_density": 0.16666666666666666,
+        "feedback_pending": 0.0,
+        "oldest_packet_age": 0.0,
+        "queue_pressure": 0.0,
+        "ingress_backlog": 0.0,
+        "dormant": 0.0,
+        "progress_n5": 0.7798647740039553,
+        "congestion_n5": 0.0,
+        "inhibited_n5": 0.0,
+        "support_n5": 0.07500000000000001,
+        "support_velocity_n5": 0.010124999999999999
+      },
+      "state_after": {
+        "atp_ratio": 0.818,
+        "inbox_load": 0.0,
+        "reward_buffer": 0.0,
+        "neighbor_density": 0.16666666666666666,
+        "feedback_pending": 0.0,
+        "oldest_packet_age": 0.0,
+        "queue_pressure": 0.0,
+        "ingress_backlog": 0.0,
+        "dormant": 0.0,
+        "progress_n5": 0.6938872882067466,
+        "congestion_n5": 0.27246390733250625,
+        "inhibited_n5": 0.0,
+        "support_n5": 0.07500000000000001,
+        "support_velocity_n5": 0.010124999999999999
+      },
+      "dimensions": {
+        "continuity": 0.6454,
+        "vitality": 0.25,
+        "contextual_fit": 0.5463186441033733,
+        "differentiation": 0.35,
+        "accountability": 0.34,
+        "reflexivity": 0.3
+      },
+      "coherence": 0.4052864406838956,
+      "delta": 0.0024828613870312433,
+      "gco": "DEGRADED",
+      "cost_secs": 0.047
+    },
+    {
+      "cycle": 4,
+      "action": "route:n5",
+      "mode": "guided",
+      "state_before": {
+        "atp_ratio": 0.818,
+        "inbox_load": 0.25,
+        "reward_buffer": 0.0,
+        "neighbor_density": 0.16666666666666666,
+        "feedback_pending": 0.3333333333333333,
+        "oldest_packet_age": 0.0,
+        "queue_pressure": 0.0,
+        "ingress_backlog": 0.0,
+        "dormant": 0.0,
+        "progress_n5": 0.8544222046612027,
+        "congestion_n5": 0.14341204717210246,
+        "inhibited_n5": 0.0,
+        "support_n5": 0.012500000000000011,
+        "support_velocity_n5": -0.011662500000000001
+      },
+      "state_after": {
+        "atp_ratio": 0.7685,
+        "inbox_load": 0.0,
+        "reward_buffer": 0.0,
+        "neighbor_density": 0.16666666666666666,
+        "feedback_pending": 0.3333333333333333,
+        "oldest_packet_age": 0.0,
+        "queue_pressure": 0.0,
+        "ingress_backlog": 0.0,
+        "dormant": 0.0,
+        "progress_n5": 0.6630846144946356,
+        "congestion_n5": 0.12270199399387291,
+        "inhibited_n5": 0.0,
+        "support_n5": 0.012500000000000011,
+        "support_velocity_n5": -0.011662500000000001
+      },
+      "dimensions": {
+        "continuity": 0.6305499999999999,
+        "vitality": 0.25,
+        "contextual_fit": 0.5106048072473178,
+        "differentiation": 1.0,
+        "accountability": 0.41000000000000003,
+        "reflexivity": 0.3
+      },
+      "coherence": 0.5168591345412196,
+      "delta": 0.11157269385732399,
+      "gco": "DEGRADED",
+      "cost_secs": 0.0495
+    },
+    {
+      "cycle": 5,
+      "action": "route:n5",
+      "mode": "fluctuation",
+      "state_before": {
+        "atp_ratio": 0.9484999999999999,
+        "inbox_load": 0.25,
+        "reward_buffer": 0.18,
+        "neighbor_density": 0.16666666666666666,
+        "feedback_pending": 0.6666666666666666,
+        "oldest_packet_age": 0.0,
+        "queue_pressure": 0.0,
+        "ingress_backlog": 0.0,
+        "dormant": 0.0,
+        "progress_n5": 0.9326221331560098,
+        "congestion_n5": 0.07164124757029233,
+        "inhibited_n5": 0.0,
+        "support_n5": 0.0,
+        "support_velocity_n5": -0.011913750000000004
+      },
+      "state_after": {
+        "atp_ratio": 0.8984999999999999,
+        "inbox_load": 0.0,
+        "reward_buffer": 0.18,
+        "neighbor_density": 0.16666666666666666,
+        "feedback_pending": 0.6666666666666666,
+        "oldest_packet_age": 0.0,
+        "queue_pressure": 0.0,
+        "ingress_backlog": 0.0,
+        "dormant": 0.0,
+        "progress_n5": 0.7922853775702534,
+        "congestion_n5": 0.18432683052865,
+        "inhibited_n5": 0.0,
+        "support_n5": 0.0,
+        "support_velocity_n5": -0.011913750000000004
+      },
+      "dimensions": {
+        "continuity": 0.66955,
+        "vitality": 0.313,
+        "contextual_fit": 0.5711426887851268,
+        "differentiation": 1.0,
+        "accountability": 0.48000000000000004,
+        "reflexivity": 0.375
+      },
+      "coherence": 0.5681154481308545,
+      "delta": 0.051256313589634894,
+      "gco": "DEGRADED",
+      "cost_secs": 0.05
+    },
+    {
+      "cycle": 6,
+      "action": "route:n5",
+      "mode": "guided",
+      "state_before": {
+        "atp_ratio": 1.0,
+        "inbox_load": 0.25,
+        "reward_buffer": 0.36,
+        "neighbor_density": 0.16666666666666666,
+        "feedback_pending": 1.0,
+        "oldest_packet_age": 0.0,
+        "queue_pressure": 0.0,
+        "ingress_backlog": 0.0,
+        "dormant": 0.0,
+        "progress_n5": 0.7229513568769733,
+        "congestion_n5": 0.0,
+        "inhibited_n5": 0.0,
+        "support_n5": 0.0,
+        "support_velocity_n5": -0.008339625000000002
+      },
+      "state_after": {
+        "atp_ratio": 0.95,
+        "inbox_load": 0.0,
+        "reward_buffer": 0.36,
+        "neighbor_density": 0.16666666666666666,
+        "feedback_pending": 1.0,
+        "oldest_packet_age": 0.0,
+        "queue_pressure": 0.0,
+        "ingress_backlog": 0.0,
+        "dormant": 0.0,
+        "progress_n5": 0.72224856706647,
+        "congestion_n5": 0.1995561460427451,
+        "inhibited_n5": 0.0,
+        "support_n5": 0.0,
+        "support_velocity_n5": -0.008339625000000002
+      },
+      "dimensions": {
+        "continuity": 0.685,
+        "vitality": 0.376,
+        "contextual_fit": 0.5361242835332349,
+        "differentiation": 1.0,
+        "accountability": 0.55,
+        "reflexivity": 0.375
+      },
+      "coherence": 0.5870207139222058,
+      "delta": 0.018905265791351322,
+      "gco": "DEGRADED",
+      "cost_secs": 0.05
+    },
+    {
+      "cycle": 7,
+      "action": "route:n5",
+      "mode": "guided",
+      "state_before": {
+        "atp_ratio": 1.0,
+        "inbox_load": 0.25,
+        "reward_buffer": 0.54,
+        "neighbor_density": 0.16666666666666666,
+        "feedback_pending": 1.0,
+        "oldest_packet_age": 0.0,
+        "queue_pressure": 0.0,
+        "ingress_backlog": 0.0,
+        "dormant": 0.0,
+        "progress_n5": 0.8963271564974211,
+        "congestion_n5": 0.0,
+        "inhibited_n5": 0.0,
+        "support_n5": 0.0,
+        "support_velocity_n5": -0.0058377375000000006
+      },
+      "state_after": {
+        "atp_ratio": 0.95,
+        "inbox_load": 0.0,
+        "reward_buffer": 0.54,
+        "neighbor_density": 0.16666666666666666,
+        "feedback_pending": 1.0,
+        "oldest_packet_age": 0.0,
+        "queue_pressure": 0.0,
+        "ingress_backlog": 0.0,
+        "dormant": 0.0,
+        "progress_n5": 0.8424631863672767,
+        "congestion_n5": 0.2823269506257818,
+        "inhibited_n5": 0.0,
+        "support_n5": 0.0,
+        "support_velocity_n5": -0.0058377375000000006
+      },
+      "dimensions": {
+        "continuity": 0.685,
+        "vitality": 0.439,
+        "contextual_fit": 0.5962315931836384,
+        "differentiation": 1.0,
+        "accountability": 0.6200000000000001,
+        "reflexivity": 0.375
+      },
+      "coherence": 0.6192052655306064,
+      "delta": 0.03218455160840061,
+      "gco": "PARTIAL",
+      "cost_secs": 0.05
+    },
+    {
+      "cycle": 8,
+      "action": "route:n5",
+      "mode": "guided",
+      "state_before": {
+        "atp_ratio": 1.0,
+        "inbox_load": 0.25,
+        "reward_buffer": 0.72,
+        "neighbor_density": 0.16666666666666666,
+        "feedback_pending": 1.0,
+        "oldest_packet_age": 0.0,
+        "queue_pressure": 0.0,
+        "ingress_backlog": 0.0,
+        "dormant": 0.0,
+        "progress_n5": 0.6381662791295345,
+        "congestion_n5": 0.0,
+        "inhibited_n5": 0.0,
+        "support_n5": 0.0,
+        "support_velocity_n5": -0.004086416250000001
+      },
+      "state_after": {
+        "atp_ratio": 0.95,
+        "inbox_load": 0.0,
+        "reward_buffer": 0.72,
+        "neighbor_density": 0.16666666666666666,
+        "feedback_pending": 1.0,
+        "oldest_packet_age": 0.0,
+        "queue_pressure": 0.0,
+        "ingress_backlog": 0.0,
+        "dormant": 0.0,
+        "progress_n5": 0.9151362678925146,
+        "congestion_n5": 0.10946257201754533,
+        "inhibited_n5": 0.0,
+        "support_n5": 0.0,
+        "support_velocity_n5": -0.004086416250000001
+      },
+      "dimensions": {
+        "continuity": 0.685,
+        "vitality": 0.502,
+        "contextual_fit": 0.6325681339462572,
+        "differentiation": 1.0,
+        "accountability": 0.6900000000000001,
+        "reflexivity": 0.375
+      },
+      "coherence": 0.6474280223243762,
+      "delta": 0.028222756793769843,
+      "gco": "PARTIAL",
+      "cost_secs": 0.05
+    },
+    {
+      "cycle": 9,
+      "action": "rest",
+      "mode": "constraint",
+      "state_before": {
+        "atp_ratio": 1.0,
+        "inbox_load": 0.0,
+        "reward_buffer": 0.8999999999999999,
+        "neighbor_density": 0.16666666666666666,
+        "feedback_pending": 1.0,
+        "oldest_packet_age": 0.0,
+        "queue_pressure": 0.0,
+        "ingress_backlog": 0.0,
+        "dormant": 0.0,
+        "progress_n5": 0.7300303413488785,
+        "congestion_n5": 0.05964888086803206,
+        "inhibited_n5": 0.0,
+        "support_n5": 0.0,
+        "support_velocity_n5": -0.0028604913750000004
+      },
+      "state_after": {
+        "atp_ratio": 1.0,
+        "inbox_load": 0.0,
+        "reward_buffer": 0.8799999999999999,
+        "neighbor_density": 0.16666666666666666,
+        "feedback_pending": 1.0,
+        "oldest_packet_age": 0.0,
+        "queue_pressure": 0.0,
+        "ingress_backlog": 0.0,
+        "dormant": 0.0,
+        "progress_n5": 0.6120458546644545,
+        "congestion_n5": 0.09100266536409468,
+        "inhibited_n5": 0.0,
+        "support_n5": 0.0,
+        "support_velocity_n5": -0.0028604913750000004
+      },
+      "dimensions": {
+        "continuity": 0.7,
+        "vitality": 0.5579999999999999,
+        "contextual_fit": 0.48102292733222723,
+        "differentiation": 1.0,
+        "accountability": 0.76,
+        "reflexivity": 0.375
+      },
+      "coherence": 0.6456704878887045,
+      "delta": -0.001757534435671726,
+      "gco": "PARTIAL",
+      "cost_secs": 0.0
+    },
+    {
+      "cycle": 10,
+      "action": "invest:n5",
+      "mode": "guided",
+      "state_before": {
+        "atp_ratio": 1.0,
+        "inbox_load": 0.0,
+        "reward_buffer": 1.0,
+        "neighbor_density": 0.16666666666666666,
+        "feedback_pending": 0.6666666666666666,
+        "oldest_packet_age": 0.0,
+        "queue_pressure": 0.0,
+        "ingress_backlog": 0.0,
+        "dormant": 0.0,
+        "progress_n5": 0.6714951902226305,
+        "congestion_n5": 0.003324315976675131,
+        "inhibited_n5": 0.0,
+        "support_n5": 0.32,
+        "support_velocity_n5": -0.0020023439625
+      },
+      "state_after": {
+        "atp_ratio": 0.86,
+        "inbox_load": 0.0,
+        "reward_buffer": 1.0,
+        "neighbor_density": 0.16666666666666666,
+        "feedback_pending": 0.6666666666666666,
+        "oldest_packet_age": 0.0,
+        "queue_pressure": 0.0,
+        "ingress_backlog": 0.0,
+        "dormant": 0.0,
+        "progress_n5": 0.7920544790810079,
+        "congestion_n5": 0.04767080613681829,
+        "inhibited_n5": 0.0,
+        "support_n5": 0.52,
+        "support_velocity_n5": -0.0020023439625
+      },
+      "dimensions": {
+        "continuity": 0.958,
+        "vitality": 0.6,
+        "contextual_fit": 0.7400272395405039,
+        "differentiation": 1.0,
+        "accountability": 0.866992,
+        "reflexivity": 0.725
+      },
+      "coherence": 0.815003206590084,
+      "delta": 0.16933271870137945,
+      "gco": "STABLE",
+      "cost_secs": 0.14
+    },
+    {
+      "cycle": 11,
+      "action": "route:n5",
+      "mode": "guided",
+      "state_before": {
+        "atp_ratio": 0.86,
+        "inbox_load": 0.25,
+        "reward_buffer": 1.0,
+        "neighbor_density": 0.16666666666666666,
+        "feedback_pending": 0.3333333333333333,
+        "oldest_packet_age": 0.0,
+        "queue_pressure": 0.0,
+        "ingress_backlog": 0.0,
+        "dormant": 0.0,
+        "progress_n5": 0.7413732124882619,
+        "congestion_n5": 0.0,
+        "inhibited_n5": 0.0,
+        "support_n5": 0.495,
+        "support_velocity_n5": 0.05109835922625
+      },
+      "state_after": {
+        "atp_ratio": 0.8298,
+        "inbox_load": 0.0,
+        "reward_buffer": 1.0,
+        "neighbor_density": 0.16666666666666666,
+        "feedback_pending": 0.3333333333333333,
+        "oldest_packet_age": 0.0,
+        "queue_pressure": 0.0,
+        "ingress_backlog": 0.0,
+        "dormant": 0.0,
+        "progress_n5": 0.6301525559762767,
+        "congestion_n5": 0.21939911677084978,
+        "inhibited_n5": 0.0,
+        "support_n5": 0.495,
+        "support_velocity_n5": 0.05109835922625
+      },
+      "dimensions": {
+        "continuity": 0.94894,
+        "vitality": 0.6,
+        "contextual_fit": 0.6509512779881383,
+        "differentiation": 1.0,
+        "accountability": 0.9141436600000001,
+        "reflexivity": 0.725
+      },
+      "coherence": 0.8065058229980231,
+      "delta": -0.00849738359206087,
+      "gco": "STABLE",
+      "cost_secs": 0.0302
+    },
+    {
+      "cycle": 12,
+      "action": "route:n5",
+      "mode": "guided",
+      "state_before": {
+        "atp_ratio": 0.8298,
+        "inbox_load": 0.25,
+        "reward_buffer": 1.0,
+        "neighbor_density": 0.16666666666666666,
+        "feedback_pending": 0.3333333333333333,
+        "oldest_packet_age": 0.0,
+        "queue_pressure": 0.0,
+        "ingress_backlog": 0.0,
+        "dormant": 0.0,
+        "progress_n5": 0.7189966276102049,
+        "congestion_n5": 0.0,
+        "inhibited_n5": 0.0,
+        "support_n5": 0.47,
+        "support_velocity_n5": 0.02826885145837499
+      },
+      "state_after": {
+        "atp_ratio": 0.7986,
+        "inbox_load": 0.0,
+        "reward_buffer": 1.0,
+        "neighbor_density": 0.16666666666666666,
+        "feedback_pending": 0.3333333333333333,
+        "oldest_packet_age": 0.0,
+        "queue_pressure": 0.0,
+        "ingress_backlog": 0.0,
+        "dormant": 0.0,
+        "progress_n5": 0.76631151580481,
+        "congestion_n5": 0.25714763404512414,
+        "inhibited_n5": 0.0,
+        "support_n5": 0.47,
+        "support_velocity_n5": 0.02826885145837499
+      },
+      "dimensions": {
+        "continuity": 0.93958,
+        "vitality": 0.6,
+        "contextual_fit": 0.710905757902405,
+        "differentiation": 1.0,
+        "accountability": 0.97,
+        "reflexivity": 0.725
+      },
+      "coherence": 0.8242476263170674,
+      "delta": 0.01774180331904429,
+      "gco": "STABLE",
+      "cost_secs": 0.031200000000000002
+    },
+    {
+      "cycle": 13,
+      "action": "rest",
+      "mode": "constraint",
+      "state_before": {
+        "atp_ratio": 0.9785999999999999,
+        "inbox_load": 0.0,
+        "reward_buffer": 1.0,
+        "neighbor_density": 0.16666666666666666,
+        "feedback_pending": 0.6666666666666666,
+        "oldest_packet_age": 0.0,
+        "queue_pressure": 0.0,
+        "ingress_backlog": 0.0,
+        "dormant": 0.0,
+        "progress_n5": 0.83637476352235,
+        "congestion_n5": 0.0,
+        "inhibited_n5": 0.0,
+        "support_n5": 0.44499999999999995,
+        "support_velocity_n5": 0.012288196020862483
+      },
+      "state_after": {
+        "atp_ratio": 0.9985999999999999,
+        "inbox_load": 0.0,
+        "reward_buffer": 0.98,
+        "neighbor_density": 0.16666666666666666,
+        "feedback_pending": 0.6666666666666666,
+        "oldest_packet_age": 0.0,
+        "queue_pressure": 0.0,
+        "ingress_backlog": 0.0,
+        "dormant": 0.0,
+        "progress_n5": 0.8241858900021481,
+        "congestion_n5": 0.06084711538372501,
+        "inhibited_n5": 0.0,
+        "support_n5": 0.44499999999999995,
+        "support_velocity_n5": 0.012288196020862483
+      },
+      "dimensions": {
+        "continuity": 0.9995799999999999,
+        "vitality": 0.593,
+        "contextual_fit": 0.731717945001074,
+        "differentiation": 1.0,
+        "accountability": 1.0,
+        "reflexivity": 0.725
+      },
+      "coherence": 0.841549657500179,
+      "delta": 0.017302031183111577,
+      "gco": "PARTIAL",
+      "cost_secs": 0.0
+    },
+    {
+      "cycle": 14,
+      "action": "rest",
+      "mode": "constraint",
+      "state_before": {
+        "atp_ratio": 1.0,
+        "inbox_load": 0.0,
+        "reward_buffer": 1.0,
+        "neighbor_density": 0.16666666666666666,
+        "feedback_pending": 0.6666666666666666,
+        "oldest_packet_age": 0.0,
+        "queue_pressure": 0.0,
+        "ingress_backlog": 0.0,
+        "dormant": 0.0,
+        "progress_n5": 0.8489915251589796,
+        "congestion_n5": 0.10235099829107216,
+        "inhibited_n5": 0.0,
+        "support_n5": 0.41999999999999993,
+        "support_velocity_n5": 0.0011017372146037308
+      },
+      "state_after": {
+        "atp_ratio": 1.0,
+        "inbox_load": 0.0,
+        "reward_buffer": 0.98,
+        "neighbor_density": 0.16666666666666666,
+        "feedback_pending": 0.6666666666666666,
+        "oldest_packet_age": 0.0,
+        "queue_pressure": 0.0,
+        "ingress_backlog": 0.0,
+        "dormant": 0.0,
+        "progress_n5": 0.7497764584464692,
+        "congestion_n5": 0.0,
+        "inhibited_n5": 0.0,
+        "support_n5": 0.41999999999999993,
+        "support_velocity_n5": 0.0011017372146037308
+      },
+      "dimensions": {
+        "continuity": 1.0,
+        "vitality": 0.593,
+        "contextual_fit": 0.6863882292232346,
+        "differentiation": 1.0,
+        "accountability": 1.0,
+        "reflexivity": 0.725
+      },
+      "coherence": 0.8340647048705391,
+      "delta": -0.007484952629639885,
+      "gco": "PARTIAL",
+      "cost_secs": 0.0
+    },
+    {
+      "cycle": 15,
+      "action": "rest",
+      "mode": "constraint",
+      "state_before": {
+        "atp_ratio": 1.0,
+        "inbox_load": 0.0,
+        "reward_buffer": 0.98,
+        "neighbor_density": 0.16666666666666666,
+        "feedback_pending": 0.3333333333333333,
+        "oldest_packet_age": 0.0,
+        "queue_pressure": 0.0,
+        "ingress_backlog": 0.0,
+        "dormant": 0.0,
+        "progress_n5": 0.6306320467029464,
+        "congestion_n5": 0.06721339949734537,
+        "inhibited_n5": 0.0,
+        "support_n5": 0.3949999999999999,
+        "support_velocity_n5": -0.006728783949777395
+      },
+      "state_after": {
+        "atp_ratio": 1.0,
+        "inbox_load": 0.0,
+        "reward_buffer": 0.96,
+        "neighbor_density": 0.16666666666666666,
+        "feedback_pending": 0.3333333333333333,
+        "oldest_packet_age": 0.0,
+        "queue_pressure": 0.0,
+        "ingress_backlog": 0.0,
+        "dormant": 0.0,
+        "progress_n5": 0.7539175076528771,
+        "congestion_n5": 0.07553894583607246,
+        "inhibited_n5": 0.0,
+        "support_n5": 0.3949999999999999,
+        "support_velocity_n5": -0.006728783949777395
+      },
+      "dimensions": {
+        "continuity": 1.0,
+        "vitality": 0.586,
+        "contextual_fit": 0.6803337538264385,
+        "differentiation": 1.0,
+        "accountability": 1.0,
+        "reflexivity": 0.725
+      },
+      "coherence": 0.8318889589710731,
+      "delta": -0.0021757458994660084,
+      "gco": "PARTIAL",
+      "cost_secs": 0.0
+    },
+    {
+      "cycle": 16,
+      "action": "route:n5",
+      "mode": "guided",
+      "state_before": {
+        "atp_ratio": 1.0,
+        "inbox_load": 0.25,
+        "reward_buffer": 0.96,
+        "neighbor_density": 0.16666666666666666,
+        "feedback_pending": 0.0,
+        "oldest_packet_age": 0.0,
+        "queue_pressure": 0.0,
+        "ingress_backlog": 0.0,
+        "dormant": 0.0,
+        "progress_n5": 0.7385187020929027,
+        "congestion_n5": 0.0,
+        "inhibited_n5": 0.0,
+        "support_n5": 0.3699999999999999,
+        "support_velocity_n5": -0.012210148764844183
+      },
+      "state_after": {
+        "atp_ratio": 0.9648,
+        "inbox_load": 0.0,
+        "reward_buffer": 0.96,
+        "neighbor_density": 0.16666666666666666,
+        "feedback_pending": 0.0,
+        "oldest_packet_age": 0.0,
+        "queue_pressure": 0.0,
+        "ingress_backlog": 0.0,
+        "dormant": 0.0,
+        "progress_n5": 0.5677657767404217,
+        "congestion_n5": 0.30919256461442746,
+        "inhibited_n5": 0.0,
+        "support_n5": 0.3699999999999999,
+        "support_velocity_n5": -0.012210148764844183
+      },
+      "dimensions": {
+        "continuity": 0.98944,
+        "vitality": 0.586,
+        "contextual_fit": 0.5791328883702108,
+        "differentiation": 1.0,
+        "accountability": 1.0,
+        "reflexivity": 0.725
+      },
+      "coherence": 0.8132621480617018,
+      "delta": -0.01862681090937124,
+      "gco": "PARTIAL",
+      "cost_secs": 0.03520000000000001
+    },
+    {
+      "cycle": 17,
+      "action": "route:n5",
+      "mode": "guided",
+      "state_before": {
+        "atp_ratio": 0.9648,
+        "inbox_load": 0.25,
+        "reward_buffer": 0.96,
+        "neighbor_density": 0.16666666666666666,
+        "feedback_pending": 0.3333333333333333,
+        "oldest_packet_age": 0.0,
+        "queue_pressure": 0.0,
+        "ingress_backlog": 0.0,
+        "dormant": 0.0,
+        "progress_n5": 0.7415222456175081,
+        "congestion_n5": 0.05154987929094721,
+        "inhibited_n5": 0.0,
+        "support_n5": 0.34499999999999986,
+        "support_velocity_n5": -0.016047104135390934
+      },
+      "state_after": {
+        "atp_ratio": 0.9286,
+        "inbox_load": 0.0,
+        "reward_buffer": 0.96,
+        "neighbor_density": 0.16666666666666666,
+        "feedback_pending": 0.3333333333333333,
+        "oldest_packet_age": 0.0,
+        "queue_pressure": 0.0,
+        "ingress_backlog": 0.0,
+        "dormant": 0.0,
+        "progress_n5": 0.7227350198187373,
+        "congestion_n5": 0.40940393192812863,
+        "inhibited_n5": 0.0,
+        "support_n5": 0.34499999999999986,
+        "support_velocity_n5": -0.016047104135390934
+      },
+      "dimensions": {
+        "continuity": 0.97858,
+        "vitality": 0.586,
+        "contextual_fit": 0.6484925099093686,
+        "differentiation": 1.0,
+        "accountability": 1.0,
+        "reflexivity": 0.725
+      },
+      "coherence": 0.8230120849848946,
+      "delta": 0.009749936923192815,
+      "gco": "PARTIAL",
+      "cost_secs": 0.03620000000000001
+    },
+    {
+      "cycle": 18,
+      "action": "maintain_edges",
+      "mode": "guided",
+      "state_before": {
+        "atp_ratio": 1.0,
+        "inbox_load": 0.0,
+        "reward_buffer": 1.0,
+        "neighbor_density": 0.16666666666666666,
+        "feedback_pending": 0.6666666666666666,
+        "oldest_packet_age": 0.0,
+        "queue_pressure": 0.0,
+        "ingress_backlog": 0.0,
+        "dormant": 0.0,
+        "progress_n5": 0.6683293942499934,
+        "congestion_n5": 0.15846409377057377,
+        "inhibited_n5": 0.0,
+        "support_n5": 0.31999999999999984,
+        "support_velocity_n5": -0.01873297289477366
+      },
+      "state_after": {
+        "atp_ratio": 0.97,
+        "inbox_load": 0.0,
+        "reward_buffer": 1.0,
+        "neighbor_density": 0.16666666666666666,
+        "feedback_pending": 0.6666666666666666,
+        "oldest_packet_age": 0.0,
+        "queue_pressure": 0.0,
+        "ingress_backlog": 0.0,
+        "dormant": 0.0,
+        "progress_n5": 0.6391919576870837,
+        "congestion_n5": 0.10430145398322785,
+        "inhibited_n5": 0.0,
+        "support_n5": 0.36999999999999983,
+        "support_velocity_n5": -0.01873297289477366
+      },
+      "dimensions": {
+        "continuity": 0.991,
+        "vitality": 0.6,
+        "contextual_fit": 0.6148459788435419,
+        "differentiation": 1.0,
+        "accountability": 1.0,
+        "reflexivity": 0.725
+      },
+      "coherence": 0.8218076631405903,
+      "delta": -0.0012044218443043597,
+      "gco": "STABLE",
+      "cost_secs": 0.03
+    },
+    {
+      "cycle": 19,
+      "action": "invest:n5",
+      "mode": "guided",
+      "state_before": {
+        "atp_ratio": 1.0,
+        "inbox_load": 0.0,
+        "reward_buffer": 1.0,
+        "neighbor_density": 0.16666666666666666,
+        "feedback_pending": 0.6666666666666666,
+        "oldest_packet_age": 0.0,
+        "queue_pressure": 0.0,
+        "ingress_backlog": 0.0,
+        "dormant": 0.0,
+        "progress_n5": 0.7508678516895043,
+        "congestion_n5": 0.0,
+        "inhibited_n5": 0.0,
+        "support_n5": 0.3449999999999998,
+        "support_velocity_n5": -0.00561308102634157
+      },
+      "state_after": {
+        "atp_ratio": 0.86,
+        "inbox_load": 0.0,
+        "reward_buffer": 1.0,
+        "neighbor_density": 0.16666666666666666,
+        "feedback_pending": 0.6666666666666666,
+        "oldest_packet_age": 0.0,
+        "queue_pressure": 0.0,
+        "ingress_backlog": 0.0,
+        "dormant": 0.0,
+        "progress_n5": 0.7570557450262106,
+        "congestion_n5": 0.01180376127114681,
+        "inhibited_n5": 0.0,
+        "support_n5": 0.5449999999999998,
+        "support_velocity_n5": -0.00561308102634157
+      },
+      "dimensions": {
+        "continuity": 0.958,
+        "vitality": 0.6,
+        "contextual_fit": 0.7306528725131052,
+        "differentiation": 1.0,
+        "accountability": 1.0,
+        "reflexivity": 0.725
+      },
+      "coherence": 0.8356088120855175,
+      "delta": 0.013801148944927233,
+      "gco": "STABLE",
+      "cost_secs": 0.14
+    },
+    {
+      "cycle": 20,
+      "action": "invest:n5",
+      "mode": "guided",
+      "state_before": {
+        "atp_ratio": 0.86,
+        "inbox_load": 0.0,
+        "reward_buffer": 1.0,
+        "neighbor_density": 0.16666666666666666,
+        "feedback_pending": 0.3333333333333333,
+        "oldest_packet_age": 0.0,
+        "queue_pressure": 0.0,
+        "ingress_backlog": 0.0,
+        "dormant": 0.0,
+        "progress_n5": 0.7859187068053711,
+        "congestion_n5": 0.07711644765276326,
+        "inhibited_n5": 0.0,
+        "support_n5": 0.5199999999999998,
+        "support_velocity_n5": 0.0485708432815609
+      },
+      "state_after": {
+        "atp_ratio": 0.72,
+        "inbox_load": 0.0,
+        "reward_buffer": 1.0,
+        "neighbor_density": 0.16666666666666666,
+        "feedback_pending": 0.3333333333333333,
+        "oldest_packet_age": 0.0,
+        "queue_pressure": 0.0,
+        "ingress_backlog": 0.0,
+        "dormant": 0.0,
+        "progress_n5": 0.7537813940718552,
+        "congestion_n5": 0.04694623394647606,
+        "inhibited_n5": 0.0,
+        "support_n5": 0.7199999999999998,
+        "support_velocity_n5": 0.0485708432815609
+      },
+      "dimensions": {
+        "continuity": 0.916,
+        "vitality": 0.6,
+        "contextual_fit": 0.7858906970359275,
+        "differentiation": 1.0,
+        "accountability": 1.0,
+        "reflexivity": 0.725
+      },
+      "coherence": 0.8378151161726546,
+      "delta": 0.0022063040871370676,
+      "gco": "STABLE",
+      "cost_secs": 0.14
+    },
+    {
+      "cycle": 21,
+      "action": "invest:n5",
+      "mode": "guided",
+      "state_before": {
+        "atp_ratio": 0.72,
+        "inbox_load": 0.0,
+        "reward_buffer": 1.0,
+        "neighbor_density": 0.16666666666666666,
+        "feedback_pending": 0.0,
+        "oldest_packet_age": 0.0,
+        "queue_pressure": 0.0,
+        "ingress_backlog": 0.0,
+        "dormant": 0.0,
+        "progress_n5": 0.7695700488811199,
+        "congestion_n5": 0.028854878295014864,
+        "inhibited_n5": 0.0,
+        "support_n5": 0.6949999999999997,
+        "support_velocity_n5": 0.08649959029709262
+      },
+      "state_after": {
+        "atp_ratio": 0.58,
+        "inbox_load": 0.0,
+        "reward_buffer": 1.0,
+        "neighbor_density": 0.16666666666666666,
+        "feedback_pending": 0.0,
+        "oldest_packet_age": 0.0,
+        "queue_pressure": 0.0,
+        "ingress_backlog": 0.0,
+        "dormant": 0.0,
+        "progress_n5": 0.7459448994306667,
+        "congestion_n5": 0.0,
+        "inhibited_n5": 0.0,
+        "support_n5": 0.8949999999999998,
+        "support_velocity_n5": 0.08649959029709262
+      },
+      "dimensions": {
+        "continuity": 0.874,
+        "vitality": 0.6,
+        "contextual_fit": 0.8388474497153333,
+        "differentiation": 1.0,
+        "accountability": 1.0,
+        "reflexivity": 0.725
+      },
+      "coherence": 0.8396412416192223,
+      "delta": 0.0018261254465676835,
+      "gco": "STABLE",
+      "cost_secs": 0.14
+    },
+    {
+      "cycle": 22,
+      "action": "rest",
+      "mode": "constraint",
+      "state_before": {
+        "atp_ratio": 0.58,
+        "inbox_load": 0.0,
+        "reward_buffer": 1.0,
+        "neighbor_density": 0.16666666666666666,
+        "feedback_pending": 0.0,
+        "oldest_packet_age": 0.0,
+        "queue_pressure": 0.0,
+        "ingress_backlog": 0.0,
+        "dormant": 0.0,
+        "progress_n5": 0.7779029942658058,
+        "congestion_n5": 0.0,
+        "inhibited_n5": 0.0,
+        "support_n5": 0.8699999999999998,
+        "support_velocity_n5": 0.11304971320796484
+      },
+      "state_after": {
+        "atp_ratio": 0.6,
+        "inbox_load": 0.0,
+        "reward_buffer": 0.98,
+        "neighbor_density": 0.16666666666666666,
+        "feedback_pending": 0.0,
+        "oldest_packet_age": 0.0,
+        "queue_pressure": 0.0,
+        "ingress_backlog": 0.0,
+        "dormant": 0.0,
+        "progress_n5": 0.7270723624019318,
+        "congestion_n5": 0.0,
+        "inhibited_n5": 0.0,
+        "support_n5": 0.8699999999999998,
+        "support_velocity_n5": 0.11304971320796484
+      },
+      "dimensions": {
+        "continuity": 0.88,
+        "vitality": 0.593,
+        "contextual_fit": 0.8212861812009659,
+        "differentiation": 1.0,
+        "accountability": 1.0,
+        "reflexivity": 0.725
+      },
+      "coherence": 0.8365476968668276,
+      "delta": -0.00309354475239465,
+      "gco": "PARTIAL",
+      "cost_secs": 0.0
+    }
+  ],
+  "dim_history": [
+    {
+      "continuity": 0.6454,
+      "vitality": 0.25,
+      "contextual_fit": 0.5463186441033733,
+      "differentiation": 0.35,
+      "accountability": 0.34,
+      "reflexivity": 0.3
+    },
+    {
+      "continuity": 0.6305499999999999,
+      "vitality": 0.25,
+      "contextual_fit": 0.5106048072473178,
+      "differentiation": 1.0,
+      "accountability": 0.41000000000000003,
+      "reflexivity": 0.3
+    },
+    {
+      "continuity": 0.66955,
+      "vitality": 0.313,
+      "contextual_fit": 0.5711426887851268,
+      "differentiation": 1.0,
+      "accountability": 0.48000000000000004,
+      "reflexivity": 0.375
+    },
+    {
+      "continuity": 0.685,
+      "vitality": 0.376,
+      "contextual_fit": 0.5361242835332349,
+      "differentiation": 1.0,
+      "accountability": 0.55,
+      "reflexivity": 0.375
+    },
+    {
+      "continuity": 0.685,
+      "vitality": 0.439,
+      "contextual_fit": 0.5962315931836384,
+      "differentiation": 1.0,
+      "accountability": 0.6200000000000001,
+      "reflexivity": 0.375
+    },
+    {
+      "continuity": 0.685,
+      "vitality": 0.502,
+      "contextual_fit": 0.6325681339462572,
+      "differentiation": 1.0,
+      "accountability": 0.6900000000000001,
+      "reflexivity": 0.375
+    },
+    {
+      "continuity": 0.7,
+      "vitality": 0.5579999999999999,
+      "contextual_fit": 0.48102292733222723,
+      "differentiation": 1.0,
+      "accountability": 0.76,
+      "reflexivity": 0.375
+    },
+    {
+      "continuity": 0.958,
+      "vitality": 0.6,
+      "contextual_fit": 0.7400272395405039,
+      "differentiation": 1.0,
+      "accountability": 0.866992,
+      "reflexivity": 0.725
+    },
+    {
+      "continuity": 0.94894,
+      "vitality": 0.6,
+      "contextual_fit": 0.6509512779881383,
+      "differentiation": 1.0,
+      "accountability": 0.9141436600000001,
+      "reflexivity": 0.725
+    },
+    {
+      "continuity": 0.93958,
+      "vitality": 0.6,
+      "contextual_fit": 0.710905757902405,
+      "differentiation": 1.0,
+      "accountability": 0.97,
+      "reflexivity": 0.725
+    },
+    {
+      "continuity": 0.9995799999999999,
+      "vitality": 0.593,
+      "contextual_fit": 0.731717945001074,
+      "differentiation": 1.0,
+      "accountability": 1.0,
+      "reflexivity": 0.725
+    },
+    {
+      "continuity": 1.0,
+      "vitality": 0.593,
+      "contextual_fit": 0.6863882292232346,
+      "differentiation": 1.0,
+      "accountability": 1.0,
+      "reflexivity": 0.725
+    },
+    {
+      "continuity": 1.0,
+      "vitality": 0.586,
+      "contextual_fit": 0.6803337538264385,
+      "differentiation": 1.0,
+      "accountability": 1.0,
+      "reflexivity": 0.725
+    },
+    {
+      "continuity": 0.98944,
+      "vitality": 0.586,
+      "contextual_fit": 0.5791328883702108,
+      "differentiation": 1.0,
+      "accountability": 1.0,
+      "reflexivity": 0.725
+    },
+    {
+      "continuity": 0.97858,
+      "vitality": 0.586,
+      "contextual_fit": 0.6484925099093686,
+      "differentiation": 1.0,
+      "accountability": 1.0,
+      "reflexivity": 0.725
+    },
+    {
+      "continuity": 0.991,
+      "vitality": 0.6,
+      "contextual_fit": 0.6148459788435419,
+      "differentiation": 1.0,
+      "accountability": 1.0,
+      "reflexivity": 0.725
+    },
+    {
+      "continuity": 0.958,
+      "vitality": 0.6,
+      "contextual_fit": 0.7306528725131052,
+      "differentiation": 1.0,
+      "accountability": 1.0,
+      "reflexivity": 0.725
+    },
+    {
+      "continuity": 0.916,
+      "vitality": 0.6,
+      "contextual_fit": 0.7858906970359275,
+      "differentiation": 1.0,
+      "accountability": 1.0,
+      "reflexivity": 0.725
+    },
+    {
+      "continuity": 0.874,
+      "vitality": 0.6,
+      "contextual_fit": 0.8388474497153333,
+      "differentiation": 1.0,
+      "accountability": 1.0,
+      "reflexivity": 0.725
+    },
+    {
+      "continuity": 0.88,
+      "vitality": 0.593,
+      "contextual_fit": 0.8212861812009659,
+      "differentiation": 1.0,
+      "accountability": 1.0,
+      "reflexivity": 0.725
+    }
+  ],
+  "prior_coherence": 0.8365476968668276,
+  "metadata": {
+    "retained_entries": 22,
+    "source": "basic_consolidation_pipeline"
+  }
+}

@@ -1,0 +1,363 @@
+{
+  "substrate": {
+    "fast": {
+      "edge:sink": 0.0
+    },
+    "slow": {
+      "edge:sink": 0.7999999999999999
+    },
+    "slow_age": {
+      "edge:sink": 3
+    },
+    "slow_velocity": {
+      "edge:sink": 0.03776227071657906
+    },
+    "metadata": {
+      "active_keys": [
+        "edge:sink"
+      ],
+      "active_count": 1,
+      "pattern_count": 0,
+      "keys": [
+        "edge:sink"
+      ],
+      "patterns": [],
+      "dim_history": [
+        {
+          "continuity": 0.7,
+          "vitality": 0.292,
+          "contextual_fit": 0.675,
+          "differentiation": 1.0,
+          "accountability": 0.48000000000000004,
+          "reflexivity": 0.375
+        },
+        {
+          "continuity": 0.7,
+          "vitality": 0.285,
+          "contextual_fit": 0.675,
+          "differentiation": 1.0,
+          "accountability": 0.55,
+          "reflexivity": 0.375
+        },
+        {
+          "continuity": 0.7,
+          "vitality": 0.278,
+          "contextual_fit": 0.675,
+          "differentiation": 1.0,
+          "accountability": 0.6200000000000001,
+          "reflexivity": 0.375
+        },
+        {
+          "continuity": 0.658,
+          "vitality": 0.278,
+          "contextual_fit": 0.6543154158400516,
+          "differentiation": 1.0,
+          "accountability": 0.6900000000000001,
+          "reflexivity": 0.375
+        },
+        {
+          "continuity": 0.664,
+          "vitality": 0.271,
+          "contextual_fit": 0.7114585951144836,
+          "differentiation": 1.0,
+          "accountability": 0.76,
+          "reflexivity": 0.375
+        },
+        {
+          "continuity": 0.67,
+          "vitality": 0.264,
+          "contextual_fit": 0.6795880554757745,
+          "differentiation": 1.0,
+          "accountability": 0.8300000000000001,
+          "reflexivity": 0.375
+        },
+        {
+          "continuity": 0.676,
+          "vitality": 0.257,
+          "contextual_fit": 0.6790625,
+          "differentiation": 1.0,
+          "accountability": 0.9000000000000001,
+          "reflexivity": 0.375
+        },
+        {
+          "continuity": 0.634,
+          "vitality": 0.257,
+          "contextual_fit": 0.6972337652228595,
+          "differentiation": 1.0,
+          "accountability": 0.97,
+          "reflexivity": 0.375
+        },
+        {
+          "continuity": 0.64,
+          "vitality": 0.25,
+          "contextual_fit": 0.7196875,
+          "differentiation": 0.35,
+          "accountability": 1.0,
+          "reflexivity": 0.375
+        },
+        {
+          "continuity": 0.898,
+          "vitality": 0.25,
+          "contextual_fit": 0.7450059395262008,
+          "differentiation": 0.35,
+          "accountability": 1.0,
+          "reflexivity": 0.725
+        },
+        {
+          "continuity": 0.8995,
+          "vitality": 0.25,
+          "contextual_fit": 0.6978368894269962,
+          "differentiation": 0.35,
+          "accountability": 1.0,
+          "reflexivity": 1.0
+        },
+        {
+          "continuity": 0.8575,
+          "vitality": 0.25,
+          "contextual_fit": 0.8078812897843726,
+          "differentiation": 0.4823276927476836,
+          "accountability": 1.0,
+          "reflexivity": 1.0
+        },
+        {
+          "continuity": 0.859,
+          "vitality": 0.25,
+          "contextual_fit": 0.7631728238819061,
+          "differentiation": 0.46940694610187084,
+          "accountability": 1.0,
+          "reflexivity": 1.0
+        },
+        {
+          "continuity": 0.817,
+          "vitality": 0.25,
+          "contextual_fit": 0.8241466661897733,
+          "differentiation": 0.48702838652884445,
+          "accountability": 1.0,
+          "reflexivity": 1.0
+        },
+        {
+          "continuity": 0.8185,
+          "vitality": 0.25,
+          "contextual_fit": 0.85375,
+          "differentiation": 0.49558375,
+          "accountability": 1.0,
+          "reflexivity": 1.0
+        },
+        {
+          "continuity": 0.8200000000000001,
+          "vitality": 0.25,
+          "contextual_fit": 0.8051555571664107,
+          "differentiation": 0.4815399560210927,
+          "accountability": 1.0,
+          "reflexivity": 1.0
+        },
+        {
+          "continuity": 0.778,
+          "vitality": 0.25,
+          "contextual_fit": 0.9025,
+          "differentiation": 0.5096725,
+          "accountability": 1.0,
+          "reflexivity": 1.0
+        },
+        {
+          "continuity": 0.736,
+          "vitality": 0.25,
+          "contextual_fit": 0.959375,
+          "differentiation": 0.526109375,
+          "accountability": 1.0,
+          "reflexivity": 0.725
+        },
+        {
+          "continuity": 0.7375,
+          "vitality": 0.25,
+          "contextual_fit": 0.9416212119540193,
+          "differentiation": 0.5209785302547115,
+          "accountability": 1.0,
+          "reflexivity": 0.725
+        },
+        {
+          "continuity": 0.739,
+          "vitality": 0.25,
+          "contextual_fit": 0.9317299586688517,
+          "differentiation": 0.5181199580552981,
+          "accountability": 1.0,
+          "reflexivity": 0.5
+        }
+      ],
+      "neighbor_ids": [
+        "sink"
+      ],
+      "active_neighbors": [
+        "sink"
+      ]
+    }
+  },
+  "episodic_entries": [],
+  "dim_history": [
+    {
+      "continuity": 0.7,
+      "vitality": 0.292,
+      "contextual_fit": 0.675,
+      "differentiation": 1.0,
+      "accountability": 0.48000000000000004,
+      "reflexivity": 0.375
+    },
+    {
+      "continuity": 0.7,
+      "vitality": 0.285,
+      "contextual_fit": 0.675,
+      "differentiation": 1.0,
+      "accountability": 0.55,
+      "reflexivity": 0.375
+    },
+    {
+      "continuity": 0.7,
+      "vitality": 0.278,
+      "contextual_fit": 0.675,
+      "differentiation": 1.0,
+      "accountability": 0.6200000000000001,
+      "reflexivity": 0.375
+    },
+    {
+      "continuity": 0.658,
+      "vitality": 0.278,
+      "contextual_fit": 0.6543154158400516,
+      "differentiation": 1.0,
+      "accountability": 0.6900000000000001,
+      "reflexivity": 0.375
+    },
+    {
+      "continuity": 0.664,
+      "vitality": 0.271,
+      "contextual_fit": 0.7114585951144836,
+      "differentiation": 1.0,
+      "accountability": 0.76,
+      "reflexivity": 0.375
+    },
+    {
+      "continuity": 0.67,
+      "vitality": 0.264,
+      "contextual_fit": 0.6795880554757745,
+      "differentiation": 1.0,
+      "accountability": 0.8300000000000001,
+      "reflexivity": 0.375
+    },
+    {
+      "continuity": 0.676,
+      "vitality": 0.257,
+      "contextual_fit": 0.6790625,
+      "differentiation": 1.0,
+      "accountability": 0.9000000000000001,
+      "reflexivity": 0.375
+    },
+    {
+      "continuity": 0.634,
+      "vitality": 0.257,
+      "contextual_fit": 0.6972337652228595,
+      "differentiation": 1.0,
+      "accountability": 0.97,
+      "reflexivity": 0.375
+    },
+    {
+      "continuity": 0.64,
+      "vitality": 0.25,
+      "contextual_fit": 0.7196875,
+      "differentiation": 0.35,
+      "accountability": 1.0,
+      "reflexivity": 0.375
+    },
+    {
+      "continuity": 0.898,
+      "vitality": 0.25,
+      "contextual_fit": 0.7450059395262008,
+      "differentiation": 0.35,
+      "accountability": 1.0,
+      "reflexivity": 0.725
+    },
+    {
+      "continuity": 0.8995,
+      "vitality": 0.25,
+      "contextual_fit": 0.6978368894269962,
+      "differentiation": 0.35,
+      "accountability": 1.0,
+      "reflexivity": 1.0
+    },
+    {
+      "continuity": 0.8575,
+      "vitality": 0.25,
+      "contextual_fit": 0.8078812897843726,
+      "differentiation": 0.4823276927476836,
+      "accountability": 1.0,
+      "reflexivity": 1.0
+    },
+    {
+      "continuity": 0.859,
+      "vitality": 0.25,
+      "contextual_fit": 0.7631728238819061,
+      "differentiation": 0.46940694610187084,
+      "accountability": 1.0,
+      "reflexivity": 1.0
+    },
+    {
+      "continuity": 0.817,
+      "vitality": 0.25,
+      "contextual_fit": 0.8241466661897733,
+      "differentiation": 0.48702838652884445,
+      "accountability": 1.0,
+      "reflexivity": 1.0
+    },
+    {
+      "continuity": 0.8185,
+      "vitality": 0.25,
+      "contextual_fit": 0.85375,
+      "differentiation": 0.49558375,
+      "accountability": 1.0,
+      "reflexivity": 1.0
+    },
+    {
+      "continuity": 0.8200000000000001,
+      "vitality": 0.25,
+      "contextual_fit": 0.8051555571664107,
+      "differentiation": 0.4815399560210927,
+      "accountability": 1.0,
+      "reflexivity": 1.0
+    },
+    {
+      "continuity": 0.778,
+      "vitality": 0.25,
+      "contextual_fit": 0.9025,
+      "differentiation": 0.5096725,
+      "accountability": 1.0,
+      "reflexivity": 1.0
+    },
+    {
+      "continuity": 0.736,
+      "vitality": 0.25,
+      "contextual_fit": 0.959375,
+      "differentiation": 0.526109375,
+      "accountability": 1.0,
+      "reflexivity": 0.725
+    },
+    {
+      "continuity": 0.7375,
+      "vitality": 0.25,
+      "contextual_fit": 0.9416212119540193,
+      "differentiation": 0.5209785302547115,
+      "accountability": 1.0,
+      "reflexivity": 0.725
+    },
+    {
+      "continuity": 0.739,
+      "vitality": 0.25,
+      "contextual_fit": 0.9317299586688517,
+      "differentiation": 0.5181199580552981,
+      "accountability": 1.0,
+      "reflexivity": 0.5
+    }
+  ],
+  "prior_coherence": 0.6564749861206917,
+  "metadata": {
+    "retained_entries": 24,
+    "source": "basic_consolidation_pipeline"
+  }
+}
