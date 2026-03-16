@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import itertools
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Dict, Iterable, List, Sequence
 
@@ -9,12 +9,19 @@ import json
 
 from .admission import AdmissionSubstrate
 from .models import FeedbackPulse, NodeRuntimeState, SignalPacket, SignalSpec
+from .topology import GrowthProposal, MorphogenesisConfig, TopologyManager, TopologyState
 
 TRANSFORM_NAMES = ("identity", "rotate_left_1", "xor_mask_1010", "xor_mask_0101")
 TASK_CONTEXT_MATCH_FLOOR = 0.75
 DEBT_ACTIVATION_CREDIT = 0.30
 DEBT_ACTIVATION_CONTEXT_CREDIT = 0.22
 DEBT_ACTIVATION_EXISTING = 0.18
+LATENT_CONTEXT_CONFIDENCE_THRESHOLD = 0.55
+LATENT_CONTEXT_PROMOTION_THRESHOLD = 0.75
+LATENT_CONTEXT_PROMOTION_STREAK = 3
+LATENT_CONTEXT_EVIDENCE_DECAY = 0.88
+LATENT_CONTEXT_ROUTE_GAIN = 0.08
+LATENT_CONTEXT_FEEDBACK_GAIN = 0.42
 
 
 def _edge_id(source_id: str, target_id: str) -> str:
@@ -39,6 +46,272 @@ def _context_branch_debt_key(neighbor_id: str, transform_name: str, context_bit:
 
 def _branch_context_debt_key(neighbor_id: str, context_bit: int) -> str:
     return f"{neighbor_id}:context_{int(context_bit)}"
+
+
+def _parity_bits(bits: Sequence[int] | None) -> int | None:
+    if bits is None:
+        return None
+    normalized = [1 if int(bit) else 0 for bit in bits]
+    if not normalized:
+        return None
+    return sum(normalized) % 2
+
+
+@dataclass
+class LatentTaskState:
+    task_id: str
+    context_evidence: Dict[int, float] = field(default_factory=lambda: {0: 0.0, 1: 0.0})
+    transform_evidence: Dict[str, float] = field(
+        default_factory=lambda: {name: 0.0 for name in TRANSFORM_NAMES}
+    )
+    dominant_context: int | None = None
+    confidence: float = 0.0
+    total_evidence: float = 0.0
+    observation_streak: int = 0
+    last_observed_cycle: int = -1
+    last_observed_context: int | None = None
+    last_packet_id: str | None = None
+    last_input_bits: List[int] = field(default_factory=list)
+    sequence_context_estimate: int | None = None
+    sequence_context_confidence: float = 0.0
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "task_id": self.task_id,
+            "context_evidence": {
+                str(key): float(value)
+                for key, value in self.context_evidence.items()
+            },
+            "transform_evidence": {
+                str(key): float(value)
+                for key, value in self.transform_evidence.items()
+            },
+            "dominant_context": self.dominant_context,
+            "confidence": self.confidence,
+            "total_evidence": self.total_evidence,
+            "observation_streak": self.observation_streak,
+            "last_observed_cycle": self.last_observed_cycle,
+            "last_observed_context": self.last_observed_context,
+            "last_packet_id": self.last_packet_id,
+            "last_input_bits": list(self.last_input_bits),
+            "sequence_context_estimate": self.sequence_context_estimate,
+            "sequence_context_confidence": self.sequence_context_confidence,
+        }
+
+    @classmethod
+    def from_dict(cls, payload: dict[str, object]) -> "LatentTaskState":
+        state = cls(task_id=str(payload.get("task_id", "")))
+        state.context_evidence = {
+            int(key): float(value)
+            for key, value in dict(payload.get("context_evidence", {})).items()
+        }
+        state.transform_evidence = {
+            name: float(dict(payload.get("transform_evidence", {})).get(name, 0.0))
+            for name in TRANSFORM_NAMES
+        }
+        state.dominant_context = payload.get("dominant_context")
+        if state.dominant_context is not None:
+            state.dominant_context = int(state.dominant_context)
+        state.confidence = float(payload.get("confidence", 0.0))
+        state.total_evidence = float(payload.get("total_evidence", 0.0))
+        state.observation_streak = int(payload.get("observation_streak", 0))
+        state.last_observed_cycle = int(payload.get("last_observed_cycle", -1))
+        state.last_observed_context = payload.get("last_observed_context")
+        if state.last_observed_context is not None:
+            state.last_observed_context = int(state.last_observed_context)
+        state.last_packet_id = payload.get("last_packet_id")
+        state.last_input_bits = [int(bit) for bit in payload.get("last_input_bits", [])]
+        state.sequence_context_estimate = payload.get("sequence_context_estimate")
+        if state.sequence_context_estimate is not None:
+            state.sequence_context_estimate = int(state.sequence_context_estimate)
+        state.sequence_context_confidence = float(payload.get("sequence_context_confidence", 0.0))
+        return state
+
+
+@dataclass
+class LatentContextTracker:
+    task_states: Dict[str, LatentTaskState] = field(default_factory=dict)
+    evidence_decay: float = LATENT_CONTEXT_EVIDENCE_DECAY
+    route_gain: float = LATENT_CONTEXT_ROUTE_GAIN
+    feedback_gain: float = LATENT_CONTEXT_FEEDBACK_GAIN
+    confidence_threshold: float = LATENT_CONTEXT_CONFIDENCE_THRESHOLD
+    promotion_threshold: float = LATENT_CONTEXT_PROMOTION_THRESHOLD
+    promotion_streak: int = LATENT_CONTEXT_PROMOTION_STREAK
+
+    def _state_for(self, task_id: str | None) -> LatentTaskState | None:
+        if not task_id:
+            return None
+        task_key = str(task_id)
+        state = self.task_states.get(task_key)
+        if state is None:
+            state = LatentTaskState(task_id=task_key)
+            self.task_states[task_key] = state
+        return state
+
+    def _recompute(self, state: LatentTaskState) -> None:
+        state.total_evidence = max(
+            0.0,
+            float(state.context_evidence.get(0, 0.0)) + float(state.context_evidence.get(1, 0.0)),
+        )
+        if state.total_evidence <= 1e-9:
+            state.dominant_context = None
+            state.confidence = 0.0
+            return
+        dominant_context = 0 if state.context_evidence.get(0, 0.0) >= state.context_evidence.get(1, 0.0) else 1
+        diff = abs(state.context_evidence.get(1, 0.0) - state.context_evidence.get(0, 0.0))
+        state.dominant_context = dominant_context
+        state.confidence = max(0.0, min(1.0, diff / max(state.total_evidence, 1e-9)))
+
+    def _apply_decay(self, state: LatentTaskState) -> None:
+        for context_bit in (0, 1):
+            state.context_evidence[context_bit] = max(
+                0.0,
+                float(state.context_evidence.get(context_bit, 0.0)) * self.evidence_decay,
+            )
+        for transform_name in TRANSFORM_NAMES:
+            state.transform_evidence[transform_name] = max(
+                0.0,
+                float(state.transform_evidence.get(transform_name, 0.0)) * self.evidence_decay,
+            )
+
+    def _apply_transform_signal(
+        self,
+        state: LatentTaskState,
+        transform_name: str,
+        signal: float,
+    ) -> None:
+        transform = _normalize_transform_name(transform_name)
+        self._apply_decay(state)
+        state.transform_evidence[transform] = max(
+            0.0,
+            state.transform_evidence.get(transform, 0.0) + signal,
+        )
+        for context_bit in (0, 1):
+            expected = _expected_transform_for_task(state.task_id, context_bit)
+            if expected == transform:
+                state.context_evidence[context_bit] = max(
+                    0.0,
+                    state.context_evidence.get(context_bit, 0.0) + signal,
+                )
+        self._recompute(state)
+
+    def record_route(self, task_id: str | None, transform_name: str) -> None:
+        state = self._state_for(task_id)
+        if state is None:
+            return
+        self._apply_transform_signal(state, transform_name, self.route_gain)
+
+    def record_feedback(
+        self,
+        task_id: str | None,
+        transform_name: str,
+        *,
+        bit_match_ratio: float,
+        credit_signal: float,
+    ) -> None:
+        state = self._state_for(task_id)
+        if state is None:
+            return
+        signed_quality = max(-1.0, min(1.0, (bit_match_ratio - 0.5) * 2.0))
+        signal = self.feedback_gain * max(0.20, credit_signal) * signed_quality
+        self._apply_transform_signal(state, transform_name, signal)
+
+    def observe_packet(
+        self,
+        task_id: str | None,
+        packet_id: str | None,
+        input_bits: Sequence[int] | None,
+    ) -> None:
+        state = self._state_for(task_id)
+        if state is None or packet_id is None:
+            return
+        if state.last_packet_id == packet_id:
+            return
+        prior_parity = _parity_bits(state.last_input_bits)
+        state.sequence_context_estimate = prior_parity
+        state.sequence_context_confidence = 0.95 if prior_parity is not None else 0.0
+        if prior_parity is not None:
+            self._apply_decay(state)
+            state.context_evidence[prior_parity] = max(
+                0.0,
+                state.context_evidence.get(prior_parity, 0.0) + 0.35,
+            )
+            self._recompute(state)
+        state.last_packet_id = str(packet_id)
+        state.last_input_bits = [1 if int(bit) else 0 for bit in list(input_bits or [])]
+
+    def observe_task(self, task_id: str | None, cycle: int) -> dict[str, object]:
+        state = self._state_for(task_id)
+        if state is None:
+            return self.snapshot(task_id)
+        if state.last_observed_cycle != cycle:
+            if state.dominant_context is None:
+                state.observation_streak = 0
+                state.last_observed_context = None
+            elif state.last_observed_context == state.dominant_context:
+                state.observation_streak += 1
+            else:
+                state.observation_streak = 1
+                state.last_observed_context = state.dominant_context
+            state.last_observed_cycle = cycle
+        return self.snapshot(task_id)
+
+    def snapshot(self, task_id: str | None) -> dict[str, object]:
+        state = self._state_for(task_id)
+        if state is None:
+            return {
+                "available": False,
+                "estimate": None,
+                "confidence": 0.0,
+                "promotion_ready": False,
+                "observation_streak": 0,
+                "sequence_available": False,
+                "transform_evidence": {name: 0.0 for name in TRANSFORM_NAMES},
+            }
+        sequence_available = state.sequence_context_estimate is not None and state.sequence_context_confidence > 0.0
+        available = sequence_available or (state.dominant_context is not None and state.total_evidence > 0.0)
+        estimate = state.sequence_context_estimate if sequence_available else state.dominant_context
+        confidence = (
+            max(state.confidence, state.sequence_context_confidence)
+            if sequence_available
+            else state.confidence
+        )
+        promotion_ready = bool(
+            state.dominant_context is not None
+            and state.confidence >= self.promotion_threshold
+            and state.observation_streak >= self.promotion_streak
+        )
+        return {
+            "available": available,
+            "estimate": estimate,
+            "confidence": confidence,
+            "promotion_ready": promotion_ready,
+            "observation_streak": state.observation_streak,
+            "sequence_available": sequence_available,
+            "transform_evidence": {
+                name: max(0.0, min(1.0, float(state.transform_evidence.get(name, 0.0))))
+                for name in TRANSFORM_NAMES
+            },
+        }
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "task_states": {
+                task_id: state.to_dict()
+                for task_id, state in self.task_states.items()
+            }
+        }
+
+    @classmethod
+    def from_dict(cls, payload: dict[str, object] | None) -> "LatentContextTracker":
+        tracker = cls()
+        if not payload:
+            return tracker
+        tracker.task_states = {
+            str(task_id): LatentTaskState.from_dict(dict(state_payload))
+            for task_id, state_payload in dict(payload.get("task_states", {})).items()
+        }
+        return tracker
 
 
 def _apply_transform(bits: Sequence[int], transform_name: str | None) -> List[int]:
@@ -94,6 +367,16 @@ def _expected_transform_for_task(
     return None
 
 
+def _candidate_transforms_for_task(task_id: str | None) -> tuple[str, ...]:
+    if task_id == "task_a":
+        return ("rotate_left_1", "xor_mask_1010")
+    if task_id == "task_b":
+        return ("rotate_left_1", "xor_mask_0101")
+    if task_id == "task_c":
+        return ("xor_mask_1010", "xor_mask_0101")
+    return tuple()
+
+
 def _bit_match_ratio(observed_bits: Sequence[int], target_bits: Sequence[int]) -> float:
     if not target_bits:
         return 0.0
@@ -128,8 +411,19 @@ class RoutingEnvironment:
     source_admission_rate: int | None = None
     source_admission_min_rate: int = 1
     source_admission_max_rate: int | None = None
+    topology_state: TopologyState | None = None
+    morphogenesis_config: MorphogenesisConfig = field(default_factory=MorphogenesisConfig)
 
     def __post_init__(self) -> None:
+        if self.topology_state is None:
+            self.topology_state = TopologyState.from_graph(
+                self.adjacency,
+                self.positions,
+                source_id=self.source_id,
+                sink_id=self.sink_id,
+            )
+        self.pending_growth_proposals: List[GrowthProposal] = []
+        self.sync_topology()
         self.inboxes: Dict[str, List[SignalPacket]] = {
             node_id: [] for node_id in self.positions
         }
@@ -164,6 +458,41 @@ class RoutingEnvironment:
         self._source_cycle_action_cost = 0.0
         self.last_source_efficiency = 0.0
         self.source_efficiency_history: List[float] = []
+        self.latent_context_trackers: Dict[str, LatentContextTracker] = {
+            node_id: LatentContextTracker()
+            for node_id in self.node_states
+        }
+
+    def sync_topology(self) -> None:
+        if self.topology_state is None:
+            return
+        self.adjacency = self.topology_state.adjacency_map()
+        self.positions = self.topology_state.positions_map()
+        prior_inboxes = getattr(self, "inboxes", {})
+        self.inboxes = {
+            node_id: list(prior_inboxes.get(node_id, []))
+            for node_id in self.positions
+        }
+        prior_states = getattr(self, "node_states", {})
+        self.node_states = {}
+        for node_id, position in self.positions.items():
+            if node_id == self.sink_id:
+                continue
+            state = prior_states.get(node_id)
+            if state is None:
+                state = NodeRuntimeState(
+                    node_id=node_id,
+                    position=position,
+                    atp=self.max_atp,
+                    max_atp=self.max_atp,
+                )
+            state.position = position
+            self.node_states[node_id] = state
+        prior_trackers = getattr(self, "latent_context_trackers", {})
+        self.latent_context_trackers = {
+            node_id: prior_trackers.get(node_id, LatentContextTracker())
+            for node_id in self.node_states
+        }
 
     def agent_ids(self) -> List[str]:
         return sorted(
@@ -259,6 +588,80 @@ class RoutingEnvironment:
         self._prioritize_all_queues()
         self._record_inbox_pressure()
 
+    def export_latent_context_state(self) -> dict[str, object]:
+        return {
+            node_id: tracker.to_dict()
+            for node_id, tracker in self.latent_context_trackers.items()
+        }
+
+    def load_latent_context_state(self, payload: dict[str, object] | None) -> None:
+        payload = payload or {}
+        self.latent_context_trackers = {
+            node_id: LatentContextTracker.from_dict(
+                dict(payload.get(node_id, {})) if node_id in payload else None
+            )
+            for node_id in self.node_states
+        }
+
+    def _latent_snapshot(
+        self,
+        node_id: str,
+        task_id: str | None,
+        *,
+        observe: bool = False,
+        packet_id: str | None = None,
+        input_bits: Sequence[int] | None = None,
+    ) -> dict[str, object]:
+        tracker = self.latent_context_trackers.get(node_id)
+        if tracker is None:
+            return LatentContextTracker().snapshot(task_id)
+        if observe:
+            tracker.observe_packet(task_id, packet_id, input_bits)
+            return tracker.observe_task(task_id, self.current_cycle)
+        return tracker.snapshot(task_id)
+
+    def _record_latent_route(
+        self,
+        node_id: str,
+        *,
+        task_id: str | None,
+        context_bit: int | None,
+        transform_name: str,
+    ) -> None:
+        if context_bit is not None:
+            return
+        tracker = self.latent_context_trackers.get(node_id)
+        if tracker is None:
+            return
+        tracker.record_route(task_id, transform_name)
+
+    def _resolved_feedback_context(
+        self,
+        node_id: str,
+        pulse: FeedbackPulse,
+        transform_name: str,
+        *,
+        credit_signal: float,
+    ) -> tuple[int | None, float, bool]:
+        if pulse.context_bit is not None:
+            return int(pulse.context_bit), 1.0, True
+        tracker = self.latent_context_trackers.get(node_id)
+        if tracker is None:
+            return None, 0.0, False
+        tracker.record_feedback(
+            pulse.task_id,
+            transform_name,
+            bit_match_ratio=float(pulse.bit_match_ratio),
+            credit_signal=credit_signal,
+        )
+        snapshot = tracker.observe_task(pulse.task_id, self.current_cycle)
+        if not snapshot.get("promotion_ready"):
+            return None, float(snapshot.get("confidence", 0.0)), False
+        estimate = snapshot.get("estimate")
+        if estimate is None:
+            return None, float(snapshot.get("confidence", 0.0)), False
+        return int(estimate), float(snapshot.get("confidence", 0.0)), True
+
     def observe_local(self, node_id: str) -> dict[str, float]:
         state = self.state_for(node_id)
         local_packets = self.inboxes[node_id]
@@ -266,6 +669,41 @@ class RoutingEnvironment:
         oldest_age = max(local_ages, default=0)
         overflow = max(0, len(local_packets) - self.inbox_capacity)
         head_packet = local_packets[0] if local_packets else None
+        head_task_id = head_packet.task_id if head_packet is not None else None
+        latent_snapshot = self._latent_snapshot(
+            node_id,
+            head_task_id,
+            observe=bool(
+                head_packet is not None
+                and head_packet.context_bit is None
+                and head_task_id is not None
+                and node_id == self.source_id
+            ),
+            packet_id=head_packet.packet_id if head_packet is not None else None,
+            input_bits=head_packet.input_bits if head_packet is not None else None,
+        )
+        raw_has_context = 1.0 if head_packet is not None and head_packet.context_bit is not None else 0.0
+        latent_available = 1.0 if latent_snapshot.get("available") else 0.0
+        latent_estimate = latent_snapshot.get("estimate")
+        latent_confidence = float(latent_snapshot.get("confidence", 0.0))
+        effective_context_bit = None
+        effective_context_confidence = 0.0
+        effective_has_context = 0.0
+        context_promotion_ready = 0.0
+        if raw_has_context >= 0.5 and head_packet is not None and head_packet.context_bit is not None:
+            effective_context_bit = int(head_packet.context_bit)
+            effective_context_confidence = 1.0
+            effective_has_context = 1.0
+            context_promotion_ready = 1.0
+        elif (
+            latent_available >= 0.5
+            and latent_estimate is not None
+            and latent_confidence >= LATENT_CONTEXT_CONFIDENCE_THRESHOLD
+        ):
+            effective_context_bit = int(latent_estimate)
+            effective_context_confidence = latent_confidence
+            effective_has_context = 1.0
+            context_promotion_ready = 1.0 if latent_snapshot.get("promotion_ready") else 0.0
         local = {
             "atp_ratio": state.atp / max(state.max_atp, 1e-9),
             "inbox_load": min(1.0, len(self.inboxes[node_id]) / max(self.inbox_capacity, 1)),
@@ -280,19 +718,31 @@ class RoutingEnvironment:
                 else 0.0
             ),
             "has_packet": 1.0 if head_packet is not None else 0.0,
+            "head_has_task": 1.0 if head_task_id is not None else 0.0,
             "head_transform_depth": (
                 min(1.0, len(head_packet.transform_trace) / 4.0)
                 if head_packet is not None
                 else 0.0
             ),
             "head_has_context": (
-                1.0 if head_packet is not None and head_packet.context_bit is not None else 0.0
+                raw_has_context
             ),
             "head_context_bit": (
                 float(head_packet.context_bit)
                 if head_packet is not None and head_packet.context_bit is not None
                 else 0.0
             ),
+            "latent_context_available": latent_available,
+            "latent_context_estimate": (
+                float(latent_estimate) if latent_estimate is not None else 0.0
+            ),
+            "latent_context_confidence": latent_confidence,
+            "effective_has_context": effective_has_context,
+            "effective_context_bit": (
+                float(effective_context_bit) if effective_context_bit is not None else 0.0
+            ),
+            "effective_context_confidence": effective_context_confidence,
+            "context_promotion_ready": context_promotion_ready,
             "last_feedback_amount": min(
                 1.0,
                 state.last_feedback_amount / max(self.feedback_amount, 1e-9),
@@ -300,6 +750,73 @@ class RoutingEnvironment:
             "last_match_ratio": min(1.0, max(0.0, state.last_match_ratio)),
             "dormant": 1.0 if state.dormant else 0.0,
         }
+        transform_evidence = dict(latent_snapshot.get("transform_evidence", {}))
+        candidate_transforms = set(_candidate_transforms_for_task(head_task_id))
+        for transform_name in TRANSFORM_NAMES:
+            local[f"history_transform_evidence_{transform_name}"] = max(
+                0.0,
+                min(1.0, float(transform_evidence.get(transform_name, 0.0))),
+            )
+            if head_task_id is None:
+                affinity = 0.0
+            elif transform_name == "identity":
+                affinity = 0.0
+            elif transform_name in candidate_transforms:
+                affinity = 1.0
+            else:
+                affinity = -1.0
+            local[f"task_transform_affinity_{transform_name}"] = affinity
+        contradiction_pressure = self._contradiction_pressure(node_id)
+        node_spec = self.topology_state.node_specs.get(node_id) if self.topology_state is not None else None
+        candidate_targets = self._candidate_growth_targets(node_id)
+        frontier_slots = self._candidate_frontier_slots(node_id)
+        local["contradiction_pressure"] = contradiction_pressure
+        local["growth_surplus_streak"] = (
+            min(
+                1.0,
+                (node_spec.surplus_streak if node_spec is not None else 0)
+                / max(self.morphogenesis_config.surplus_window, 1),
+            )
+            if self.morphogenesis_config.enabled
+            else 0.0
+        )
+        local["growth_candidate_count"] = min(1.0, len(candidate_targets) / 3.0)
+        local["frontier_slot_count"] = min(1.0, len(frontier_slots) / 2.0)
+        local["node_probationary"] = 1.0 if node_spec is not None and node_spec.probationary else 0.0
+        local["lineage_depth"] = (
+            min(1.0, float(node_spec.lineage_depth))
+            if node_spec is not None
+            else 0.0
+        )
+        local["dynamic_node"] = 1.0 if node_spec is not None and node_spec.dynamic else 0.0
+        local["energy_balance"] = (
+            max(-1.0, min(1.0, node_spec.net_energy_recent))
+            if node_spec is not None
+            else 0.0
+        )
+        local["energy_surplus"] = (
+            max(0.0, min(1.0, node_spec.net_energy_recent + 0.35 * local["reward_buffer"] + 0.25 * local["atp_ratio"]))
+            if node_spec is not None
+            else 0.0
+        )
+        local["maintenance_load"] = (
+            min(
+                1.0,
+                (
+                    node_spec.maintenance_cost_recent
+                    + node_spec.structural_upkeep_recent
+                    + node_spec.growth_cost_recent
+                ) / 0.25,
+            )
+            if node_spec is not None
+            else 0.0
+        )
+        local["structural_value"] = (
+            max(-1.0, min(1.0, node_spec.value_recent))
+            if node_spec is not None
+            else 0.0
+        )
+        observed_context_bit = effective_context_bit
         payload_bits = head_packet.payload_bits if head_packet is not None else []
         for index in range(4):
             local[f"payload_bit_{index}"] = (
@@ -316,13 +833,13 @@ class RoutingEnvironment:
             )
             context_credit = 0.0
             context_debt = 0.0
-            if head_packet is not None and head_packet.context_bit is not None:
+            if observed_context_bit is not None:
                 context_credit = state.context_transform_credit.get(
-                    _context_credit_key(transform_name, int(head_packet.context_bit)),
+                    _context_credit_key(transform_name, int(observed_context_bit)),
                     0.0,
                 )
                 context_debt = state.context_transform_debt.get(
-                    _context_credit_key(transform_name, int(head_packet.context_bit)),
+                    _context_credit_key(transform_name, int(observed_context_bit)),
                     0.0,
                 )
             local[f"context_feedback_credit_{transform_name}"] = min(
@@ -344,6 +861,14 @@ class RoutingEnvironment:
                 1.0,
                 len(self.inboxes[neighbor_id]) / max(self.inbox_capacity, 1),
             )
+            if self.topology_state is not None:
+                neighbor_spec = self.topology_state.node_specs.get(neighbor_id)
+                local[f"neighbor_dynamic_{neighbor_id}"] = (
+                    1.0 if neighbor_spec is not None and neighbor_spec.dynamic else 0.0
+                )
+                local[f"neighbor_probationary_{neighbor_id}"] = (
+                    1.0 if neighbor_spec is not None and neighbor_spec.probationary else 0.0
+                )
             for transform_name in TRANSFORM_NAMES:
                 branch_credit = state.branch_transform_credit.get(
                     _branch_debt_key(neighbor_id, transform_name),
@@ -355,12 +880,12 @@ class RoutingEnvironment:
                 )
                 context_branch_credit = 0.0
                 context_branch_debt = 0.0
-                if head_packet is not None and head_packet.context_bit is not None:
+                if observed_context_bit is not None:
                     context_branch_credit = state.context_branch_transform_credit.get(
                         _context_branch_debt_key(
                             neighbor_id,
                             transform_name,
-                            int(head_packet.context_bit),
+                            int(observed_context_bit),
                         ),
                         0.0,
                     )
@@ -368,7 +893,7 @@ class RoutingEnvironment:
                         _context_branch_debt_key(
                             neighbor_id,
                             transform_name,
-                            int(head_packet.context_bit),
+                            int(observed_context_bit),
                         ),
                         0.0,
                     )
@@ -390,13 +915,13 @@ class RoutingEnvironment:
                 )
             branch_context_debt = 0.0
             branch_context_credit = 0.0
-            if head_packet is not None and head_packet.context_bit is not None:
+            if observed_context_bit is not None:
                 branch_context_credit = state.branch_context_credit.get(
-                    _branch_context_debt_key(neighbor_id, int(head_packet.context_bit)),
+                    _branch_context_debt_key(neighbor_id, int(observed_context_bit)),
                     0.0,
                 )
                 branch_context_debt = state.branch_context_debt.get(
-                    _branch_context_debt_key(neighbor_id, int(head_packet.context_bit)),
+                    _branch_context_debt_key(neighbor_id, int(observed_context_bit)),
                     0.0,
                 )
             local[f"branch_context_feedback_credit_{neighbor_id}"] = min(
@@ -413,7 +938,227 @@ class RoutingEnvironment:
                 local[f"inhibited_{neighbor_id}"] = (
                     1.0 if self.state_for(neighbor_id).inhibited_for > 0 else 0.0
                 )
+        for target_id in candidate_targets:
+            if f"progress_{target_id}" not in local:
+                target_position = self.positions[target_id]
+                progress = 1.0 - abs(sink_position - target_position) / span
+                local[f"progress_{target_id}"] = max(0.0, min(1.0, progress))
+                local[f"congestion_{target_id}"] = min(
+                    1.0,
+                    len(self.inboxes[target_id]) / max(self.inbox_capacity, 1),
+                )
         return local
+
+    def _contradiction_pressure(self, node_id: str) -> float:
+        state = self.state_for(node_id)
+        debt_total = (
+            sum(state.transform_debt.values())
+            + sum(state.context_transform_debt.values())
+            + sum(state.branch_transform_debt.values())
+            + sum(state.context_branch_transform_debt.values())
+            + sum(state.branch_context_debt.values())
+        )
+        credit_total = (
+            sum(state.transform_credit.values())
+            + sum(state.context_transform_credit.values())
+            + sum(state.branch_transform_credit.values())
+            + sum(state.context_branch_transform_credit.values())
+            + sum(state.branch_context_credit.values())
+        )
+        if debt_total <= 0.0 and credit_total <= 0.0:
+            return 0.0
+        return max(0.0, min(1.0, debt_total / max(debt_total + credit_total, 1e-9)))
+
+    def _candidate_growth_targets(self, node_id: str) -> List[str]:
+        if self.topology_state is None or not self.morphogenesis_config.enabled:
+            return []
+        return self.topology_state.candidate_targets(
+            node_id,
+            hop_limit=self.morphogenesis_config.frontier_hop_limit,
+        )
+
+    def _candidate_frontier_slots(self, node_id: str) -> List[int]:
+        if self.topology_state is None or not self.morphogenesis_config.enabled:
+            return []
+        return self.topology_state.node_layer_slots(node_id)
+
+    def growth_action_specs(self, node_id: str) -> List[dict[str, object]]:
+        if not self.morphogenesis_config.enabled or self.topology_state is None:
+            return []
+        if node_id in (self.sink_id,):
+            return []
+        if node_id not in self.node_states:
+            return []
+        state = self.state_for(node_id)
+        observation = self.observe_local(node_id)
+        node_spec = self.topology_state.node_specs.get(node_id)
+        if node_spec is None:
+            return []
+        atp_ratio = observation.get("atp_ratio", 0.0)
+        backlog_crisis = (
+            observation.get("ingress_backlog", 0.0) >= 0.85
+            or observation.get("queue_pressure", 0.0) >= 0.85
+        )
+        contradiction = observation.get("contradiction_pressure", 0.0)
+        overload = max(
+            observation.get("queue_pressure", 0.0),
+            observation.get("oldest_packet_age", 0.0),
+            observation.get("ingress_backlog", 0.0),
+        )
+        energy_balance = float(node_spec.net_energy_recent)
+        energy_surplus = float(observation.get("energy_surplus", 0.0))
+        structural_value = float(node_spec.value_recent)
+        structurally_motivated = (
+            contradiction >= self.morphogenesis_config.contradiction_threshold
+            or overload >= self.morphogenesis_config.overload_threshold
+        )
+        growth_ready = (
+            atp_ratio >= self.morphogenesis_config.atp_surplus_threshold
+            and node_spec.positive_energy_streak >= 1
+            and node_spec.surplus_streak >= max(1, self.morphogenesis_config.surplus_window - 1)
+            and not backlog_crisis
+            and energy_balance >= self.morphogenesis_config.growth_energy_threshold
+            and structural_value >= self.morphogenesis_config.growth_energy_threshold
+            and structurally_motivated
+            and not self.topology_state.max_dynamic_nodes_reached(self.morphogenesis_config)
+        )
+
+        specs: List[dict[str, object]] = []
+        local_queue_window = len(self.inboxes[node_id])
+        low_local_pressure = local_queue_window <= self.morphogenesis_config.growth_queue_tolerance
+        if growth_ready and low_local_pressure:
+            for target_id in self._candidate_growth_targets(node_id):
+                target_pos = self.positions[target_id]
+                node_pos = self.positions[node_id]
+                progress = 1.0 - abs(self.positions[self.sink_id] - target_pos) / max(
+                    abs(self.positions[self.sink_id] - self.positions[self.source_id]),
+                    1,
+                )
+                edge_projection = (
+                    energy_surplus
+                    + 0.18 * contradiction
+                    + 0.10 * overload
+                    + 0.12 * progress
+                    - self.morphogenesis_config.bud_edge_cost
+                )
+                if target_pos == node_pos + 1:
+                    if edge_projection >= self.morphogenesis_config.growth_energy_threshold:
+                        specs.append(
+                            {
+                                "action": f"bud_edge:{target_id}",
+                                "cost": self.morphogenesis_config.bud_edge_cost,
+                                "score": (
+                                    0.20
+                                    + edge_projection
+                                    + 0.08 * atp_ratio
+                                    + 0.06 * observation.get("reward_buffer", 0.0)
+                                ),
+                                "target_id": target_id,
+                                "reason": "energy_affordable_contradiction_escape",
+                            }
+                        )
+                if target_pos > node_pos + 1:
+                    slot = node_pos + 1
+                    node_projection = (
+                        energy_surplus
+                        + 0.22 * contradiction
+                        + 0.08 * overload
+                        + 0.10 * progress
+                        - 1.15 * self.morphogenesis_config.bud_node_cost
+                    )
+                    if node_projection >= self.morphogenesis_config.growth_energy_threshold:
+                        specs.append(
+                            {
+                                "action": f"bud_node:{slot}:{target_id}",
+                                "cost": self.morphogenesis_config.bud_node_cost,
+                                "score": (
+                                    0.22
+                                    + node_projection
+                                    + 0.06 * atp_ratio
+                                    + 0.06 * observation.get("reward_buffer", 0.0)
+                                ),
+                                "target_id": target_id,
+                                "slot": slot,
+                                "reason": "energy_affordable_branch_bypass",
+                            }
+                        )
+
+        neighbors = self.neighbors_of(node_id)
+        if len(self.inboxes[node_id]) == 0:
+            for neighbor_id in neighbors:
+                idle_ticks = 0
+                edge = None
+                if self.topology_state is not None and self.topology_state.has_edge(node_id, neighbor_id):
+                    edge = self.topology_state.edge_specs.get(_edge_id(node_id, neighbor_id))
+                    if edge is not None:
+                        if edge.last_used_cycle is None:
+                            idle_ticks = self.current_cycle - edge.created_cycle
+                        else:
+                            idle_ticks = self.current_cycle - edge.last_used_cycle
+                if edge is None or not edge.dynamic:
+                    continue
+                prune_ready = (
+                    edge.negative_value_streak >= self.morphogenesis_config.edge_prune_ticks
+                    or (
+                        idle_ticks >= self.morphogenesis_config.edge_prune_ticks
+                        and edge.value_recent <= self.morphogenesis_config.prune_energy_threshold
+                    )
+                )
+                if prune_ready and len(neighbors) > 1:
+                    specs.append(
+                        {
+                            "action": f"prune_edge:{neighbor_id}",
+                            "cost": self.morphogenesis_config.prune_edge_cost,
+                            "score": (
+                                0.22
+                                + max(0.0, -edge.value_recent)
+                                + 0.18 * idle_ticks / max(self.morphogenesis_config.edge_prune_ticks, 1)
+                            ),
+                            "target_id": neighbor_id,
+                            "reason": "energetically_net_negative",
+                        }
+                    )
+            if (
+                node_spec.dynamic
+                and node_spec.negative_energy_streak >= self.morphogenesis_config.isolation_ticks
+                and (
+                    len(neighbors) == 0
+                    or node_spec.isolated_ticks >= self.morphogenesis_config.isolation_ticks
+                    or node_spec.dormant_ticks >= self.morphogenesis_config.isolation_ticks
+                )
+            ):
+                specs.append(
+                    {
+                        "action": "apoptosis_request",
+                        "cost": self.morphogenesis_config.apoptosis_cost,
+                        "score": 0.95,
+                        "reason": "energetically_unsustainable",
+                    }
+                )
+        return specs
+
+    def queue_growth_proposal(self, node_id: str, action: str, *, score: float, cost: float) -> GrowthProposal:
+        target_id = None
+        slot = None
+        if action.startswith("bud_edge:"):
+            target_id = action.split(":", 1)[1]
+        elif action.startswith("bud_node:"):
+            _, slot_raw, target_id = action.split(":", 2)
+            slot = int(slot_raw)
+        elif action.startswith("prune_edge:"):
+            target_id = action.split(":", 1)[1]
+        proposal = GrowthProposal(
+            action=action,
+            node_id=node_id,
+            cycle=self.current_cycle,
+            score=score,
+            cost=cost,
+            target_id=target_id,
+            slot=slot,
+            reason="queued_locally",
+        )
+        self.pending_growth_proposals.append(proposal)
+        return proposal
 
     def route_available(self, node_id: str, neighbor_id: str, cost: float) -> bool:
         state = self.state_for(node_id)
@@ -439,7 +1184,7 @@ class RoutingEnvironment:
         return recovered
 
     def score_packet(self, packet: SignalPacket) -> float:
-        target_bits = _target_bits_for_task(
+        target_bits = list(packet.target_bits) if packet.target_bits else _target_bits_for_task(
             packet.input_bits,
             context_bit=packet.context_bit,
             task_id=packet.task_id,
@@ -476,6 +1221,14 @@ class RoutingEnvironment:
         packet.hops.append(node_id)
         packet.edge_path.append(_edge_id(node_id, neighbor_id))
         packet.last_moved_cycle = self.current_cycle
+        self._record_latent_route(
+            node_id,
+            task_id=packet.task_id,
+            context_bit=packet.context_bit,
+            transform_name=transform,
+        )
+        if self.topology_state is not None:
+            self.topology_state.record_edge_use(node_id, neighbor_id, self.current_cycle, cost=cost)
 
         source_state = self.state_for(node_id)
         source_state.atp = max(0.0, source_state.atp - cost)
@@ -497,6 +1250,7 @@ class RoutingEnvironment:
                         amount=feedback_award,
                         transform_path=list(packet.transform_trace),
                         context_bit=packet.context_bit,
+                        task_id=packet.task_id,
                         bit_match_ratio=float(packet.bit_match_ratio or 0.0),
                         matched_target=bool(packet.matched_target),
                     )
@@ -551,7 +1305,13 @@ class RoutingEnvironment:
             prior_credit = state.transform_credit.get(transform_name, 0.0)
             prior_debt = state.transform_debt.get(transform_name, 0.0)
             branch_key = _branch_debt_key(neighbor_id, transform_name)
-            if pulse.context_bit is None:
+            resolved_context_bit, resolved_context_confidence, context_promotion_ready = self._resolved_feedback_context(
+                source_id,
+                pulse,
+                transform_name,
+                credit_signal=credit_signal,
+            )
+            if resolved_context_bit is None:
                 state.transform_credit[transform_name] = min(
                     1.0,
                     0.55 * prior_credit + 0.45 * credit_signal,
@@ -563,15 +1323,15 @@ class RoutingEnvironment:
                 )
                 state.transform_debt[transform_name] = max(0.0, prior_debt * 0.65)
             else:
-                context_key = _context_credit_key(transform_name, int(pulse.context_bit))
+                context_key = _context_credit_key(transform_name, int(resolved_context_bit))
                 context_branch_key = _context_branch_debt_key(
                     neighbor_id,
                     transform_name,
-                    int(pulse.context_bit),
+                    int(resolved_context_bit),
                 )
                 branch_context_key = _branch_context_debt_key(
                     neighbor_id,
-                    int(pulse.context_bit),
+                    int(resolved_context_bit),
                 )
                 prior_context_credit = state.context_transform_credit.get(context_key, 0.0)
                 prior_branch_credit = state.branch_transform_credit.get(branch_key, 0.0)
@@ -758,10 +1518,22 @@ class RoutingEnvironment:
                     "node_id": source_id,
                     "amount": pulse.amount,
                     "transform": transform_name,
-                    "context_bit": pulse.context_bit,
+                    "context_bit": resolved_context_bit,
+                    "raw_context_bit": pulse.context_bit,
+                    "effective_context_confidence": resolved_context_confidence,
+                    "context_promotion_ready": context_promotion_ready,
+                    "task_id": pulse.task_id,
                     "bit_match_ratio": pulse.bit_match_ratio,
                 }
             )
+            if self.topology_state is not None:
+                self.topology_state.record_feedback(
+                    source_id,
+                    pulse.amount,
+                    self.current_cycle,
+                    self.morphogenesis_config,
+                    neighbor_id=neighbor_id,
+                )
             pulse.advance()
             if not pulse.complete:
                 remaining.append(pulse)
@@ -817,6 +1589,13 @@ class RoutingEnvironment:
                 if state.branch_context_credit[key] < 1e-4:
                     del state.branch_context_credit[key]
         self._update_admission_substrate()
+        if self.topology_state is not None:
+            self.topology_state.update_node_counters(
+                node_states=self.node_states,
+                adjacency=self.adjacency,
+                config=self.morphogenesis_config,
+                cycle=self.current_cycle,
+            )
         self._expire_stale_packets()
         self._admit_source_packets()
         self._prioritize_all_queues()
@@ -862,10 +1641,12 @@ class RoutingEnvironment:
             "overload_events": self.overload_events,
             "max_inbox_depth": self.max_inbox_depth,
             "max_source_backlog": self.max_source_backlog,
+            "pending_growth_proposals": len(self.pending_growth_proposals),
         }
 
     def export_runtime_state(self) -> dict:
         return {
+            "topology": self.topology_state.to_dict() if self.topology_state is not None else None,
             "node_states": {
                 node_id: asdict(state)
                 for node_id, state in self.node_states.items()
@@ -890,9 +1671,15 @@ class RoutingEnvironment:
             "overload_events": self.overload_events,
             "max_inbox_depth": self.max_inbox_depth,
             "max_source_backlog": self.max_source_backlog,
+            "pending_growth_proposals": [asdict(proposal) for proposal in self.pending_growth_proposals],
+            "latent_context_trackers": self.export_latent_context_state(),
         }
 
     def load_runtime_state(self, payload: dict) -> None:
+        topology_payload = payload.get("topology")
+        if topology_payload:
+            self.topology_state = TopologyState.from_dict(topology_payload)
+            self.sync_topology()
         self._next_packet_id = int(payload.get("next_packet_id", 1))
         self.packet_counter = itertools.count(self._next_packet_id)
         self.current_cycle = int(payload.get("current_cycle", 0))
@@ -906,7 +1693,8 @@ class RoutingEnvironment:
         inboxes = payload.get("inboxes", {})
         self.inboxes = {node_id: [] for node_id in self.positions}
         for node_id, packets in inboxes.items():
-            self.inboxes[node_id] = [SignalPacket(**packet) for packet in packets]
+            if node_id in self.inboxes:
+                self.inboxes[node_id] = [SignalPacket(**packet) for packet in packets]
 
         self.delivered_packets = [
             SignalPacket(**packet) for packet in payload.get("delivered_packets", [])
@@ -936,6 +1724,11 @@ class RoutingEnvironment:
         self.overload_events = int(payload.get("overload_events", 0))
         self.max_inbox_depth = int(payload.get("max_inbox_depth", 0))
         self.max_source_backlog = int(payload.get("max_source_backlog", 0))
+        self.pending_growth_proposals = [
+            GrowthProposal(**proposal)
+            for proposal in payload.get("pending_growth_proposals", [])
+        ]
+        self.load_latent_context_state(payload.get("latent_context_trackers"))
 
     def _feedback_pending_ratio(self, node_id: str) -> float:
         pending = 0
@@ -1095,6 +1888,7 @@ class NativeSubstrateSystem:
         source_admission_rate: int | None = None,
         source_admission_min_rate: int = 1,
         source_admission_max_rate: int | None = None,
+        morphogenesis_config: MorphogenesisConfig | None = None,
     ) -> None:
         from .node_agent import NodeAgent
 
@@ -1102,6 +1896,16 @@ class NativeSubstrateSystem:
             node_id: tuple(neighbor_ids)
             for node_id, neighbor_ids in adjacency.items()
         }
+        self.selector_seed = selector_seed
+        self.max_atp = max_atp
+        self.topology_state = TopologyState.from_graph(
+            normalized,
+            positions,
+            source_id=source_id,
+            sink_id=sink_id,
+        )
+        self.morphogenesis_config = morphogenesis_config or MorphogenesisConfig()
+        self.topology_manager = TopologyManager(self.morphogenesis_config)
         self.environment = RoutingEnvironment(
             adjacency=normalized,
             positions=positions,
@@ -1113,18 +1917,61 @@ class NativeSubstrateSystem:
             source_admission_rate=source_admission_rate,
             source_admission_min_rate=source_admission_min_rate,
             source_admission_max_rate=source_admission_max_rate,
+            topology_state=self.topology_state,
+            morphogenesis_config=self.morphogenesis_config,
         )
         self.global_cycle = 0
         self.session_start_cycle = 0
-        self.agents = {
-            node_id: NodeAgent(
-                node_id=node_id,
-                neighbor_ids=normalized.get(node_id, ()),
-                environment=self.environment,
-                selector_seed=None if selector_seed is None else selector_seed + index,
-            )
-            for index, node_id in enumerate(self.environment.agent_ids())
-        }
+        self.agents: Dict[str, NodeAgent] = {}
+        for node_id in self.environment.agent_ids():
+            self.ensure_agent(node_id)
+
+    def _selector_seed_for(self, node_id: str) -> int | None:
+        if self.selector_seed is None:
+            return None
+        ordered = self.environment.agent_ids()
+        try:
+            index = ordered.index(node_id)
+        except ValueError:
+            index = len(ordered)
+        return self.selector_seed + index
+
+    def ensure_agent(self, node_id: str, *, probationary: bool = False) -> None:
+        from .node_agent import NodeAgent
+
+        if node_id == self.environment.sink_id:
+            return
+        if node_id in self.agents:
+            return
+        self.agents[node_id] = NodeAgent(
+            node_id=node_id,
+            neighbor_ids=self.environment.neighbors_of(node_id),
+            environment=self.environment,
+            selector_seed=self._selector_seed_for(node_id),
+            probationary=probationary,
+        )
+
+    def refresh_agent_neighbors(self, node_id: str) -> None:
+        if node_id not in self.agents:
+            self.ensure_agent(node_id)
+            return
+        self.agents[node_id].refresh_neighbors(self.environment.neighbors_of(node_id))
+
+    def remove_agent(self, node_id: str) -> None:
+        self.agents.pop(node_id, None)
+
+    def rebuild_agents_from_topology(self) -> None:
+        current_agents = set(self.agents)
+        desired_agents = set(self.environment.agent_ids())
+        for node_id in sorted(desired_agents - current_agents):
+            probationary = False
+            if self.topology_state is not None and node_id in self.topology_state.node_specs:
+                probationary = self.topology_state.node_specs[node_id].probationary
+            self.ensure_agent(node_id, probationary=probationary)
+        for node_id in sorted(current_agents - desired_agents):
+            self.remove_agent(node_id)
+        for node_id in sorted(desired_agents):
+            self.refresh_agent_neighbors(node_id)
 
     def inject_signal(self, count: int = 1) -> None:
         self.environment.inject_signal(count=count, cycle=self.global_cycle)
@@ -1137,6 +1984,7 @@ class NativeSubstrateSystem:
                 payload_bits=spec.payload_bits,
                 context_bit=spec.context_bit,
                 task_id=spec.task_id,
+                target_bits=spec.target_bits,
             )
             for spec in signal_specs
         ]
@@ -1144,6 +1992,7 @@ class NativeSubstrateSystem:
 
     def run_global_cycle(self) -> dict[str, object]:
         self.global_cycle += 1
+        self.rebuild_agents_from_topology()
         self.environment.prepare_cycle(self.global_cycle)
         cycle_entries = {}
         for node_id in self.environment.agent_ids():
@@ -1159,10 +2008,15 @@ class NativeSubstrateSystem:
             if local_feedback:
                 agent.absorb_feedback(local_feedback)
         self.environment.tick(self.global_cycle)
+        topology_events = []
+        if self.topology_manager.should_checkpoint(self.global_cycle):
+            topology_events = self.topology_manager.apply_checkpoint(self, self.global_cycle)
+            self.rebuild_agents_from_topology()
         return {
             "cycle": self.global_cycle,
             "entries": cycle_entries,
             "feedback": feedback,
+            "topology_events": [asdict(event) for event in topology_events],
             "snapshot": self.environment.snapshot(),
         }
 
@@ -1236,6 +2090,28 @@ class NativeSubstrateSystem:
         )
         total_action_cost = sum(entry.cost_secs for entry in all_entries)
         session_cycles = max(1, self.global_cycle - self.session_start_cycle)
+        topology_events = list(self.topology_state.events) if self.topology_state is not None else []
+        bud_events = [event for event in topology_events if event.event_type in ("bud_edge", "bud_node")]
+        prune_events = [event for event in topology_events if event.event_type == "prune_edge"]
+        apoptosis_events = [event for event in topology_events if event.event_type == "apoptosis"]
+        dynamic_specs = [
+            spec
+            for spec in (self.topology_state.node_specs.values() if self.topology_state is not None else [])
+            if spec.dynamic
+        ]
+        dynamic_edges = [
+            edge
+            for edge in (self.topology_state.edge_specs.values() if self.topology_state is not None else [])
+            if edge.dynamic
+        ]
+        utilized_dynamic_nodes = 0
+        first_feedback_samples = []
+        for spec in dynamic_specs:
+            state = self.environment.node_states.get(spec.node_id)
+            if state is not None and (state.routed_packets > 0 or state.received_feedback > 0):
+                utilized_dynamic_nodes += 1
+            if spec.first_feedback_cycle is not None:
+                first_feedback_samples.append(max(0, spec.first_feedback_cycle - spec.created_cycle))
         return {
             "cycles": self.global_cycle,
             "injected_packets": self.environment.total_injected,
@@ -1286,6 +2162,33 @@ class NativeSubstrateSystem:
             "overload_events": self.environment.overload_events,
             "max_inbox_depth": self.environment.max_inbox_depth,
             "max_source_backlog": self.environment.max_source_backlog,
+            "node_count": len(self.topology_state.node_specs) if self.topology_state is not None else len(self.environment.positions),
+            "edge_count": len(self.topology_state.edge_specs) if self.topology_state is not None else sum(len(neighbors) for neighbors in self.environment.adjacency.values()),
+            "bud_attempts": len(bud_events),
+            "bud_successes": len(bud_events),
+            "prune_events": len(prune_events),
+            "apoptosis_events": len(apoptosis_events),
+            "dynamic_node_count": len(dynamic_specs),
+            "new_node_utilization": round(
+                utilized_dynamic_nodes / max(len(dynamic_specs), 1),
+                4,
+            ),
+            "mean_dynamic_node_value": round(
+                sum(spec.value_recent for spec in dynamic_specs) / max(len(dynamic_specs), 1),
+                4,
+            ) if dynamic_specs else None,
+            "mean_dynamic_net_energy": round(
+                sum(spec.net_energy_recent for spec in dynamic_specs) / max(len(dynamic_specs), 1),
+                4,
+            ) if dynamic_specs else None,
+            "mean_dynamic_edge_value": round(
+                sum(edge.value_recent for edge in dynamic_edges) / max(len(dynamic_edges), 1),
+                4,
+            ) if dynamic_edges else None,
+            "time_to_first_feedback": round(
+                sum(first_feedback_samples) / max(len(first_feedback_samples), 1),
+                4,
+            ) if first_feedback_samples else None,
             "context_breakdown": context_breakdown,
             "final_transform_counts": transform_counts,
             "task_diagnostics": task_diagnostics,
@@ -1537,6 +2440,7 @@ class NativeSubstrateSystem:
             "global_cycle": self.global_cycle,
             "environment": self.environment.export_runtime_state(),
             "agent_ids": list(self.agents.keys()),
+            "topology": self.topology_state.to_dict(),
         }
         manifest_path = target / "system_state.json"
         manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
@@ -1554,6 +2458,8 @@ class NativeSubstrateSystem:
             "global_cycle": self.global_cycle,
             "agent_ids": list(self.agents.keys()),
             "admission_substrate": self.environment.admission_substrate.export_state(),
+            "topology": self.topology_state.to_dict(),
+            "latent_context_trackers": self.environment.export_latent_context_state(),
         }
         manifest_path = target / "memory_state.json"
         manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
@@ -1571,6 +2477,8 @@ class NativeSubstrateSystem:
             "global_cycle": self.global_cycle,
             "agent_ids": list(self.agents.keys()),
             "admission_substrate": self.environment.admission_substrate.export_state(),
+            "topology": self.topology_state.to_dict(),
+            "latent_context_trackers": self.environment.export_latent_context_state(),
         }
         manifest_path = target / "substrate_state.json"
         manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
@@ -1584,9 +2492,16 @@ class NativeSubstrateSystem:
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         self.global_cycle = int(manifest.get("global_cycle", 0))
         self.session_start_cycle = self.global_cycle
+        topology_payload = manifest.get("topology")
+        if topology_payload:
+            self.topology_state = TopologyState.from_dict(topology_payload)
+            self.environment.topology_state = self.topology_state
+            self.environment.sync_topology()
+            self.rebuild_agents_from_topology()
         self.environment.admission_substrate = AdmissionSubstrate.from_state(
             manifest.get("admission_substrate")
         )
+        self.environment.load_latent_context_state(manifest.get("latent_context_trackers"))
         nodes_dir = target / "nodes"
         for node_id, agent in self.agents.items():
             agent.load_carryover(nodes_dir / f"{node_id}.json")
@@ -1600,9 +2515,16 @@ class NativeSubstrateSystem:
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         self.global_cycle = int(manifest.get("global_cycle", 0))
         self.session_start_cycle = self.global_cycle
+        topology_payload = manifest.get("topology")
+        if topology_payload:
+            self.topology_state = TopologyState.from_dict(topology_payload)
+            self.environment.topology_state = self.topology_state
+            self.environment.sync_topology()
+            self.rebuild_agents_from_topology()
         self.environment.admission_substrate = AdmissionSubstrate.from_state(
             manifest.get("admission_substrate")
         )
+        self.environment.load_latent_context_state(manifest.get("latent_context_trackers"))
         nodes_dir = target / "nodes"
         for node_id, agent in self.agents.items():
             agent.load_substrate_carryover(nodes_dir / f"{node_id}.json")
@@ -1618,6 +2540,8 @@ class NativeSubstrateSystem:
         self.global_cycle = int(manifest.get("global_cycle", 0))
         self.session_start_cycle = self.global_cycle
         self.environment.load_runtime_state(manifest.get("environment", {}))
+        self.topology_state = self.environment.topology_state
+        self.rebuild_agents_from_topology()
 
         nodes_dir = target / "nodes"
         for node_id, agent in self.agents.items():

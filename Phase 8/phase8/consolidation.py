@@ -129,11 +129,20 @@ class Phase8ConsolidationPipeline(BasicConsolidationPipeline):
                 continue
             context_groups: Dict[int | None, List[CycleEntry]] = {}
             for entry in action_entries:
-                context_value = entry.state_before.get("head_context_bit")
-                if entry.state_before.get("head_has_context", 0.0) < 0.5:
-                    context_value = None
-                elif context_value is not None:
-                    context_value = int(float(context_value))
+                if entry.state_before.get("effective_has_context", 0.0) >= 0.5:
+                    context_value = entry.state_before.get("effective_context_bit")
+                    context_confidence = float(entry.state_before.get("effective_context_confidence", 0.0))
+                    promotion_ready = entry.state_before.get("context_promotion_ready", 0.0) >= 0.5
+                    if not promotion_ready or context_confidence < 0.75:
+                        context_value = None
+                    elif context_value is not None:
+                        context_value = int(float(context_value))
+                else:
+                    context_value = entry.state_before.get("head_context_bit")
+                    if entry.state_before.get("head_has_context", 0.0) < 0.5:
+                        context_value = None
+                    elif context_value is not None:
+                        context_value = int(float(context_value))
                 context_groups.setdefault(context_value, []).append(entry)
 
             for context_bit, context_entries in context_groups.items():

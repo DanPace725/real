@@ -50,6 +50,13 @@ class Phase8Selector:
         route_actions = [action for action in available if _route_neighbor(action) is not None]
         invest_actions = [action for action in available if action.startswith("invest:")]
         maintain_actions = [action for action in available if action == "maintain_edges"]
+        growth_actions = [
+            action
+            for action in available
+            if action.startswith("bud_edge:") or action.startswith("bud_node:")
+        ]
+        prune_actions = [action for action in available if action.startswith("prune_edge:")]
+        apoptosis_actions = [action for action in available if action == "apoptosis_request"]
         rest_available = "rest" in available
 
         local_inbox = len(self.environment.inboxes[self.node_id])
@@ -61,6 +68,9 @@ class Phase8Selector:
             observation.get("ingress_backlog", 0.0),
         )
 
+        if growth_actions and self._can_interrupt_routing(growth_actions, local_inbox, urgency, observation, history):
+            return self._best_growth_action(growth_actions), "guided"
+
         if local_inbox > 0 and route_actions:
             if self.rng.random() < self._local_exploration_rate(history, local_inbox, urgency):
                 return self._sample_routes(route_actions, history), "fluctuation"
@@ -69,8 +79,20 @@ class Phase8Selector:
         if state.atp <= self.rest_atp_threshold and rest_available:
             return "rest", "constraint"
 
+        if growth_actions and self._should_prioritize_growth(growth_actions):
+            return self._best_growth_action(growth_actions), "guided"
+
         if maintain_actions and self._needs_maintenance():
             return "maintain_edges", "guided"
+
+        if prune_actions:
+            return self._best_growth_action(prune_actions), "guided"
+
+        if growth_actions:
+            return self._best_growth_action(growth_actions), "guided"
+
+        if apoptosis_actions:
+            return apoptosis_actions[0], "constraint"
 
         if invest_actions:
             if self.rng.random() < 0.25:
@@ -114,6 +136,30 @@ class Phase8Selector:
         scored.sort(key=lambda item: item[0], reverse=True)
         return scored[0][1]
 
+    def _best_growth_action(self, actions: List[str]) -> str:
+        scored = [(self._score_growth_action(action), action) for action in actions]
+        scored.sort(key=lambda item: item[0], reverse=True)
+        return scored[0][1]
+
+    def _effective_context(self, observation: dict[str, float]) -> tuple[int | None, float]:
+        if observation.get("effective_has_context", 0.0) < 0.5:
+            return None, 0.0
+        return int(observation.get("effective_context_bit", 0.0)), max(
+            0.0,
+            min(1.0, observation.get("effective_context_confidence", 0.0)),
+        )
+
+    def _entry_effective_context(self, entry: object) -> tuple[int | None, float]:
+        state_before = getattr(entry, "state_before", {})
+        if state_before.get("effective_has_context", 0.0) >= 0.5:
+            return int(float(state_before.get("effective_context_bit", 0.0))), max(
+                0.0,
+                min(1.0, float(state_before.get("effective_context_confidence", 0.0))),
+            )
+        if state_before.get("head_has_context", 0.0) >= 0.5:
+            return int(float(state_before.get("head_context_bit", 0.0))), 1.0
+        return None, 0.0
+
     def _score_route(self, action: str, history: List[object]) -> float:
         neighbor_id = _route_neighbor(action)
         if neighbor_id is None:
@@ -122,13 +168,12 @@ class Phase8Selector:
 
         recent_delta = self._recency_weighted_mean(history, action, field="delta", default=0.0)
         recent_coherence = self._recency_weighted_mean(history, action, field="coherence", default=0.5)
-        context_bit = int(observation.get("head_context_bit", 0.0))
-        has_context = observation.get("head_has_context", 0.0)
+        context_bit, context_weight = self._effective_context(observation)
         context_delta = self._contextual_route_mean(
             history,
             action,
             context_bit=context_bit,
-            has_context=has_context,
+            context_weight=context_weight,
             field="delta",
             default=recent_delta,
         )
@@ -142,12 +187,33 @@ class Phase8Selector:
         action_support = self.substrate.action_support(
             neighbor_id,
             transform_name,
-            context_bit if has_context >= 0.5 else None,
+            context_bit,
         )
         action_velocity = self.substrate.action_velocity(
             neighbor_id,
             transform_name,
-            context_bit if has_context >= 0.5 else None,
+            context_bit,
+        )
+        history_transform_evidence = observation.get(
+            f"history_transform_evidence_{transform_name}",
+            0.0,
+        )
+        best_non_identity_history = max(
+            (
+                observation.get(f"history_transform_evidence_{candidate}", 0.0)
+                for candidate in ROUTE_TRANSFORMS
+                if candidate != "identity"
+            ),
+            default=0.0,
+        )
+        task_transform_affinity = observation.get(
+            f"task_transform_affinity_{transform_name}",
+            0.0,
+        )
+        hidden_task_commitment = (
+            observation.get("head_has_task", 0.0) >= 0.5
+            and observation.get("head_has_context", 0.0) < 0.5
+            and observation.get("effective_has_context", 0.0) < 0.5
         )
         feedback_credit = observation.get(f"feedback_credit_{transform_name}", 0.0)
         feedback_debt = observation.get(f"feedback_debt_{transform_name}", 0.0)
@@ -195,7 +261,25 @@ class Phase8Selector:
         branch_transform_bonus = 0.0
         competition_penalty = 0.0
         competition_bonus = 0.0
-        if has_context >= 0.5:
+        growth_novelty_bonus = 0.0
+        if self.environment.topology_state is not None:
+            neighbor_spec = self.environment.topology_state.node_specs.get(neighbor_id)
+            if neighbor_spec is not None and neighbor_spec.dynamic:
+                growth_novelty_bonus += self.environment.morphogenesis_config.growth_route_novelty_bonus
+            if neighbor_spec is not None and neighbor_spec.probationary:
+                growth_novelty_bonus += self.environment.morphogenesis_config.growth_route_probationary_bonus
+        if hidden_task_commitment:
+            if transform_name == "identity":
+                identity_penalty += 0.08 + 0.10 * min(1.0, best_non_identity_history)
+            elif task_transform_affinity > 0.0:
+                task_transform_bonus += 0.08 + 0.10 * history_transform_evidence
+            elif task_transform_affinity < 0.0:
+                identity_penalty += 0.06
+        elif transform_name == "identity" and best_non_identity_history > 0.12:
+            identity_penalty += 0.18 * min(1.0, best_non_identity_history)
+        elif transform_name != "identity":
+            task_transform_bonus += 0.12 * history_transform_evidence
+        if context_bit is not None:
             context_action_support = self.substrate.contextual_action_support(
                 neighbor_id,
                 transform_name,
@@ -209,16 +293,17 @@ class Phase8Selector:
             context_support_bonus = max(
                 0.0,
                 context_action_support - generic_action_support,
-            ) * 0.18 + max(0.0, context_action_velocity) * 0.08
+            ) * (0.18 * context_weight) + max(0.0, context_action_velocity) * (0.08 * context_weight)
             context_support_penalty = max(
                 0.0,
                 generic_action_support - context_action_support,
-            ) * 0.12
+            ) * (0.12 * context_weight)
             context_evidence = min(
                 1.0,
                 max(
                     0.0,
-                    context_action_support
+                    0.55 * history_transform_evidence
+                    + context_action_support
                     + context_feedback_credit
                     + 0.35 * branch_feedback_credit
                     + 0.60 * context_branch_feedback_credit
@@ -235,11 +320,11 @@ class Phase8Selector:
                 - 0.25 * context_feedback_credit
                 - 0.20 * context_action_support,
             )
-            branch_context_bonus = 0.20 * branch_context_feedback_credit
+            branch_context_bonus = 0.20 * branch_context_feedback_credit * context_weight
             branch_transform_bonus = (
                 0.10 * branch_feedback_credit + 0.22 * context_branch_feedback_credit
-            )
-            history_alignment = 0.35 + 0.65 * context_evidence
+            ) * context_weight
+            history_alignment = 0.55 + 0.45 * context_evidence
             history_alignment *= max(0.30, 1.0 - 0.40 * branch_context_pressure)
             if (
                 transform_name == "identity"
@@ -247,9 +332,9 @@ class Phase8Selector:
                 and feedback_credit < 0.35
                 and context_feedback_credit < 0.30
             ):
-                identity_penalty = 0.14
+                identity_penalty = 0.14 * context_weight
             elif transform_name != "identity" and context_feedback_debt < 0.45:
-                task_transform_bonus = 0.08
+                task_transform_bonus = 0.08 * max(context_weight, min(1.0, 0.35 + history_transform_evidence))
             competition_penalty, competition_bonus = self._competition_adjustment(
                 neighbor_id=neighbor_id,
                 transform_name=transform_name,
@@ -268,8 +353,10 @@ class Phase8Selector:
                 context_branch_feedback_debt=context_branch_feedback_debt,
                 branch_context_feedback_debt=branch_context_feedback_debt,
             )
+            competition_penalty *= context_weight
+            competition_bonus *= context_weight
         branch_escape_bonus = 0.0
-        if has_context >= 0.5:
+        if context_bit is not None:
             competing_branch_debt = max(
                 (
                     observation.get(f"branch_context_feedback_debt_{candidate_neighbor}", 0.0)
@@ -281,7 +368,7 @@ class Phase8Selector:
             branch_escape_bonus = 0.24 * max(
                 0.0,
                 competing_branch_debt - branch_context_pressure,
-            )
+            ) * context_weight
         progress = observation.get(f"progress_{neighbor_id}", 0.0)
         congestion = observation.get(f"congestion_{neighbor_id}", 0.0)
         inhibited = observation.get(f"inhibited_{neighbor_id}", 0.0)
@@ -291,15 +378,18 @@ class Phase8Selector:
         transform_cost = self.substrate.use_cost(
             neighbor_id,
             transform_name if action.startswith("route_transform:") else None,
-            context_bit if has_context >= 0.5 else None,
+            context_bit,
         )
         cost_ratio = transform_cost / max(self.substrate.config.fire_base_cost, 1e-9)
         stale_penalty = self._stale_bias_penalty(history, action)
         maintenance = self.substrate.maintenance_metrics()
+        context_route_component = (
+            (1.0 - context_weight) * recent_delta + context_weight * context_delta
+        )
 
         score = (
             0.32 * recent_delta * history_alignment
-            + 0.28 * context_delta * history_alignment
+            + 0.28 * context_route_component * history_alignment
             + 0.18 * recent_coherence * (0.55 + 0.45 * history_alignment)
             + 0.30 * support
             + 0.22 * action_support
@@ -307,10 +397,12 @@ class Phase8Selector:
             + 0.08 * support_velocity
             + 0.06 * action_velocity
             + 0.18 * feedback_credit
-            + 0.34 * context_feedback_credit
+            + 0.34 * context_feedback_credit * context_weight
+            + 0.16 * history_transform_evidence
             + 0.12 * last_match_ratio
             + 0.08 * last_feedback_amount
             + 0.06 * maintenance["action_maintenance_ratio"]
+            + growth_novelty_bonus
             + context_support_bonus
             + task_transform_bonus
             + branch_context_bonus
@@ -324,10 +416,10 @@ class Phase8Selector:
             - 0.12 * queue_pressure * congestion
             - context_support_penalty
             - 0.18 * feedback_debt
-            - 0.42 * context_feedback_debt
+            - 0.42 * context_feedback_debt * context_weight
             - 0.20 * branch_feedback_debt
-            - 0.48 * context_branch_feedback_debt
-            - 0.26 * branch_context_pressure
+            - 0.48 * context_branch_feedback_debt * context_weight
+            - 0.26 * branch_context_pressure * context_weight
             - identity_penalty
             - competition_penalty
             - stale_penalty
@@ -349,6 +441,98 @@ class Phase8Selector:
             + 0.22 * max(0.0, recent_route_delta)
             - 0.10 * congestion
             - 0.18 * cost_ratio
+        )
+
+    def _score_growth_action(self, action: str) -> float:
+        observation = self.environment.observe_local(self.node_id)
+        contradiction = observation.get("contradiction_pressure", 0.0)
+        surplus = observation.get("growth_surplus_streak", 0.0)
+        energy_surplus = observation.get("energy_surplus", 0.0)
+        energy_balance = observation.get("energy_balance", 0.0)
+        structural_value = observation.get("structural_value", 0.0)
+        maintenance_load = observation.get("maintenance_load", 0.0)
+        overload = max(
+            observation.get("queue_pressure", 0.0),
+            observation.get("oldest_packet_age", 0.0),
+            observation.get("ingress_backlog", 0.0),
+        )
+        if action.startswith("bud_node:"):
+            _, _, target_id = action.split(":", 2)
+            progress = observation.get(f"progress_{target_id}", 0.0)
+            return (
+                0.20
+                + 0.26 * contradiction
+                + 0.18 * surplus
+                + 0.18 * energy_surplus
+                + 0.12 * max(0.0, energy_balance)
+                + 0.08 * max(0.0, structural_value)
+                + 0.10 * overload
+                + 0.08 * progress
+                - 0.10 * maintenance_load
+            )
+        if action.startswith("bud_edge:"):
+            target_id = action.split(":", 1)[1]
+            progress = observation.get(f"progress_{target_id}", 0.0)
+            return (
+                0.18
+                + 0.24 * contradiction
+                + 0.18 * surplus
+                + 0.20 * energy_surplus
+                + 0.14 * max(0.0, energy_balance)
+                + 0.08 * max(0.0, structural_value)
+                + 0.10 * overload
+                + 0.10 * progress
+                - 0.08 * maintenance_load
+            )
+        if action.startswith("prune_edge:"):
+            target_id = action.split(":", 1)[1]
+            congestion = observation.get(f"congestion_{target_id}", 0.0)
+            return 0.22 + 0.28 * max(0.0, -energy_balance) + 0.18 * maintenance_load + 0.14 * congestion + 0.10 * overload
+        if action == "apoptosis_request":
+            return 0.55 + 0.35 * max(0.0, -structural_value) + 0.20 * maintenance_load
+        return 0.0
+
+    def _should_prioritize_growth(self, actions: List[str]) -> bool:
+        if not actions:
+            return False
+        best_score = max(self._score_growth_action(action) for action in actions)
+        return best_score >= 0.45
+
+    def _can_interrupt_routing(
+        self,
+        actions: List[str],
+        local_inbox: int,
+        urgency: float,
+        observation: dict[str, float],
+        history: List[object],
+    ) -> bool:
+        if not self._should_prioritize_growth(actions):
+            return False
+        if local_inbox <= 0:
+            return True
+        if len(history) < 6:
+            return False
+        if local_inbox > self.environment.morphogenesis_config.growth_queue_tolerance:
+            return False
+        if urgency > self.environment.morphogenesis_config.growth_interrupt_urgency_threshold:
+            return False
+        if observation.get("feedback_pending", 0.0) > 0.6:
+            return False
+        if observation.get("atp_ratio", 0.0) < self.environment.morphogenesis_config.atp_surplus_threshold:
+            return False
+        contradiction = observation.get("contradiction_pressure", 0.0)
+        overload = max(
+            observation.get("queue_pressure", 0.0),
+            observation.get("oldest_packet_age", 0.0),
+            observation.get("ingress_backlog", 0.0),
+        )
+        if (
+            observation.get("last_match_ratio", 0.0) >= 0.75
+            and contradiction < self.environment.morphogenesis_config.contradiction_threshold + 0.15
+        ):
+            return False
+        return contradiction >= self.environment.morphogenesis_config.contradiction_threshold or (
+            overload >= self.environment.morphogenesis_config.overload_threshold
         )
 
     def _needs_maintenance(self) -> bool:
@@ -434,18 +618,17 @@ class Phase8Selector:
         history: List[object],
         action: str,
         *,
-        context_bit: float,
-        has_context: float,
+        context_bit: int | None,
+        context_weight: float,
         field: str,
         default: float,
     ) -> float:
-        if has_context < 0.5:
+        if context_bit is None or context_weight <= 0.0:
             return default
         entries = [
             entry
             for entry in history
-            if entry.action == action
-            and float(entry.state_before.get("head_context_bit", 0.0)) == float(context_bit)
+            if entry.action == action and self._entry_effective_context(entry)[0] == context_bit
         ]
         if not entries:
             return default
@@ -455,7 +638,8 @@ class Phase8Selector:
         total_weight = 0.0
         for entry in entries[-16:]:
             age = max(0, current_cycle - entry.cycle)
-            weight = 0.5 ** (age / max(self.recency_half_life, 1e-9))
+            _, entry_weight = self._entry_effective_context(entry)
+            weight = (0.5 ** (age / max(self.recency_half_life, 1e-9))) * max(0.15, entry_weight)
             weighted_total += weight * float(getattr(entry, field))
             total_weight += weight
         if total_weight <= 0.0:
@@ -468,9 +652,9 @@ class Phase8Selector:
             for action in route_actions
         }
         observation = self.environment.observe_local(self.node_id)
-        if observation.get("head_has_context", 0.0) < 0.5:
+        context_bit, context_weight = self._effective_context(observation)
+        if context_bit is None or context_weight <= 0.0:
             return scores
-        context_bit = int(observation.get("head_context_bit", 0.0))
         evidence = {
             action: self._candidate_evidence_from_local_state(
                 neighbor_id=_route_neighbor(action) or "",
@@ -577,6 +761,10 @@ class Phase8Selector:
             branch_feedback_debt=branch_feedback_debt,
             context_branch_feedback_debt=context_branch_feedback_debt,
             branch_context_feedback_debt=branch_context_feedback_debt,
+            transform_history_evidence=observation.get(
+                f"history_transform_evidence_{transform_name}",
+                0.0,
+            ),
         )
         contradiction = max(
             0.0,
@@ -677,6 +865,10 @@ class Phase8Selector:
             f"branch_context_feedback_debt_{neighbor_id}",
             0.0,
         )
+        transform_history_evidence = observation.get(
+            f"history_transform_evidence_{transform_name}",
+            0.0,
+        )
         return self._candidate_evidence(
             neighbor_id=neighbor_id,
             transform_name=transform_name,
@@ -694,6 +886,7 @@ class Phase8Selector:
             branch_feedback_debt=branch_feedback_debt,
             context_branch_feedback_debt=context_branch_feedback_debt,
             branch_context_feedback_debt=branch_context_feedback_debt,
+            transform_history_evidence=transform_history_evidence,
         )
 
     def _candidate_contradiction_from_local_state(
@@ -765,24 +958,27 @@ class Phase8Selector:
         branch_feedback_debt: float,
         context_branch_feedback_debt: float,
         branch_context_feedback_debt: float,
+        transform_history_evidence: float,
     ) -> float:
         context_action_support = self.substrate.contextual_action_support(
             neighbor_id,
             transform_name,
             context_bit,
         )
+        _, context_weight = self._effective_context(observation)
         return (
             0.20 * generic_action_support
             + 0.30 * action_support
-            + 0.16 * context_action_support
+            + 0.16 * context_action_support * context_weight
+            + 0.16 * transform_history_evidence
             + 0.10 * feedback_credit
-            + 0.14 * context_feedback_credit
+            + 0.14 * context_feedback_credit * context_weight
             + 0.10 * branch_feedback_credit
-            + 0.20 * context_branch_feedback_credit
-            + 0.16 * branch_context_feedback_credit
+            + 0.20 * context_branch_feedback_credit * context_weight
+            + 0.16 * branch_context_feedback_credit * context_weight
             - 0.08 * feedback_debt
-            - 0.16 * context_feedback_debt
+            - 0.16 * context_feedback_debt * context_weight
             - 0.08 * branch_feedback_debt
-            - 0.22 * context_branch_feedback_debt
-            - 0.16 * branch_context_feedback_debt
+            - 0.22 * context_branch_feedback_debt * context_weight
+            - 0.16 * branch_context_feedback_debt * context_weight
         )

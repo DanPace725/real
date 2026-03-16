@@ -34,10 +34,12 @@ class NodeAgent:
         *,
         selector_seed: int | None = None,
         carryover_path: str | Path | None = None,
+        probationary: bool = False,
     ) -> None:
         self.node_id = node_id
         self.neighbor_ids = tuple(neighbor_ids)
         self.environment = environment
+        self.probationary = probationary
         self.substrate = ConnectionSubstrate(self.neighbor_ids)
 
         rng = random.Random(selector_seed)
@@ -84,6 +86,21 @@ class NodeAgent:
         )
         self.cycle = 0
 
+    def refresh_neighbors(self, neighbor_ids: tuple[str, ...]) -> None:
+        neighbor_ids = tuple(neighbor_ids)
+        if neighbor_ids == self.neighbor_ids:
+            return
+        refreshed = ConnectionSubstrate(neighbor_ids)
+        refreshed.copy_overlap_from(self.substrate)
+        self.neighbor_ids = neighbor_ids
+        self.substrate = refreshed
+        self.engine.substrate = refreshed
+        self.engine.selector.substrate = refreshed
+        self.engine.actions.neighbor_ids = neighbor_ids
+        self.engine.actions.substrate = refreshed
+        self.engine.memory_binding.neighbor_ids = neighbor_ids
+        self.engine.memory_binding.substrate = refreshed
+
     @property
     def atp(self) -> float:
         return self.environment.state_for(self.node_id).atp
@@ -107,16 +124,18 @@ class NodeAgent:
             context_bit = event.get("context_bit")
             if context_bit is not None:
                 context_bit = int(context_bit)
+            promotion_ready = bool(event.get("context_promotion_ready", context_bit is not None))
             amount = float(event.get("amount", 0.0))
             bit_match_ratio = float(event.get("bit_match_ratio", 0.0))
             feedback_scale = amount / max(self.environment.feedback_amount, 1e-9)
-            self.substrate.record_context_feedback(
-                neighbor_id,
-                transform_name,
-                context_bit,
-                credit_signal=feedback_scale,
-                bit_match_ratio=bit_match_ratio,
-            )
+            if promotion_ready:
+                self.substrate.record_context_feedback(
+                    neighbor_id,
+                    transform_name,
+                    context_bit,
+                    credit_signal=feedback_scale,
+                    bit_match_ratio=bit_match_ratio,
+                )
 
     def save_carryover(self, path: str | Path) -> None:
         state_store = SessionStateStore(Path(path))

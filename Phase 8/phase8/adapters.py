@@ -50,8 +50,10 @@ class LocalNodeActionBackend:
     def available_actions(self, history_size: int) -> List[str]:
         actions = ["rest"]
         local_inbox = len(self.environment.inboxes[self.node_id])
-        head_packet = self.environment.inboxes[self.node_id][0] if local_inbox > 0 else None
-        context_bit = head_packet.context_bit if head_packet is not None else None
+        observation = self.environment.observe_local(self.node_id)
+        context_bit = None
+        if observation.get("effective_has_context", 0.0) >= 0.5:
+            context_bit = int(observation.get("effective_context_bit", 0.0))
         for neighbor_id in self.neighbor_ids:
             route_cost = self.substrate.use_cost(neighbor_id)
             if self.environment.route_available(self.node_id, neighbor_id, route_cost):
@@ -93,8 +95,10 @@ class LocalNodeActionBackend:
 
         if action.startswith("route_transform:"):
             _, neighbor_id, transform_name = action.split(":", 2)
-            head_packet = self.environment.inboxes[self.node_id][0] if self.environment.inboxes[self.node_id] else None
-            context_bit = head_packet.context_bit if head_packet is not None else None
+            observation = self.environment.observe_local(self.node_id)
+            context_bit = None
+            if observation.get("effective_has_context", 0.0) >= 0.5:
+                context_bit = int(observation.get("effective_context_bit", 0.0))
             cost = self.substrate.use_cost(neighbor_id, transform_name, context_bit)
             result = self.environment.route_signal(
                 self.node_id,
@@ -263,12 +267,12 @@ class LocalNodeMemoryBinding:
                         transform_name,
                     )
                 )
-                if modulated.get("head_has_context", 0.0) >= 0.5:
+                if modulated.get("effective_has_context", 0.0) >= 0.5:
                     modulated[f"context_action_support_{neighbor_id}_{transform_name}"] = (
                         self.substrate.action_support(
                             neighbor_id,
                             transform_name,
-                            int(modulated.get("head_context_bit", 0.0)),
+                            int(modulated.get("effective_context_bit", 0.0)),
                         )
                     )
         maintenance = self.substrate.maintenance_metrics()
@@ -284,6 +288,7 @@ class LocalNodeMemoryBinding:
         actions = []
         state = self.environment.state_for(self.node_id)
         local_inbox = len(self.environment.inboxes[self.node_id])
+        growth_window_open = local_inbox <= self.environment.morphogenesis_config.growth_queue_tolerance
         if state.atp > 0.0 and local_inbox == 0:
             for neighbor_id in self.neighbor_ids:
                 cost = self.substrate.write_cost(neighbor_id)
@@ -296,12 +301,22 @@ class LocalNodeMemoryBinding:
                     )
             maintain_cost = self.substrate.estimate_maintenance_cost()
             if maintain_cost > 0.0 and maintain_cost <= state.atp + 1e-9:
-                actions.append(
-                    MemoryActionSpec(
-                        action="maintain_edges",
-                        estimated_cost=maintain_cost,
+                    actions.append(
+                        MemoryActionSpec(
+                            action="maintain_edges",
+                            estimated_cost=maintain_cost,
+                        )
                     )
-                )
+        if state.atp > 0.0 and growth_window_open:
+            for spec in self.environment.growth_action_specs(self.node_id):
+                cost = float(spec["cost"])
+                if cost <= state.atp + 1e-9:
+                    actions.append(
+                        MemoryActionSpec(
+                            action=str(spec["action"]),
+                            estimated_cost=cost,
+                        )
+                    )
         return actions
 
     def estimate_memory_action_cost(self, action: str, substrate) -> float | None:
@@ -310,6 +325,9 @@ class LocalNodeMemoryBinding:
         if action.startswith("invest:"):
             neighbor_id = action.split(":", 1)[1]
             return self.substrate.write_cost(neighbor_id)
+        for spec in self.environment.growth_action_specs(self.node_id):
+            if spec["action"] == action:
+                return float(spec["cost"])
         return None
 
     def execute_memory_action(self, action: str, substrate):
@@ -319,8 +337,8 @@ class LocalNodeMemoryBinding:
         if action == "maintain_edges":
             observation = self.environment.observe_local(self.node_id)
             context_bit = None
-            if observation.get("head_has_context", 0.0) >= 0.5:
-                context_bit = int(observation.get("head_context_bit", 0.0))
+            if observation.get("context_promotion_ready", 0.0) >= 0.5 and observation.get("effective_has_context", 0.0) >= 0.5:
+                context_bit = int(observation.get("effective_context_bit", 0.0))
             maintenance = self.substrate.maintain_supports(
                 state.atp,
                 transform_credit=dict(state.transform_credit),
@@ -337,6 +355,17 @@ class LocalNodeMemoryBinding:
             if spent <= 0.0:
                 return ActionOutcome(success=False, cost_secs=0.0)
             state.atp = max(0.0, state.atp - spent)
+            if self.environment.topology_state is not None:
+                maintained_neighbors = list(maintenance.get("maintained_edges", []))
+                maintained_neighbors.extend(
+                    label.split(":", 1)[0]
+                    for label in maintenance.get("maintained_actions", [])
+                )
+                self.environment.topology_state.record_maintenance(
+                    self.node_id,
+                    spent,
+                    maintained_neighbors=maintained_neighbors,
+                )
             return ActionOutcome(
                 success=True,
                 result=maintenance,
@@ -352,6 +381,31 @@ class LocalNodeMemoryBinding:
             return ActionOutcome(
                 success=True,
                 result={"invested_neighbor": neighbor_id},
+                cost_secs=spent,
+            )
+
+        growth_specs = {
+            str(spec["action"]): spec
+            for spec in self.environment.growth_action_specs(self.node_id)
+        }
+        if action in growth_specs:
+            spec = growth_specs[action]
+            spent = float(spec["cost"])
+            if spent > state.atp + 1e-9:
+                return ActionOutcome(success=False, cost_secs=0.0)
+            state.atp = max(0.0, state.atp - spent)
+            if self.environment.topology_state is not None:
+                self.environment.topology_state.record_growth_spend(self.node_id, spent)
+            proposal = self.environment.queue_growth_proposal(
+                self.node_id,
+                action,
+                score=float(spec.get("score", 0.0)),
+                cost=spent,
+            )
+            proposal.reason = str(spec.get("reason", "queued_locally"))
+            return ActionOutcome(
+                success=True,
+                result={"queued_growth_action": action},
                 cost_secs=spent,
             )
 

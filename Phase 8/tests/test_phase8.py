@@ -16,13 +16,22 @@ if str(PHASE4_ROOT) not in sys.path:
 
 from phase8 import (
     ConnectionSubstrate,
+    MorphogenesisConfig,
     NativeSubstrateSystem,
     RoutingEnvironment,
     SignalPacket,
     SignalSpec,
     phase8_scenarios,
 )
+from compare_morphogenesis import (
+    aggregate_growth_results,
+    compare_growth_for_seed,
+    growth_counts_as_earned,
+    growth_counts_as_win,
+)
+from compare_latent_context import latent_signal_specs
 from compare_task_transfer import aggregate_transfer, transfer_metrics
+from phase8.consolidation import Phase8ConsolidationPipeline
 from real_core.types import CycleEntry, GCOStatus
 
 
@@ -1855,6 +1864,697 @@ class TestTransferHarness(unittest.TestCase):
         self.assertEqual(aggregate["avg_warm_full_task_b_wrong_transform_family"], 1.0)
         self.assertEqual(aggregate["avg_warm_substrate_task_b_identity_fallbacks"], 0.0)
         self.assertEqual(aggregate["avg_cold_task_b_stale_support_suspicions"], 1.0)
+
+
+class TestMorphogenesis(unittest.TestCase):
+    def _edge_growth_system(self) -> NativeSubstrateSystem:
+        system = NativeSubstrateSystem(
+            adjacency={
+                "n0": ("n1",),
+                "n1": ("sink",),
+                "n2": ("sink",),
+            },
+            positions={"n0": 0, "n1": 1, "n2": 1, "sink": 2},
+            source_id="n0",
+            sink_id="sink",
+            selector_seed=71,
+            morphogenesis_config=MorphogenesisConfig(
+                enabled=True,
+                checkpoint_interval=6,
+                max_dynamic_nodes=2,
+                edge_prune_ticks=20,
+            ),
+        )
+        node_spec = system.topology_state.node_specs["n0"]
+        node_spec.surplus_streak = 3
+        node_spec.positive_energy_streak = 3
+        node_spec.net_energy_recent = 0.18
+        node_spec.value_recent = 0.26
+        state = system.environment.state_for("n0")
+        state.reward_buffer = 0.35
+        state.context_transform_debt["rotate_left_1:context_0"] = 1.0
+        system.environment.current_cycle = 6
+        system.global_cycle = 6
+        return system
+
+    def _node_growth_system(self) -> NativeSubstrateSystem:
+        system = NativeSubstrateSystem(
+            adjacency={
+                "n0": ("n1",),
+                "n1": ("sink",),
+                "n2": ("sink",),
+            },
+            positions={"n0": 0, "n1": 1, "n2": 2, "sink": 3},
+            source_id="n0",
+            sink_id="sink",
+            selector_seed=73,
+            morphogenesis_config=MorphogenesisConfig(
+                enabled=True,
+                checkpoint_interval=6,
+                max_dynamic_nodes=2,
+                edge_prune_ticks=20,
+            ),
+        )
+        node_spec = system.topology_state.node_specs["n0"]
+        node_spec.surplus_streak = 3
+        node_spec.positive_energy_streak = 3
+        node_spec.net_energy_recent = 0.20
+        node_spec.value_recent = 0.28
+        state = system.environment.state_for("n0")
+        state.reward_buffer = 0.4
+        state.context_transform_debt["rotate_left_1:context_0"] = 1.0
+        system.environment.current_cycle = 6
+        system.global_cycle = 6
+        return system
+
+    def test_growth_observation_exposes_local_affordances_only(self) -> None:
+        system = self._edge_growth_system()
+
+        observation = system.environment.observe_local("n0")
+        actions = system.environment.growth_action_specs("n0")
+
+        self.assertIn("contradiction_pressure", observation)
+        self.assertIn("growth_surplus_streak", observation)
+        self.assertIn("growth_candidate_count", observation)
+        self.assertNotIn("branch_feedback_credit_n2_identity", observation)
+        self.assertTrue(any(spec["action"] == "bud_edge:n2" for spec in actions))
+
+    def test_bud_edge_action_spends_atp_and_refreshes_neighbors(self) -> None:
+        system = self._edge_growth_system()
+        agent = system.agents["n0"]
+        before_atp = system.environment.state_for("n0").atp
+
+        outcome = agent.engine.memory_binding.execute_memory_action("bud_edge:n2", agent.substrate)
+        events = system.topology_manager.apply_checkpoint(system, 6)
+        system.rebuild_agents_from_topology()
+
+        self.assertTrue(outcome.success)
+        self.assertLess(system.environment.state_for("n0").atp, before_atp)
+        self.assertTrue(any(event.event_type == "bud_edge" for event in events))
+        self.assertTrue(system.topology_state.has_edge("n0", "n2"))
+        self.assertIn("n2", system.agents["n0"].neighbor_ids)
+
+    def test_bud_node_creates_real_agent_and_keeps_feedback_sequential(self) -> None:
+        system = self._node_growth_system()
+        agent = system.agents["n0"]
+
+        outcome = agent.engine.memory_binding.execute_memory_action("bud_node:1:n2", agent.substrate)
+        events = system.topology_manager.apply_checkpoint(system, 6)
+        system.rebuild_agents_from_topology()
+
+        self.assertTrue(outcome.success)
+        bud_events = [event for event in events if event.event_type == "bud_node"]
+        self.assertEqual(len(bud_events), 1)
+        new_node_id = bud_events[0].created_node_id
+        self.assertIsNotNone(new_node_id)
+        assert new_node_id is not None
+        self.assertIn(new_node_id, system.agents)
+        self.assertIn(new_node_id, system.agents["n0"].neighbor_ids)
+        self.assertEqual(system.agents[new_node_id].neighbor_ids, ("n2",))
+
+        system.environment.inject_signal(
+            count=1,
+            cycle=6,
+            packet_payloads=[[1, 0, 1, 1]],
+            context_bits=[0],
+            task_id="task_a",
+        )
+        cost0 = system.agents["n0"].substrate.use_cost(new_node_id)
+        system.environment.route_signal("n0", new_node_id, cost0)
+        cost1 = system.agents[new_node_id].substrate.use_cost("n2")
+        system.environment.route_signal(new_node_id, "n2", cost1)
+        cost2 = system.agents["n2"].substrate.use_cost("sink", "rotate_left_1", 0)
+        system.environment.route_signal("n2", "sink", cost2, transform_name="rotate_left_1")
+
+        first = system.environment.advance_feedback()
+        second = system.environment.advance_feedback()
+        third = system.environment.advance_feedback()
+
+        self.assertEqual(first[0]["node_id"], "n2")
+        self.assertEqual(second[0]["node_id"], new_node_id)
+        self.assertEqual(third[0]["node_id"], "n0")
+
+        summary = system.summarize()
+        self.assertEqual(summary["dynamic_node_count"], 1)
+        self.assertGreaterEqual(summary["bud_successes"], 1)
+        self.assertGreater(summary["new_node_utilization"], 0.0)
+        self.assertIsNotNone(summary["time_to_first_feedback"])
+
+    def test_auto_prune_and_apoptosis_cleanup_dynamic_structures(self) -> None:
+        system = self._node_growth_system()
+        agent = system.agents["n0"]
+        agent.engine.memory_binding.execute_memory_action("bud_node:1:n2", agent.substrate)
+        events = system.topology_manager.apply_checkpoint(system, 6)
+        system.rebuild_agents_from_topology()
+        new_node_id = next(event.created_node_id for event in events if event.event_type == "bud_node")
+        assert new_node_id is not None
+
+        parent = system.agents["n0"]
+        parent.substrate._inner.slow[parent.substrate.edge_key(new_node_id)] = 0.0
+        system.topology_state.edge_specs[f"n0->{new_node_id}"].created_cycle = 0
+        system.topology_manager.config.edge_prune_ticks = 6
+        system.morphogenesis_config.edge_prune_ticks = 6
+        system.environment.morphogenesis_config.edge_prune_ticks = 6
+
+        system.environment.queue_growth_proposal(
+            "n0",
+            f"prune_edge:{new_node_id}",
+            score=0.9,
+            cost=0.0,
+        )
+        prune_events = system.topology_manager.apply_checkpoint(system, 12)
+        system.rebuild_agents_from_topology()
+        self.assertTrue(any(event.event_type == "prune_edge" for event in prune_events))
+        self.assertNotIn(new_node_id, system.agents["n0"].neighbor_ids)
+
+        system.topology_state.remove_edge(new_node_id, "n2")
+        system.environment.sync_topology()
+        system.refresh_agent_neighbors(new_node_id)
+        system.topology_state.node_specs[new_node_id].dormant_ticks = 6
+        system.topology_state.node_specs[new_node_id].negative_energy_streak = 6
+        system.topology_state.node_specs[new_node_id].value_recent = -0.2
+        system.environment.state_for(new_node_id).atp = 0.0
+
+        apoptosis_events = system.topology_manager.apply_checkpoint(system, 18)
+        system.rebuild_agents_from_topology()
+        self.assertTrue(any(event.event_type == "apoptosis" for event in apoptosis_events))
+        self.assertNotIn(new_node_id, system.agents)
+
+    def test_enabled_morphogenesis_preserves_static_scaffold_edges(self) -> None:
+        system = NativeSubstrateSystem(
+            adjacency={
+                "n0": ("n1", "n2"),
+                "n1": ("sink",),
+                "n2": ("sink",),
+            },
+            positions={"n0": 0, "n1": 1, "n2": 1, "sink": 2},
+            source_id="n0",
+            sink_id="sink",
+            selector_seed=89,
+            morphogenesis_config=MorphogenesisConfig(
+                enabled=True,
+                checkpoint_interval=6,
+                max_dynamic_nodes=2,
+                edge_prune_ticks=6,
+            ),
+        )
+        for edge in system.topology_state.edge_specs.values():
+            edge.created_cycle = 0
+
+        events = system.topology_manager.apply_checkpoint(system, 12)
+        system.rebuild_agents_from_topology()
+
+        self.assertFalse(any(event.event_type == "prune_edge" for event in events))
+        self.assertTrue(system.topology_state.has_edge("n0", "n1"))
+        self.assertTrue(system.topology_state.has_edge("n0", "n2"))
+
+    def test_growth_requires_positive_energy_budget(self) -> None:
+        system = self._edge_growth_system()
+        node_spec = system.topology_state.node_specs["n0"]
+        node_spec.positive_energy_streak = 0
+        node_spec.net_energy_recent = -0.12
+        node_spec.value_recent = -0.05
+
+        actions = system.environment.growth_action_specs("n0")
+
+        self.assertFalse(any(action["action"].startswith("bud_") for action in actions))
+
+    def test_grown_topology_restores_from_carryover(self) -> None:
+        system = self._node_growth_system()
+        agent = system.agents["n0"]
+        agent.engine.memory_binding.execute_memory_action("bud_node:1:n2", agent.substrate)
+        events = system.topology_manager.apply_checkpoint(system, 6)
+        system.rebuild_agents_from_topology()
+        new_node_id = next(event.created_node_id for event in events if event.event_type == "bud_node")
+        assert new_node_id is not None
+
+        temp_dir = ROOT / "tests_tmp" / f"morphogenesis_{uuid.uuid4().hex}"
+        temp_dir.mkdir(parents=True, exist_ok=True)
+
+        try:
+            system.save_carryover(temp_dir)
+            restored = NativeSubstrateSystem(
+                adjacency={
+                    "n0": ("n1",),
+                    "n1": ("sink",),
+                    "n2": ("sink",),
+                },
+                positions={"n0": 0, "n1": 1, "n2": 2, "sink": 3},
+                source_id="n0",
+                sink_id="sink",
+                selector_seed=73,
+                morphogenesis_config=MorphogenesisConfig(
+                    enabled=True,
+                    checkpoint_interval=6,
+                    max_dynamic_nodes=2,
+                ),
+            )
+            loaded = restored.load_carryover(temp_dir)
+
+            self.assertTrue(loaded)
+            self.assertIn(new_node_id, restored.topology_state.node_specs)
+            self.assertIn(new_node_id, restored.agents)
+            self.assertIn(new_node_id, restored.agents["n0"].neighbor_ids)
+        finally:
+            shutil.rmtree(temp_dir, ignore_errors=True)
+
+
+class TestMorphogenesisComparison(unittest.TestCase):
+    def test_growth_evaluation_requires_earned_structure(self) -> None:
+        fixed = {
+            "exact_matches": 4,
+            "mean_bit_accuracy": 0.5,
+            "mean_route_cost": 0.1,
+            "total_action_cost": 2.0,
+            "bud_successes": 0,
+            "dynamic_node_count": 0,
+            "new_node_utilization": 0.0,
+            "time_to_first_feedback": None,
+            "mean_feedback_award": 0.2,
+            "prune_events": 0,
+        }
+        unearned = {
+            **fixed,
+            "bud_successes": 1,
+            "dynamic_node_count": 1,
+            "new_node_utilization": 0.0,
+            "time_to_first_feedback": None,
+        }
+        earned = {
+            **fixed,
+            "bud_successes": 1,
+            "dynamic_node_count": 1,
+            "new_node_utilization": 1.0,
+            "time_to_first_feedback": 1.0,
+            "exact_matches": 5,
+        }
+        cheaper_but_worse = {
+            **earned,
+            "exact_matches": 3,
+            "mean_bit_accuracy": 0.45,
+            "mean_route_cost": 0.08,
+            "total_action_cost": 1.9,
+        }
+
+        self.assertFalse(growth_counts_as_earned(unearned))
+        self.assertTrue(growth_counts_as_earned(earned))
+        self.assertFalse(growth_counts_as_win(fixed, unearned))
+        self.assertTrue(growth_counts_as_win(fixed, earned))
+        self.assertFalse(growth_counts_as_win(fixed, cheaper_but_worse))
+
+    def test_compare_growth_for_seed_reports_structural_metrics(self) -> None:
+        record = compare_growth_for_seed(
+            13,
+            "cvt1_task_b_stage1",
+            morphogenesis_config=MorphogenesisConfig(
+                enabled=True,
+                checkpoint_interval=6,
+                max_dynamic_nodes=2,
+                contradiction_threshold=0.2,
+                overload_threshold=0.2,
+                atp_surplus_threshold=0.4,
+            ),
+        )
+
+        self.assertIn("fixed", record)
+        self.assertIn("growth", record)
+        self.assertIn("delta", record)
+        self.assertIn("bud_successes", record["growth"]["summary"])
+        self.assertGreaterEqual(record["growth"]["summary"]["bud_successes"], 1)
+
+    def test_aggregate_growth_results_tracks_earned_and_win_rates(self) -> None:
+        results = [
+            {
+                "fixed": {
+                    "summary": {
+                        "exact_matches": 4,
+                        "mean_bit_accuracy": 0.5,
+                        "mean_route_cost": 0.1,
+                        "total_action_cost": 2.0,
+                        "edge_count": 6,
+                        "node_count": 5,
+                    }
+                },
+                "growth": {
+                    "summary": {
+                        "exact_matches": 5,
+                        "mean_bit_accuracy": 0.6,
+                        "mean_route_cost": 0.08,
+                        "total_action_cost": 1.9,
+                        "node_count": 6,
+                        "edge_count": 7,
+                        "bud_successes": 1,
+                        "prune_events": 0,
+                        "apoptosis_events": 0,
+                        "dynamic_node_count": 1,
+                        "new_node_utilization": 1.0,
+                        "time_to_first_feedback": 1.0,
+                    },
+                    "earned_growth": True,
+                    "growth_win": True,
+                },
+                "delta": {
+                    "exact_matches": 1,
+                    "mean_bit_accuracy": 0.1,
+                    "mean_route_cost": -0.02,
+                    "total_action_cost": -0.1,
+                    "bud_successes": 1,
+                    "dynamic_node_count": 1,
+                    "edge_count": 1,
+                    "node_count": 1,
+                },
+            },
+            {
+                "fixed": {
+                    "summary": {
+                        "exact_matches": 4,
+                        "mean_bit_accuracy": 0.5,
+                        "mean_route_cost": 0.1,
+                        "total_action_cost": 2.0,
+                        "edge_count": 6,
+                        "node_count": 5,
+                    }
+                },
+                "growth": {
+                    "summary": {
+                        "exact_matches": 4,
+                        "mean_bit_accuracy": 0.5,
+                        "mean_route_cost": 0.11,
+                        "total_action_cost": 2.1,
+                        "node_count": 5,
+                        "edge_count": 6,
+                        "bud_successes": 0,
+                        "prune_events": 0,
+                        "apoptosis_events": 0,
+                        "dynamic_node_count": 0,
+                        "new_node_utilization": 0.0,
+                        "time_to_first_feedback": None,
+                    },
+                    "earned_growth": False,
+                    "growth_win": False,
+                },
+                "delta": {
+                    "exact_matches": 0,
+                    "mean_bit_accuracy": 0.0,
+                    "mean_route_cost": 0.01,
+                    "total_action_cost": 0.1,
+                    "bud_successes": 0,
+                    "dynamic_node_count": 0,
+                    "edge_count": 0,
+                    "node_count": 0,
+                },
+            },
+        ]
+
+        aggregate = aggregate_growth_results(results)
+
+        self.assertEqual(aggregate["avg_growth_bud_successes"], 0.5)
+        self.assertEqual(aggregate["earned_growth_rate"], 0.5)
+        self.assertEqual(aggregate["growth_win_rate"], 0.5)
+
+
+class TestLatentContextProbe(unittest.TestCase):
+    def test_latent_signal_specs_hide_context_but_preserve_hidden_targets(self) -> None:
+        initial, schedule = latent_signal_specs("cvt1_task_a_stage1")
+
+        self.assertIsNotNone(initial[0].target_bits)
+        self.assertIsNone(initial[0].context_bit)
+        self.assertIsNotNone(schedule)
+        assert schedule is not None
+        first_scheduled = next(iter(schedule.values()))[0]
+        self.assertIsNone(first_scheduled.context_bit)
+        self.assertIsNotNone(first_scheduled.target_bits)
+
+    def test_score_packet_uses_hidden_target_bits_without_visible_context(self) -> None:
+        system = NativeSubstrateSystem(
+            adjacency={"n0": ("sink",)},
+            positions={"n0": 0, "sink": 1},
+            source_id="n0",
+            sink_id="sink",
+            selector_seed=19,
+        )
+        packet = system.environment.create_packet(
+            cycle=0,
+            input_bits=[1, 0, 0, 1],
+            payload_bits=[0, 0, 1, 1],
+            context_bit=None,
+            task_id="task_a",
+            target_bits=[0, 0, 1, 1],
+        )
+
+        award = system.environment.score_packet(packet)
+
+        self.assertGreater(award, 0.0)
+        self.assertTrue(packet.matched_target)
+        self.assertEqual(packet.bit_match_ratio, 1.0)
+
+    def test_latent_observation_uses_local_history_without_exposing_targets(self) -> None:
+        system = NativeSubstrateSystem(
+            adjacency={"n0": ("sink",)},
+            positions={"n0": 0, "sink": 1},
+            source_id="n0",
+            sink_id="sink",
+            selector_seed=11,
+        )
+        packet = system.environment.create_packet(
+            cycle=0,
+            input_bits=[1, 0, 0, 1],
+            payload_bits=[1, 0, 0, 1],
+            context_bit=None,
+            task_id="task_a",
+            target_bits=[0, 0, 1, 1],
+        )
+        system.environment.inject_packets((packet,), cycle=0)
+        baseline = system.environment.observe_local("n0")
+        self.assertEqual(baseline["latent_context_available"], 0.0)
+        self.assertEqual(baseline["effective_has_context"], 0.0)
+        self.assertTrue(all("target" not in key for key in baseline))
+
+        system.environment.route_signal(
+            "n0",
+            "sink",
+            system.agents["n0"].substrate.use_cost("sink", "rotate_left_1"),
+            transform_name="rotate_left_1",
+        )
+        system.environment.advance_feedback()
+        followup = system.environment.create_packet(
+            cycle=1,
+            input_bits=[1, 0, 0, 1],
+            payload_bits=[1, 0, 0, 1],
+            context_bit=None,
+            task_id="task_a",
+            target_bits=[0, 0, 1, 1],
+        )
+        system.environment.inject_packets((followup,), cycle=1)
+        observed = system.environment.observe_local("n0")
+
+        self.assertGreater(observed["history_transform_evidence_rotate_left_1"], 0.0)
+        self.assertGreaterEqual(observed["latent_context_available"], 0.0)
+        self.assertEqual(observed["effective_has_context"], 1.0)
+        self.assertEqual(observed["effective_context_bit"], 0.0)
+        self.assertEqual(observed["task_transform_affinity_rotate_left_1"], 1.0)
+        self.assertEqual(observed["task_transform_affinity_xor_mask_1010"], 1.0)
+        self.assertEqual(observed["task_transform_affinity_xor_mask_0101"], -1.0)
+        self.assertTrue(all("target" not in key for key in observed))
+
+    def test_selector_uses_effective_context_when_explicit_context_is_hidden(self) -> None:
+        system = NativeSubstrateSystem(
+            adjacency={
+                "n0": ("n1", "n2"),
+                "n1": ("sink",),
+                "n2": ("sink",),
+            },
+            positions={"n0": 0, "n1": 1, "n2": 1, "sink": 2},
+            source_id="n0",
+            sink_id="sink",
+            selector_seed=7,
+        )
+        tracker = system.environment.latent_context_trackers["n0"]
+        for cycle in range(1, 5):
+            tracker.record_feedback(
+                "task_b",
+                "xor_mask_0101",
+                bit_match_ratio=1.0,
+                credit_signal=1.0,
+            )
+            system.environment.current_cycle = cycle
+            tracker.observe_task("task_b", cycle)
+
+        system.agents["n0"].substrate.seed_action_support("n2", "xor_mask_0101", value=0.6, context_bit=1)
+        packet = system.environment.create_packet(
+            cycle=5,
+            input_bits=[1, 1, 0, 0],
+            payload_bits=[1, 1, 0, 0],
+            context_bit=None,
+            task_id="task_b",
+            target_bits=[1, 0, 0, 1],
+        )
+        system.environment.inject_packets((packet,), cycle=5)
+
+        available = system.agents["n0"].engine.actions.available_actions(0)
+        action, _ = system.agents["n0"].engine.selector.select(available, [])
+        self.assertEqual(action, "route_transform:n2:xor_mask_0101")
+
+    def test_selector_prefers_task_compatible_transform_over_identity_under_hidden_context(self) -> None:
+        system = NativeSubstrateSystem(
+            adjacency={"n0": ("sink",)},
+            positions={"n0": 0, "sink": 1},
+            source_id="n0",
+            sink_id="sink",
+            selector_seed=29,
+        )
+        packet = system.environment.create_packet(
+            cycle=0,
+            input_bits=[1, 0, 0, 1],
+            payload_bits=[1, 0, 0, 1],
+            context_bit=None,
+            task_id="task_a",
+            target_bits=[0, 0, 1, 1],
+        )
+        system.environment.inject_packets((packet,), cycle=0)
+
+        available = system.agents["n0"].engine.actions.available_actions(0)
+        action, _ = system.agents["n0"].engine.selector.select(available, [])
+
+        self.assertIn(
+            action,
+            {"route_transform:sink:rotate_left_1", "route_transform:sink:xor_mask_1010"},
+        )
+
+    def test_low_confidence_latent_feedback_does_not_promote_context_support(self) -> None:
+        system = NativeSubstrateSystem(
+            adjacency={"n0": ("sink",)},
+            positions={"n0": 0, "sink": 1},
+            source_id="n0",
+            sink_id="sink",
+            selector_seed=13,
+        )
+        agent = system.agents["n0"]
+
+        agent.absorb_feedback(
+            [
+                {
+                    "edge": "n0->sink",
+                    "transform": "rotate_left_1",
+                    "context_bit": None,
+                    "context_promotion_ready": False,
+                    "amount": system.environment.feedback_amount,
+                    "bit_match_ratio": 1.0,
+                }
+            ]
+        )
+
+        self.assertEqual(
+            agent.substrate.contextual_action_support("sink", "rotate_left_1", 0),
+            0.0,
+        )
+
+    def test_stable_latent_feedback_can_promote_context_support(self) -> None:
+        system = NativeSubstrateSystem(
+            adjacency={"n0": ("sink",)},
+            positions={"n0": 0, "sink": 1},
+            source_id="n0",
+            sink_id="sink",
+            selector_seed=17,
+        )
+        tracker = system.environment.latent_context_trackers["n0"]
+        snapshot = None
+        for cycle in range(1, 5):
+            tracker.record_feedback(
+                "task_a",
+                "rotate_left_1",
+                bit_match_ratio=1.0,
+                credit_signal=1.0,
+            )
+            system.environment.current_cycle = cycle
+            snapshot = tracker.observe_task("task_a", cycle)
+        assert snapshot is not None
+        self.assertTrue(snapshot["promotion_ready"])
+
+        event = {
+            "edge": "n0->sink",
+            "transform": "rotate_left_1",
+            "context_bit": snapshot["estimate"],
+            "context_promotion_ready": snapshot["promotion_ready"],
+            "amount": system.environment.feedback_amount,
+            "bit_match_ratio": 1.0,
+        }
+        for _ in range(4):
+            system.agents["n0"].absorb_feedback([event])
+
+        self.assertGreater(
+            system.agents["n0"].substrate.contextual_action_support("sink", "rotate_left_1", 0),
+            0.0,
+        )
+
+    def test_consolidation_uses_effective_context_fields_for_latent_runs(self) -> None:
+        substrate = ConnectionSubstrate(("n1",))
+        pipeline = Phase8ConsolidationPipeline()
+        entries = [
+            CycleEntry(
+                cycle=cycle,
+                action="route_transform:n1:rotate_left_1",
+                mode="constraint",
+                state_before={
+                    "head_has_context": 0.0,
+                    "effective_has_context": 1.0,
+                    "effective_context_bit": 0.0,
+                    "effective_context_confidence": 0.9,
+                    "context_promotion_ready": 1.0,
+                },
+                state_after={"reward_buffer": 0.7},
+                dimensions={"contextual_fit": 0.8},
+                coherence=0.8,
+                delta=0.06,
+                gco=GCOStatus.PARTIAL,
+                cost_secs=0.04,
+            )
+            for cycle in range(1, 4)
+        ]
+
+        pipeline.consolidate(entries, substrate)
+
+        self.assertGreater(
+            substrate.contextual_action_support("n1", "rotate_left_1", 0),
+            0.0,
+        )
+
+    def test_memory_carryover_restores_latent_tracker_state(self) -> None:
+        system = NativeSubstrateSystem(
+            adjacency={"n0": ("sink",)},
+            positions={"n0": 0, "sink": 1},
+            source_id="n0",
+            sink_id="sink",
+            selector_seed=23,
+        )
+        tracker = system.environment.latent_context_trackers["n0"]
+        for cycle in range(1, 5):
+            tracker.record_feedback(
+                "task_b",
+                "xor_mask_0101",
+                bit_match_ratio=1.0,
+                credit_signal=1.0,
+            )
+            system.environment.current_cycle = cycle
+            tracker.observe_task("task_b", cycle)
+
+        temp_dir = ROOT / "tests_tmp" / f"latent_carryover_{uuid.uuid4().hex}"
+        try:
+            system.save_memory_carryover(temp_dir)
+            restored = NativeSubstrateSystem(
+                adjacency={"n0": ("sink",)},
+                positions={"n0": 0, "sink": 1},
+                source_id="n0",
+                sink_id="sink",
+                selector_seed=23,
+            )
+            restored.load_memory_carryover(temp_dir)
+            snapshot = restored.environment.latent_context_trackers["n0"].snapshot("task_b")
+            self.assertTrue(snapshot["available"])
+            self.assertEqual(snapshot["estimate"], 1)
+            self.assertGreater(snapshot["confidence"], 0.0)
+        finally:
+            shutil.rmtree(temp_dir, ignore_errors=True)
 
 
 if __name__ == "__main__":

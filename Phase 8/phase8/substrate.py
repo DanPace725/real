@@ -578,6 +578,36 @@ class ConnectionSubstrate:
             for key, value in snapshot.metadata.get("context_credit_accumulator", {}).items()
         }
 
+    def copy_overlap_from(self, other: "ConnectionSubstrate") -> None:
+        for neighbor_id in self.neighbor_ids:
+            if neighbor_id in other.neighbor_ids:
+                edge_key = self._edge_keys[neighbor_id]
+                other_edge_key = other._edge_keys[neighbor_id]
+                self._inner.slow[edge_key] = other._inner.slow.get(other_edge_key, 0.0)
+                self._inner.slow_age[edge_key] = other._inner.slow_age.get(other_edge_key, 0)
+                self._inner.slow_velocity[edge_key] = other._inner.slow_velocity.get(other_edge_key, 0.0)
+            for transform_name in SUPPORTED_TRANSFORMS:
+                action_key = self._action_keys[(neighbor_id, transform_name)]
+                other_action_key = other._action_keys.get((neighbor_id, transform_name))
+                if other_action_key is not None:
+                    self._inner.slow[action_key] = other._inner.slow.get(other_action_key, 0.0)
+                    self._inner.slow_age[action_key] = other._inner.slow_age.get(other_action_key, 0)
+                    self._inner.slow_velocity[action_key] = other._inner.slow_velocity.get(other_action_key, 0.0)
+                for context_bit in SUPPORTED_CONTEXTS:
+                    context_key = self._context_action_keys[(neighbor_id, transform_name, context_bit)]
+                    other_context_key = other._context_action_keys.get((neighbor_id, transform_name, context_bit))
+                    if other_context_key is None:
+                        continue
+                    self._inner.slow[context_key] = other._inner.slow.get(other_context_key, 0.0)
+                    self._inner.slow_age[context_key] = other._inner.slow_age.get(other_context_key, 0)
+                    self._inner.slow_velocity[context_key] = other._inner.slow_velocity.get(other_context_key, 0.0)
+                    credit_key = self._credit_key(neighbor_id, transform_name, context_bit)
+                    other_credit_key = other._credit_key(neighbor_id, transform_name, context_bit)
+                    if other_credit_key in other._context_credit_accumulator:
+                        self._context_credit_accumulator[credit_key] = other._context_credit_accumulator[other_credit_key]
+        self._inner.dim_history = list(other._inner.dim_history)
+        self._inner.constraint_patterns = list(other._inner.constraint_patterns)
+
     def _maintain_key(self, key: str, atp_budget: float) -> float | None:
         if self._inner.slow.get(key, 0.0) <= 0.0:
             return None

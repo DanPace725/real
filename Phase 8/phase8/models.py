@@ -61,6 +61,7 @@ class SignalSpec:
     payload_bits: List[int] | None = None
     context_bit: int | None = None
     task_id: str | None = None
+    target_bits: List[int] | None = None
 
 
 @dataclass
@@ -70,6 +71,7 @@ class FeedbackPulse:
     amount: float
     transform_path: List[str] = field(default_factory=list)
     context_bit: int | None = None
+    task_id: str | None = None
     bit_match_ratio: float = 0.0
     matched_target: bool = False
     cursor: int = 0
