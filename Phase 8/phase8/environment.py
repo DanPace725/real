@@ -7,6 +7,7 @@ from typing import Dict, Iterable, List
 
 import json
 
+from .admission import AdmissionSubstrate
 from .models import FeedbackPulse, NodeRuntimeState, SignalPacket
 
 
@@ -61,6 +62,13 @@ class RoutingEnvironment:
         self.max_source_backlog = 0
         self.last_source_admission = 0
         self.source_admission_history: List[int] = []
+        self.admission_substrate = AdmissionSubstrate()
+        self._source_cycle_start_feedback = 0
+        self._source_cycle_start_routed = 0
+        self._source_cycle_start_backlog = 0
+        self._source_cycle_action_cost = 0.0
+        self.last_source_efficiency = 0.0
+        self.source_efficiency_history: List[float] = []
 
     def agent_ids(self) -> List[str]:
         return sorted(
@@ -94,6 +102,11 @@ class RoutingEnvironment:
 
     def prepare_cycle(self, cycle: int) -> None:
         self.current_cycle = cycle
+        source_state = self.state_for(self.source_id)
+        self._source_cycle_start_feedback = source_state.received_feedback
+        self._source_cycle_start_routed = source_state.routed_packets
+        self._source_cycle_start_backlog = len(self.source_buffer)
+        self._source_cycle_action_cost = 0.0
         self._admit_source_packets()
         self._prioritize_all_queues()
         self._record_inbox_pressure()
@@ -174,6 +187,8 @@ class RoutingEnvironment:
         source_state = self.state_for(node_id)
         source_state.atp = max(0.0, source_state.atp - cost)
         source_state.routed_packets += 1
+        if node_id == self.source_id:
+            self._source_cycle_action_cost += cost
 
         if neighbor_id == self.sink_id:
             packet.hops.append(neighbor_id)
@@ -209,6 +224,8 @@ class RoutingEnvironment:
             return {"success": False, "cost": 0.0}
         source_state = self.state_for(node_id)
         source_state.atp = max(0.0, source_state.atp - self.inhibit_cost)
+        if node_id == self.source_id:
+            self._source_cycle_action_cost += self.inhibit_cost
         target_state = self.state_for(neighbor_id)
         target_state.inhibited_for = max(target_state.inhibited_for, self.inhibit_duration)
         return {"success": True, "cost": self.inhibit_cost}
@@ -245,6 +262,7 @@ class RoutingEnvironment:
         for state in self.node_states.values():
             if state.inhibited_for > 0:
                 state.inhibited_for -= 1
+        self._update_admission_substrate()
         self._expire_stale_packets()
         self._admit_source_packets()
         self._prioritize_all_queues()
@@ -268,6 +286,9 @@ class RoutingEnvironment:
             "pending_feedback": len(self.pending_feedback),
             "source_buffer": len(self.source_buffer),
             "last_source_admission": self.last_source_admission,
+            "source_admission_support": round(self.admission_substrate.support, 4),
+            "source_admission_velocity": round(self.admission_substrate.velocity, 4),
+            "last_source_efficiency": round(self.last_source_efficiency, 4),
             "overload_events": self.overload_events,
             "max_inbox_depth": self.max_inbox_depth,
             "max_source_backlog": self.max_source_backlog,
@@ -293,6 +314,9 @@ class RoutingEnvironment:
             "source_buffer": [asdict(packet) for packet in self.source_buffer],
             "last_source_admission": self.last_source_admission,
             "source_admission_history": list(self.source_admission_history),
+            "admission_substrate": self.admission_substrate.export_state(),
+            "last_source_efficiency": self.last_source_efficiency,
+            "source_efficiency_history": list(self.source_efficiency_history),
             "overload_events": self.overload_events,
             "max_inbox_depth": self.max_inbox_depth,
             "max_source_backlog": self.max_source_backlog,
@@ -331,6 +355,13 @@ class RoutingEnvironment:
         self.last_source_admission = int(payload.get("last_source_admission", 0))
         self.source_admission_history = [
             int(value) for value in payload.get("source_admission_history", [])
+        ]
+        self.admission_substrate = AdmissionSubstrate.from_state(
+            payload.get("admission_substrate")
+        )
+        self.last_source_efficiency = float(payload.get("last_source_efficiency", 0.0))
+        self.source_efficiency_history = [
+            float(value) for value in payload.get("source_efficiency_history", [])
         ]
         self.overload_events = int(payload.get("overload_events", 0))
         self.max_inbox_depth = int(payload.get("max_inbox_depth", 0))
@@ -417,27 +448,47 @@ class RoutingEnvironment:
         oldest_age = observation.get("oldest_packet_age", 0.0)
         feedback_pending = observation.get("feedback_pending", 0.0)
 
-        allowance = self.source_admission_min_rate if source_state.atp > 0.0 else 0
-
-        if backlog > self.inbox_capacity:
-            allowance += 1
-        if atp_ratio >= 0.75 and inbox_load <= 0.25:
-            allowance += 1
-        if reward_ratio >= 0.15 and feedback_pending > 0.0 and inbox_load <= 0.5:
-            allowance += 1
-
-        if inbox_load >= 0.75:
-            allowance -= 1
-        if oldest_age >= 0.60:
-            allowance -= 1
-        if atp_ratio <= 0.25:
-            allowance -= 1
-
         ceiling = self.source_admission_max_rate
         if ceiling is None:
             ceiling = self.inbox_capacity
 
-        return max(0, min(allowance, available_slots, ceiling))
+        return self.admission_substrate.allowance(
+            available_slots=available_slots,
+            backlog_pressure=min(1.0, backlog / max(self.inbox_capacity, 1)),
+            atp_ratio=atp_ratio,
+            reward_ratio=reward_ratio,
+            inbox_load=inbox_load,
+            oldest_age=oldest_age,
+            feedback_pending=feedback_pending,
+            min_rate=self.source_admission_min_rate,
+            max_rate=ceiling,
+        )
+
+    def _update_admission_substrate(self) -> None:
+        if self.source_admission_policy != "adaptive":
+            return
+        observation = self.observe_local(self.source_id)
+        source_state = self.state_for(self.source_id)
+        feedback_gained = source_state.received_feedback - self._source_cycle_start_feedback
+        routed_packets = source_state.routed_packets - self._source_cycle_start_routed
+        feedback_energy = max(0.0, feedback_gained) * self.feedback_amount
+        action_cost = max(0.0, self._source_cycle_action_cost)
+        net_energy = feedback_energy - action_cost
+        update = self.admission_substrate.update(
+            backlog_before=self._source_cycle_start_backlog,
+            backlog_after=len(self.source_buffer),
+            admitted=self.last_source_admission,
+            routed_packets=max(0, routed_packets),
+            feedback_gained=max(0, feedback_gained),
+            action_cost=action_cost,
+            feedback_energy=feedback_energy,
+            net_energy=net_energy,
+            inbox_load=observation.get("inbox_load", 0.0),
+            oldest_age=observation.get("oldest_packet_age", 0.0),
+            atp_ratio=observation.get("atp_ratio", 0.0),
+        )
+        self.last_source_efficiency = update["efficiency_signal"]
+        self.source_efficiency_history.append(self.last_source_efficiency)
 
     def _prioritize_all_queues(self) -> None:
         for node_id in self.node_states:
@@ -590,6 +641,14 @@ class NativeSubstrateSystem:
                 4,
             ),
             "last_source_admission": self.environment.last_source_admission,
+            "source_admission_support": round(self.environment.admission_substrate.support, 4),
+            "source_admission_velocity": round(self.environment.admission_substrate.velocity, 4),
+            "mean_source_efficiency": round(
+                sum(self.environment.source_efficiency_history)
+                / max(len(self.environment.source_efficiency_history), 1),
+                4,
+            ),
+            "last_source_efficiency": round(self.environment.last_source_efficiency, 4),
             "overload_events": self.environment.overload_events,
             "max_inbox_depth": self.environment.max_inbox_depth,
             "max_source_backlog": self.environment.max_source_backlog,
@@ -659,6 +718,7 @@ class NativeSubstrateSystem:
         manifest = {
             "global_cycle": self.global_cycle,
             "agent_ids": list(self.agents.keys()),
+            "admission_substrate": self.environment.admission_substrate.export_state(),
         }
         manifest_path = target / "memory_state.json"
         manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
@@ -675,6 +735,7 @@ class NativeSubstrateSystem:
         manifest = {
             "global_cycle": self.global_cycle,
             "agent_ids": list(self.agents.keys()),
+            "admission_substrate": self.environment.admission_substrate.export_state(),
         }
         manifest_path = target / "substrate_state.json"
         manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
@@ -688,6 +749,9 @@ class NativeSubstrateSystem:
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         self.global_cycle = int(manifest.get("global_cycle", 0))
         self.session_start_cycle = self.global_cycle
+        self.environment.admission_substrate = AdmissionSubstrate.from_state(
+            manifest.get("admission_substrate")
+        )
         nodes_dir = target / "nodes"
         for node_id, agent in self.agents.items():
             agent.load_carryover(nodes_dir / f"{node_id}.json")
@@ -701,6 +765,9 @@ class NativeSubstrateSystem:
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         self.global_cycle = int(manifest.get("global_cycle", 0))
         self.session_start_cycle = self.global_cycle
+        self.environment.admission_substrate = AdmissionSubstrate.from_state(
+            manifest.get("admission_substrate")
+        )
         nodes_dir = target / "nodes"
         for node_id, agent in self.agents.items():
             agent.load_substrate_carryover(nodes_dir / f"{node_id}.json")

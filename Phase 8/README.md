@@ -14,6 +14,8 @@ Current focus:
 - packets can now expire locally when they stall too long in a node inbox
 - ingress queue management meters packets into the source node instead of flooding its inbox
 - source admission can now run in a local adaptive mode instead of a fixed scenario throttle
+- source admission now has its own maintained substrate that learns boundary openness from local success and friction
+- admission learning now scores source-side metabolic efficiency, not just successful throughput
 - each node now prioritizes older local packets before fresher ones when routing
 - comparisons and demos now cover multiple routing scenarios instead of one smoke run
 - the initial environment is a small routing graph, not a dense network
@@ -23,6 +25,7 @@ Current focus:
 - `phase8/node_agent.py` - wraps `RealCoreEngine` for one local node
 - `phase8/substrate.py` - connection-scoped slow memory and route-cost bias
 - `phase8/environment.py` - trivial spatial routing environment with sequential feedback
+- `phase8/admission.py` - source-boundary admission substrate and allowance logic
 - `phase8/adapters.py` - observation, action, coherence, and memory bindings
 - `phase8/consolidation.py` - route-history promotion into maintained substrate
 - `phase8/selector.py` - Phase 8-specific local route selector
@@ -42,11 +45,13 @@ Current focus:
 - overload is surfaced through local queue pressure and aggregate environment metrics
 - ingress pacing is explicit and measurable through source backlog and admitted-packet counts
 - adaptive admission reads only source-local metabolic state, backlog, and queue age
+- admission substrate state persists through full and substrate carryover paths
+- source admission now tracks efficiency signals from local action cost versus returned feedback energy
 
 ## Next likely steps
 
 - deepen Phase 7-style pattern merging and pruning inside the connection substrate
 - add explicit neighbor inhibition effects to routing pressure
-- let admission become learned or substrate-shaped instead of heuristic
+- let admission substrate learn richer tradeoffs such as latency sensitivity, not just energy efficiency
 - measure specialization and path emergence over longer runs
 - compare adaptive TTL and queue-management variants against the current fixed-pressure baseline

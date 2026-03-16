@@ -1,4 +1,5 @@
 from .consolidation import Phase8ConsolidationPipeline
+from .admission import AdmissionSubstrate
 from .scenarios import (
     ScenarioSpec,
     basic_demo_topology,
@@ -25,6 +26,7 @@ from .substrate import ConnectionSubstrate, ConnectionSubstrateConfig
 __all__ = [
     "ConnectionSubstrate",
     "ConnectionSubstrateConfig",
+    "AdmissionSubstrate",
     "FeedbackPulse",
     "ScenarioSpec",
     "basic_demo_topology",

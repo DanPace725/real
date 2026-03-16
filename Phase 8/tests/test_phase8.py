@@ -116,8 +116,8 @@ class TestRoutingEnvironment(unittest.TestCase):
         )
         env.inject_signal(count=6, cycle=0)
 
-        self.assertEqual(len(env.inboxes["n0"]), 3)
-        self.assertEqual(env.last_source_admission, 3)
+        self.assertEqual(len(env.inboxes["n0"]), 2)
+        self.assertEqual(env.last_source_admission, 2)
 
     def test_adaptive_admission_closes_when_source_is_dormant(self) -> None:
         env = RoutingEnvironment(
@@ -141,6 +141,55 @@ class TestRoutingEnvironment(unittest.TestCase):
         self.assertEqual(len(env.inboxes["n0"]), 0)
         self.assertGreater(len(env.source_buffer), 0)
         self.assertEqual(env.last_source_admission, 0)
+
+    def test_admission_support_strengthens_after_successful_source_feedback(self) -> None:
+        env = RoutingEnvironment(
+            adjacency={
+                "n0": ("sink",),
+            },
+            positions={"n0": 0, "sink": 1},
+            source_id="n0",
+            sink_id="sink",
+            max_atp=1.0,
+            source_admission_policy="adaptive",
+            source_admission_min_rate=1,
+            source_admission_max_rate=2,
+        )
+        env.inject_signal(count=1, cycle=0)
+        before = env.admission_substrate.support
+
+        env.prepare_cycle(1)
+        env.route_signal("n0", "sink", cost=0.05)
+        env.advance_feedback()
+        env.tick(1)
+
+        self.assertGreater(env.admission_substrate.support, before)
+        self.assertGreater(env.last_source_efficiency, 0.0)
+
+    def test_admission_support_weakens_after_unreciprocated_source_spend(self) -> None:
+        env = RoutingEnvironment(
+            adjacency={
+                "n0": ("n1",),
+                "n1": ("sink",),
+            },
+            positions={"n0": 0, "n1": 1, "sink": 2},
+            source_id="n0",
+            sink_id="sink",
+            max_atp=1.0,
+            source_admission_policy="adaptive",
+            source_admission_min_rate=1,
+            source_admission_max_rate=2,
+        )
+        env.inject_signal(count=1, cycle=0)
+        env.admission_substrate.support = 0.8
+        before = env.admission_substrate.support
+
+        env.prepare_cycle(1)
+        env.route_signal("n0", "n1", cost=0.05)
+        env.tick(1)
+
+        self.assertLess(env.admission_substrate.support, before)
+        self.assertLess(env.last_source_efficiency, 0.0)
 
     def test_route_signal_prioritizes_stalest_packet_in_local_queue(self) -> None:
         env = RoutingEnvironment(
@@ -399,6 +448,51 @@ class TestNativeSubstrateSystem(unittest.TestCase):
         summary = system.summarize()
         self.assertGreaterEqual(summary["dropped_packets"], 1)
         self.assertGreater(summary["drop_ratio"], 0.0)
+
+    def test_substrate_carryover_restores_admission_support(self) -> None:
+        system = NativeSubstrateSystem(
+            adjacency={
+                "n0": ("sink",),
+            },
+            positions={"n0": 0, "sink": 1},
+            source_id="n0",
+            sink_id="sink",
+            selector_seed=31,
+            source_admission_policy="adaptive",
+            source_admission_min_rate=1,
+            source_admission_max_rate=2,
+        )
+        system.inject_signal(count=1)
+        system.run_global_cycle()
+        learned_support = system.environment.admission_substrate.support
+
+        temp_dir = ROOT / "tests_tmp" / f"admission_substrate_{uuid.uuid4().hex}"
+        temp_dir.mkdir(parents=True, exist_ok=True)
+
+        try:
+            system.save_substrate_carryover(temp_dir)
+            restored = NativeSubstrateSystem(
+                adjacency={
+                    "n0": ("sink",),
+                },
+                positions={"n0": 0, "sink": 1},
+                source_id="n0",
+                sink_id="sink",
+                selector_seed=31,
+                source_admission_policy="adaptive",
+                source_admission_min_rate=1,
+                source_admission_max_rate=2,
+            )
+            loaded = restored.load_substrate_carryover(temp_dir)
+
+            self.assertTrue(loaded)
+            self.assertAlmostEqual(
+                restored.environment.admission_substrate.support,
+                learned_support,
+                places=6,
+            )
+        finally:
+            shutil.rmtree(temp_dir, ignore_errors=True)
 
 
 if __name__ == "__main__":
