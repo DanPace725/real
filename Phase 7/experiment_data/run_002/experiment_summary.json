@@ -1,0 +1,24 @@
+{
+  "sessions": 15,
+  "coherence_range": [
+    0.7416321830387419,
+    0.8252561728522124
+  ],
+  "coherence_mean": 0.7954781130930227,
+  "coupling_range": [
+    0.0,
+    0.23230626787168768
+  ],
+  "coupling_mean": 0.19061854024947814,
+  "active_range": [
+    1,
+    6
+  ],
+  "active_mean": 5.0,
+  "gco_distribution": {
+    "STABLE": 0.536,
+    "PARTIAL": 0.3893333333333333,
+    "DEGRADED": 0.05733333333333333,
+    "CRITICAL": 0.017333333333333333
+  }
+}

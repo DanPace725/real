@@ -1,0 +1,72 @@
+{
+  "2.0": {
+    "coherence_mean": 0.6720212699618848,
+    "coherence_std": 0.03434962770607474,
+    "active_mean": 0,
+    "coupling_mean": 0.0,
+    "stable_rate": 0.3417777777777778,
+    "critical_rate": 0.06,
+    "atp_spent_mean": 1.9842666666666666,
+    "forced_rest_mean": 0,
+    "domain_action_share": 0.7608888888888888,
+    "invest_share": 0.22311111111111112,
+    "maintain_share": 0.016,
+    "rest_share": 0.5937777777777777
+  },
+  "3.0": {
+    "coherence_mean": 0.7510993985850198,
+    "coherence_std": 0.029864363303194003,
+    "active_mean": 0.3111111111111111,
+    "coupling_mean": 0.024385090240272328,
+    "stable_rate": 0.5368888888888889,
+    "critical_rate": 0.06,
+    "atp_spent_mean": 2.9866933333333328,
+    "forced_rest_mean": 0,
+    "domain_action_share": 0.6204444444444445,
+    "invest_share": 0.3373333333333333,
+    "maintain_share": 0.042222222222222223,
+    "rest_share": 0.37866666666666665
+  },
+  "3.5": {
+    "coherence_mean": 0.7701250132952683,
+    "coherence_std": 0.01742322446744615,
+    "active_mean": 0.4222222222222222,
+    "coupling_mean": 0.050019125734324606,
+    "stable_rate": 0.5755555555555556,
+    "critical_rate": 0.06,
+    "atp_spent_mean": 3.4369066666666654,
+    "forced_rest_mean": 0,
+    "domain_action_share": 0.5648888888888889,
+    "invest_share": 0.3893333333333333,
+    "maintain_share": 0.04577777777777778,
+    "rest_share": 0.26222222222222225
+  },
+  "5.0": {
+    "coherence_mean": 0.7859446118783514,
+    "coherence_std": 0.01448202248939875,
+    "active_mean": 0.8,
+    "coupling_mean": 0.14691650515077279,
+    "stable_rate": 0.6613333333333333,
+    "critical_rate": 0.06,
+    "atp_spent_mean": 4.108586666666666,
+    "forced_rest_mean": 0,
+    "domain_action_share": 0.4151111111111111,
+    "invest_share": 0.49822222222222223,
+    "maintain_share": 0.08666666666666667,
+    "rest_share": 0.14755555555555555
+  },
+  "inf": {
+    "coherence_mean": 0.7878944989235073,
+    "coherence_std": 0.020222677125340614,
+    "active_mean": 1.0222222222222221,
+    "coupling_mean": 0.21519018415574273,
+    "stable_rate": 0.6728888888888889,
+    "critical_rate": 0.06,
+    "atp_spent_mean": 4.037279999999999,
+    "forced_rest_mean": 0,
+    "domain_action_share": 0.43822222222222224,
+    "invest_share": 0.4951111111111111,
+    "maintain_share": 0.06666666666666667,
+    "rest_share": 0.15555555555555556
+  }
+}

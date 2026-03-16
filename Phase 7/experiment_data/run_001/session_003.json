@@ -1,0 +1,3110 @@
+{
+  "session_id": 3,
+  "cycles": 50,
+  "mean_coherence": 0.7911281418971849,
+  "final_coherence": 0.8264367096736503,
+  "gco_counts": {
+    "STABLE": 20,
+    "PARTIAL": 27,
+    "DEGRADED": 2,
+    "CRITICAL": 1
+  },
+  "final_substrate": {
+    "fast": {
+      "continuity": 0.8341740720704677,
+      "vitality": 0.7230860595391365,
+      "contextual_fit": 0.5850422729302515,
+      "differentiation": 0.7919882305326879,
+      "accountability": 0.48838198777138936,
+      "reflexivity": 0.9506717530178489
+    },
+    "slow": {
+      "continuity": 0.6999999999999984,
+      "vitality": 0.7799999999999985,
+      "contextual_fit": 0.6399999999999986,
+      "differentiation": 0.0,
+      "accountability": 0.7599999999999991,
+      "reflexivity": 0.5199999999999989
+    },
+    "slow_age": {
+      "continuity": 3,
+      "vitality": 3,
+      "contextual_fit": 3,
+      "differentiation": 4,
+      "accountability": 2,
+      "reflexivity": 3
+    },
+    "active": {
+      "continuity": true,
+      "vitality": true,
+      "contextual_fit": true,
+      "differentiation": false,
+      "accountability": true,
+      "reflexivity": true
+    },
+    "active_count": 5,
+    "coupling_score": 0.2467132308135144
+  },
+  "action_counts": {
+    "maintain": 12,
+    "invest_differentiation": 3,
+    "invest_vitality": 4,
+    "invest_continuity": 3,
+    "invest_contextual_fit": 3,
+    "observe": 20,
+    "invest_reflexivity": 2,
+    "invest_accountability": 3
+  },
+  "cycle_logs": [
+    {
+      "cycle": 1,
+      "action": "maintain",
+      "cost": 0.026000000000000002,
+      "coherence": 0.4000000000000001,
+      "delta": 0.0,
+      "gco": "DEGRADED",
+      "dimensions": {
+        "continuity": 0.4,
+        "vitality": 0.4,
+        "contextual_fit": 0.4,
+        "differentiation": 0.4,
+        "accountability": 0.4,
+        "reflexivity": 0.4
+      },
+      "substrate_snapshot": {
+        "fast": {
+          "continuity": 0.5058822880218505,
+          "vitality": 0.0,
+          "contextual_fit": 0.29444835029455046,
+          "differentiation": 0.7781980293729261,
+          "accountability": 0.0803581571777852,
+          "reflexivity": 0.5449243495923277
+        },
+        "slow": {
+          "continuity": 0.639999999999999,
+          "vitality": 0.5199999999999991,
+          "contextual_fit": 0.5799999999999992,
+          "differentiation": 0.0,
+          "accountability": 0.6999999999999997,
+          "reflexivity": 0.6599999999999995
+        },
+        "slow_age": {
+          "continuity": 1,
+          "vitality": 1,
+          "contextual_fit": 1,
+          "differentiation": 4,
+          "accountability": 1,
+          "reflexivity": 1
+        },
+        "active": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true,
+          "differentiation": false,
+          "accountability": true,
+          "reflexivity": true
+        },
+        "active_count": 5,
+        "coupling_score": 0.0
+      },
+      "budget_remaining": 4.974,
+      "true_signals": {
+        "continuity": 0.5625737860160923,
+        "vitality": 0.06666666666666665,
+        "contextual_fit": 0.5,
+        "differentiation": 0.6,
+        "accountability": 0.05,
+        "reflexivity": 0.4979551457690892
+      }
+    },
+    {
+      "cycle": 2,
+      "action": "invest_differentiation",
+      "cost": 0.020000000000000004,
+      "coherence": 0.4000000000000001,
+      "delta": 0.0,
+      "gco": "DEGRADED",
+      "dimensions": {
+        "continuity": 0.4,
+        "vitality": 0.4,
+        "contextual_fit": 0.4,
+        "differentiation": 0.4,
+        "accountability": 0.4,
+        "reflexivity": 0.4
+      },
+      "substrate_snapshot": {
+        "fast": {
+          "continuity": 0.5789931516377543,
+          "vitality": 0.24848918271309,
+          "contextual_fit": 0.48320261230871525,
+          "differentiation": 0.3874297998210775,
+          "accountability": 0.08276226360595546,
+          "reflexivity": 0.4920284898601022
+        },
+        "slow": {
+          "continuity": 0.619999999999999,
+          "vitality": 0.4999999999999991,
+          "contextual_fit": 0.5599999999999992,
+          "differentiation": 0.14,
+          "accountability": 0.6799999999999997,
+          "reflexivity": 0.6399999999999995
+        },
+        "slow_age": {
+          "continuity": 2,
+          "vitality": 2,
+          "contextual_fit": 2,
+          "differentiation": 1,
+          "accountability": 2,
+          "reflexivity": 2
+        },
+        "active": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true,
+          "differentiation": false,
+          "accountability": true,
+          "reflexivity": true
+        },
+        "active_count": 5,
+        "coupling_score": 0.0
+      },
+      "budget_remaining": 4.954000000000001,
+      "true_signals": {
+        "continuity": 0.623606797749979,
+        "vitality": 0.1333333333333333,
+        "contextual_fit": 0.5,
+        "differentiation": 0.6,
+        "accountability": 0.1,
+        "reflexivity": 0.4803804416766502
+      }
+    },
+    {
+      "cycle": 3,
+      "action": "invest_vitality",
+      "cost": 0.026000000000000002,
+      "coherence": 0.3666666666666667,
+      "delta": -0.03333333333333338,
+      "gco": "CRITICAL",
+      "dimensions": {
+        "continuity": 0.4,
+        "vitality": 0.2,
+        "contextual_fit": 0.4,
+        "differentiation": 0.4,
+        "accountability": 0.4,
+        "reflexivity": 0.4
+      },
+      "substrate_snapshot": {
+        "fast": {
+          "continuity": 0.5585148661458321,
+          "vitality": 0.19610991473868544,
+          "contextual_fit": 0.6878962023847955,
+          "differentiation": 0.36324706830679876,
+          "accountability": 0.15454530046209058,
+          "reflexivity": 0.5129028633777827
+        },
+        "slow": {
+          "continuity": 0.599999999999999,
+          "vitality": 0.679999999999999,
+          "contextual_fit": 0.5399999999999991,
+          "differentiation": 0.08000000000000002,
+          "accountability": 0.6599999999999997,
+          "reflexivity": 0.6199999999999994
+        },
+        "slow_age": {
+          "continuity": 3,
+          "vitality": 1,
+          "contextual_fit": 3,
+          "differentiation": 2,
+          "accountability": 3,
+          "reflexivity": 3
+        },
+        "active": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true,
+          "differentiation": false,
+          "accountability": true,
+          "reflexivity": true
+        },
+        "active_count": 5,
+        "coupling_score": 0.19739227207906415
+      },
+      "budget_remaining": 4.928000000000001,
+      "true_signals": {
+        "continuity": 0.6815961998958187,
+        "vitality": 0.19999999999999996,
+        "contextual_fit": 0.5,
+        "differentiation": 0.6,
+        "accountability": 0.15,
+        "reflexivity": 0.4967563854765069
+      }
+    },
+    {
+      "cycle": 4,
+      "action": "invest_differentiation",
+      "cost": 0.020000000000000004,
+      "coherence": 0.6484339548846774,
+      "delta": 0.28176728821801067,
+      "gco": "PARTIAL",
+      "dimensions": {
+        "continuity": 0.9049717397392777,
+        "vitality": 0.95,
+        "contextual_fit": 0.8356319895687866,
+        "differentiation": 0.4,
+        "accountability": 0.4,
+        "reflexivity": 0.4
+      },
+      "substrate_snapshot": {
+        "fast": {
+          "continuity": 0.6045732498125421,
+          "vitality": 0.20097269447108534,
+          "contextual_fit": 0.45629046251344335,
+          "differentiation": 0.575449923177433,
+          "accountability": 0.0,
+          "reflexivity": 0.5013708135205537
+        },
+        "slow": {
+          "continuity": 0.579999999999999,
+          "vitality": 0.659999999999999,
+          "contextual_fit": 0.5199999999999991,
+          "differentiation": 0.26,
+          "accountability": 0.6399999999999997,
+          "reflexivity": 0.5999999999999994
+        },
+        "slow_age": {
+          "continuity": 4,
+          "vitality": 2,
+          "contextual_fit": 4,
+          "differentiation": 1,
+          "accountability": 4,
+          "reflexivity": 4
+        },
+        "active": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true,
+          "differentiation": true,
+          "accountability": true,
+          "reflexivity": true
+        },
+        "active_count": 6,
+        "coupling_score": 0.1780153332287182
+      },
+      "budget_remaining": 4.908000000000001,
+      "true_signals": {
+        "continuity": 0.7351141009169893,
+        "vitality": 0.2666666666666666,
+        "contextual_fit": 0.5,
+        "differentiation": 0.6,
+        "accountability": 0.2,
+        "reflexivity": 0.524942529135388
+      }
+    },
+    {
+      "cycle": 5,
+      "action": "invest_continuity",
+      "cost": 0.020000000000000004,
+      "coherence": 0.6739046612780663,
+      "delta": 0.025470706393388887,
+      "gco": "PARTIAL",
+      "dimensions": {
+        "continuity": 0.9318926526916828,
+        "vitality": 0.8399999999999999,
+        "contextual_fit": 0.47153531497671497,
+        "differentiation": 1.0,
+        "accountability": 0.4,
+        "reflexivity": 0.4
+      },
+      "substrate_snapshot": {
+        "fast": {
+          "continuity": 0.8636733591512435,
+          "vitality": 0.33883009157896493,
+          "contextual_fit": 0.4922734594810359,
+          "differentiation": 0.8588078558172312,
+          "accountability": 0.16091061870006196,
+          "reflexivity": 0.36103176452805613
+        },
+        "slow": {
+          "continuity": 0.7599999999999989,
+          "vitality": 0.639999999999999,
+          "contextual_fit": 0.4999999999999991,
+          "differentiation": 0.24000000000000002,
+          "accountability": 0.6199999999999997,
+          "reflexivity": 0.5799999999999994
+        },
+        "slow_age": {
+          "continuity": 1,
+          "vitality": 3,
+          "contextual_fit": 5,
+          "differentiation": 2,
+          "accountability": 5,
+          "reflexivity": 5
+        },
+        "active": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true,
+          "differentiation": false,
+          "accountability": true,
+          "reflexivity": true
+        },
+        "active_count": 5,
+        "coupling_score": 0.20603322977927435
+      },
+      "budget_remaining": 4.888000000000002,
+      "true_signals": {
+        "continuity": 0.7828427124746191,
+        "vitality": 0.33333333333333326,
+        "contextual_fit": 0.5,
+        "differentiation": 0.6,
+        "accountability": 0.25,
+        "reflexivity": 0.4569991760382507
+      }
+    },
+    {
+      "cycle": 6,
+      "action": "invest_contextual_fit",
+      "cost": 0.026000000000000002,
+      "coherence": 0.8161573207444729,
+      "delta": 0.14225265946640664,
+      "gco": "PARTIAL",
+      "dimensions": {
+        "continuity": 0.9050828626977809,
+        "vitality": 0.7555555555555555,
+        "contextual_fit": 0.4696388395468346,
+        "differentiation": 1.0,
+        "accountability": 0.7666666666666666,
+        "reflexivity": 1.0
+      },
+      "substrate_snapshot": {
+        "fast": {
+          "continuity": 0.9386988234093523,
+          "vitality": 0.3926616512554553,
+          "contextual_fit": 0.4910841003876171,
+          "differentiation": 0.8791313811446997,
+          "accountability": 0.33627296253296546,
+          "reflexivity": 0.4956968386909952
+        },
+        "slow": {
+          "continuity": 0.7399999999999989,
+          "vitality": 0.619999999999999,
+          "contextual_fit": 0.679999999999999,
+          "differentiation": 0.18000000000000002,
+          "accountability": 0.5999999999999996,
+          "reflexivity": 0.5599999999999994
+        },
+        "slow_age": {
+          "continuity": 2,
+          "vitality": 4,
+          "contextual_fit": 1,
+          "differentiation": 3,
+          "accountability": 6,
+          "reflexivity": 6
+        },
+        "active": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true,
+          "differentiation": false,
+          "accountability": true,
+          "reflexivity": true
+        },
+        "active_count": 5,
+        "coupling_score": 0.2230056863086159
+      },
+      "budget_remaining": 4.862000000000002,
+      "true_signals": {
+        "continuity": 0.823606797749979,
+        "vitality": 0.4,
+        "contextual_fit": 0.5,
+        "differentiation": 0.6,
+        "accountability": 0.3,
+        "reflexivity": 0.4194722037341588
+      }
+    },
+    {
+      "cycle": 7,
+      "action": "maintain",
+      "cost": 0.026000000000000002,
+      "coherence": 0.8764552802589134,
+      "delta": 0.0602979595144405,
+      "gco": "STABLE",
+      "dimensions": {
+        "continuity": 0.8853693567596184,
+        "vitality": 1.0,
+        "contextual_fit": 0.5483623247938623,
+        "differentiation": 1.0,
+        "accountability": 0.825,
+        "reflexivity": 1.0
+      },
+      "substrate_snapshot": {
+        "fast": {
+          "continuity": 0.9642342394902412,
+          "vitality": 0.28706574360460274,
+          "contextual_fit": 0.45543024054192616,
+          "differentiation": 0.6981054075258274,
+          "accountability": 0.3738665773126332,
+          "reflexivity": 0.21530706669325866
+        },
+        "slow": {
+          "continuity": 0.7599999999999989,
+          "vitality": 0.639999999999999,
+          "contextual_fit": 0.6999999999999991,
+          "differentiation": 0.12000000000000002,
+          "accountability": 0.6199999999999997,
+          "reflexivity": 0.5799999999999994
+        },
+        "slow_age": {
+          "continuity": 1,
+          "vitality": 1,
+          "contextual_fit": 1,
+          "differentiation": 4,
+          "accountability": 1,
+          "reflexivity": 1
+        },
+        "active": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true,
+          "differentiation": false,
+          "accountability": true,
+          "reflexivity": true
+        },
+        "active_count": 5,
+        "coupling_score": 0.22722142564828798
+      },
+      "budget_remaining": 4.836000000000002,
+      "true_signals": {
+        "continuity": 0.8564026096753472,
+        "vitality": 0.4666666666666667,
+        "contextual_fit": 0.5,
+        "differentiation": 0.8576422893541258,
+        "accountability": 0.35,
+        "reflexivity": 0.46127385327340337
+      }
+    },
+    {
+      "cycle": 8,
+      "action": "observe",
+      "cost": 0.005,
+      "coherence": 0.8818549730451494,
+      "delta": 0.005399692786235977,
+      "gco": "STABLE",
+      "dimensions": {
+        "continuity": 0.8782459871854335,
+        "vitality": 0.95,
+        "contextual_fit": 0.6028838510854629,
+        "differentiation": 1.0,
+        "accountability": 0.8599999999999999,
+        "reflexivity": 1.0
+      },
+      "substrate_snapshot": {
+        "fast": {
+          "continuity": 0.9630294685171942,
+          "vitality": 0.35273595177466166,
+          "contextual_fit": 0.4188190035648482,
+          "differentiation": 1.0,
+          "accountability": 0.30359691979428227,
+          "reflexivity": 0.4434902833356992
+        },
+        "slow": {
+          "continuity": 0.7399999999999989,
+          "vitality": 0.619999999999999,
+          "contextual_fit": 0.679999999999999,
+          "differentiation": 0.060000000000000026,
+          "accountability": 0.5999999999999996,
+          "reflexivity": 0.5599999999999994
+        },
+        "slow_age": {
+          "continuity": 2,
+          "vitality": 2,
+          "contextual_fit": 2,
+          "differentiation": 5,
+          "accountability": 2,
+          "reflexivity": 2
+        },
+        "active": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true,
+          "differentiation": false,
+          "accountability": true,
+          "reflexivity": true
+        },
+        "active_count": 5,
+        "coupling_score": 0.22660968297037637
+      },
+      "budget_remaining": 4.831000000000002,
+      "true_signals": {
+        "continuity": 0.8804226065180614,
+        "vitality": 0.5333333333333333,
+        "contextual_fit": 0.5,
+        "differentiation": 0.6,
+        "accountability": 0.4,
+        "reflexivity": 0.4490778350860595
+      }
+    },
+    {
+      "cycle": 9,
+      "action": "observe",
+      "cost": 0.005,
+      "coherence": 0.8563758084522881,
+      "delta": -0.02547916459286126,
+      "gco": "PARTIAL",
+      "dimensions": {
+        "continuity": 0.8728069734553381,
+        "vitality": 1.0,
+        "contextual_fit": 0.40544787725839093,
+        "differentiation": 1.0,
+        "accountability": 0.8599999999999999,
+        "reflexivity": 1.0
+      },
+      "substrate_snapshot": {
+        "fast": {
+          "continuity": 0.9075867792402837,
+          "vitality": 0.7492117574404394,
+          "contextual_fit": 0.5289045567551227,
+          "differentiation": 0.5464763090006047,
+          "accountability": 0.6299166365774288,
+          "reflexivity": 0.5631242730163128
+        },
+        "slow": {
+          "continuity": 0.7199999999999989,
+          "vitality": 0.599999999999999,
+          "contextual_fit": 0.659999999999999,
+          "differentiation": 2.7755575615628914e-17,
+          "accountability": 0.5799999999999996,
+          "reflexivity": 0.5399999999999994
+        },
+        "slow_age": {
+          "continuity": 3,
+          "vitality": 3,
+          "contextual_fit": 3,
+          "differentiation": 6,
+          "accountability": 3,
+          "reflexivity": 3
+        },
+        "active": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true,
+          "differentiation": false,
+          "accountability": true,
+          "reflexivity": true
+        },
+        "active_count": 5,
+        "coupling_score": 0.22685263960844887
+      },
+      "budget_remaining": 4.826000000000002,
+      "true_signals": {
+        "continuity": 0.8950753362380551,
+        "vitality": 0.6,
+        "contextual_fit": 0.5,
+        "differentiation": 0.6,
+        "accountability": 0.45,
+        "reflexivity": 0.44851516128950464
+      }
+    },
+    {
+      "cycle": 10,
+      "action": "maintain",
+      "cost": 0.026000000000000002,
+      "coherence": 0.8828361231629933,
+      "delta": 0.0264603147107052,
+      "gco": "STABLE",
+      "dimensions": {
+        "continuity": 0.8416968477242459,
+        "vitality": 1.0,
+        "contextual_fit": 0.5953198912537142,
+        "differentiation": 1.0,
+        "accountability": 0.8599999999999999,
+        "reflexivity": 1.0
+      },
+      "substrate_snapshot": {
+        "fast": {
+          "continuity": 0.814926083301142,
+          "vitality": 0.5683480513042003,
+          "contextual_fit": 0.3637051828250293,
+          "differentiation": 0.5474102235057074,
+          "accountability": 0.5237779668220218,
+          "reflexivity": 0.44276851955994606
+        },
+        "slow": {
+          "continuity": 0.7399999999999989,
+          "vitality": 0.619999999999999,
+          "contextual_fit": 0.679999999999999,
+          "differentiation": 0.0,
+          "accountability": 0.5999999999999996,
+          "reflexivity": 0.5599999999999994
+        },
+        "slow_age": {
+          "continuity": 1,
+          "vitality": 1,
+          "contextual_fit": 1,
+          "differentiation": 7,
+          "accountability": 1,
+          "reflexivity": 1
+        },
+        "active": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true,
+          "differentiation": false,
+          "accountability": true,
+          "reflexivity": true
+        },
+        "active_count": 5,
+        "coupling_score": 0.23955503074906798
+      },
+      "budget_remaining": 4.8000000000000025,
+      "true_signals": {
+        "continuity": 0.9,
+        "vitality": 0.6666666666666666,
+        "contextual_fit": 0.5,
+        "differentiation": 0.6,
+        "accountability": 0.5,
+        "reflexivity": 0.4397997461591956
+      }
+    },
+    {
+      "cycle": 11,
+      "action": "invest_continuity",
+      "cost": 0.026000000000000002,
+      "coherence": 0.8872163383510413,
+      "delta": 0.004380215188047987,
+      "gco": "STABLE",
+      "dimensions": {
+        "continuity": 0.8439823013558934,
+        "vitality": 1.0,
+        "contextual_fit": 0.6193157287503546,
+        "differentiation": 1.0,
+        "accountability": 0.8599999999999999,
+        "reflexivity": 1.0
+      },
+      "substrate_snapshot": {
+        "fast": {
+          "continuity": 0.8830588377492671,
+          "vitality": 0.7876047895076435,
+          "contextual_fit": 0.6288763420310185,
+          "differentiation": 0.7380615077377004,
+          "accountability": 0.5439904659666808,
+          "reflexivity": 0.3145740753113555
+        },
+        "slow": {
+          "continuity": 0.9199999999999988,
+          "vitality": 0.599999999999999,
+          "contextual_fit": 0.659999999999999,
+          "differentiation": 0.0,
+          "accountability": 0.5799999999999996,
+          "reflexivity": 0.5399999999999994
+        },
+        "slow_age": {
+          "continuity": 1,
+          "vitality": 2,
+          "contextual_fit": 2,
+          "differentiation": 7,
+          "accountability": 2,
+          "reflexivity": 2
+        },
+        "active": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true,
+          "differentiation": false,
+          "accountability": true,
+          "reflexivity": true
+        },
+        "active_count": 5,
+        "coupling_score": 0.2600847452182788
+      },
+      "budget_remaining": 4.774000000000003,
+      "true_signals": {
+        "continuity": 0.8950753362380551,
+        "vitality": 0.7333333333333333,
+        "contextual_fit": 0.5,
+        "differentiation": 0.6,
+        "accountability": 0.55,
+        "reflexivity": 0.48879443684226626
+      }
+    },
+    {
+      "cycle": 12,
+      "action": "observe",
+      "cost": 0.005,
+      "coherence": 0.8922021305112035,
+      "delta": 0.00498579216016215,
+      "gco": "STABLE",
+      "dimensions": {
+        "continuity": 0.846836951496024,
+        "vitality": 1.0,
+        "contextual_fit": 0.6463758315711968,
+        "differentiation": 1.0,
+        "accountability": 0.8599999999999999,
+        "reflexivity": 1.0
+      },
+      "substrate_snapshot": {
+        "fast": {
+          "continuity": 0.8823447671535176,
+          "vitality": 0.7362436334681695,
+          "contextual_fit": 0.6417621892591968,
+          "differentiation": 0.7086326153968515,
+          "accountability": 0.4532639197272782,
+          "reflexivity": 0.7046256476671304
+        },
+        "slow": {
+          "continuity": 0.8999999999999988,
+          "vitality": 0.579999999999999,
+          "contextual_fit": 0.639999999999999,
+          "differentiation": 0.0,
+          "accountability": 0.5599999999999996,
+          "reflexivity": 0.5199999999999994
+        },
+        "slow_age": {
+          "continuity": 2,
+          "vitality": 3,
+          "contextual_fit": 3,
+          "differentiation": 7,
+          "accountability": 3,
+          "reflexivity": 3
+        },
+        "active": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true,
+          "differentiation": false,
+          "accountability": true,
+          "reflexivity": true
+        },
+        "active_count": 5,
+        "coupling_score": 0.25936335531953614
+      },
+      "budget_remaining": 4.769000000000003,
+      "true_signals": {
+        "continuity": 0.8804226065180615,
+        "vitality": 0.8,
+        "contextual_fit": 0.5,
+        "differentiation": 0.6,
+        "accountability": 0.6,
+        "reflexivity": 0.5237813046825033
+      }
+    },
+    {
+      "cycle": 13,
+      "action": "maintain",
+      "cost": 0.026000000000000002,
+      "coherence": 0.87183178012733,
+      "delta": -0.02037035038387347,
+      "gco": "PARTIAL",
+      "dimensions": {
+        "continuity": 0.8511535602136061,
+        "vitality": 1.0,
+        "contextual_fit": 0.4965037872170402,
+        "differentiation": 1.0,
+        "accountability": 0.8833333333333333,
+        "reflexivity": 1.0
+      },
+      "substrate_snapshot": {
+        "fast": {
+          "continuity": 0.9092433920549217,
+          "vitality": 0.9047893857210743,
+          "contextual_fit": 0.40214891487243204,
+          "differentiation": 0.39591580464639686,
+          "accountability": 0.5237738083122402,
+          "reflexivity": 0.7563647384282275
+        },
+        "slow": {
+          "continuity": 0.9199999999999988,
+          "vitality": 0.599999999999999,
+          "contextual_fit": 0.659999999999999,
+          "differentiation": 0.0,
+          "accountability": 0.5799999999999996,
+          "reflexivity": 0.5399999999999994
+        },
+        "slow_age": {
+          "continuity": 1,
+          "vitality": 1,
+          "contextual_fit": 1,
+          "differentiation": 7,
+          "accountability": 1,
+          "reflexivity": 1
+        },
+        "active": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true,
+          "differentiation": false,
+          "accountability": true,
+          "reflexivity": true
+        },
+        "active_count": 5,
+        "coupling_score": 0.2706565595329254
+      },
+      "budget_remaining": 4.743000000000003,
+      "true_signals": {
+        "continuity": 0.8564026096753472,
+        "vitality": 0.8666666666666667,
+        "contextual_fit": 0.5,
+        "differentiation": 0.6,
+        "accountability": 0.65,
+        "reflexivity": 0.5109435525734659
+      }
+    },
+    {
+      "cycle": 14,
+      "action": "observe",
+      "cost": 0.005,
+      "coherence": 0.8976696853515872,
+      "delta": 0.025837905224257218,
+      "gco": "STABLE",
+      "dimensions": {
+        "continuity": 0.8504696235868233,
+        "vitality": 1.0,
+        "contextual_fit": 0.6522151551893671,
+        "differentiation": 1.0,
+        "accountability": 0.8833333333333333,
+        "reflexivity": 1.0
+      },
+      "substrate_snapshot": {
+        "fast": {
+          "continuity": 0.9063445457784769,
+          "vitality": 0.9490257245524268,
+          "contextual_fit": 0.4369216655927569,
+          "differentiation": 0.3639032157233948,
+          "accountability": 0.6060440611738477,
+          "reflexivity": 0.6545090158925101
+        },
+        "slow": {
+          "continuity": 0.8999999999999988,
+          "vitality": 0.579999999999999,
+          "contextual_fit": 0.639999999999999,
+          "differentiation": 0.0,
+          "accountability": 0.5599999999999996,
+          "reflexivity": 0.5199999999999994
+        },
+        "slow_age": {
+          "continuity": 2,
+          "vitality": 2,
+          "contextual_fit": 2,
+          "differentiation": 7,
+          "accountability": 2,
+          "reflexivity": 2
+        },
+        "active": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true,
+          "differentiation": false,
+          "accountability": true,
+          "reflexivity": true
+        },
+        "active_count": 5,
+        "coupling_score": 0.26756979791682445
+      },
+      "budget_remaining": 4.738000000000003,
+      "true_signals": {
+        "continuity": 0.823606797749979,
+        "vitality": 0.9333333333333333,
+        "contextual_fit": 0.5,
+        "differentiation": 0.6,
+        "accountability": 0.7,
+        "reflexivity": 0.5072278430694847
+      }
+    },
+    {
+      "cycle": 15,
+      "action": "observe",
+      "cost": 0.005,
+      "coherence": 0.7961956509948895,
+      "delta": -0.10147403435669766,
+      "gco": "PARTIAL",
+      "dimensions": {
+        "continuity": 0.858572086628426,
+        "vitality": 1.0,
+        "contextual_fit": 0.41860181934091084,
+        "differentiation": 1.0,
+        "accountability": 1.0,
+        "reflexivity": 0.5
+      },
+      "substrate_snapshot": {
+        "fast": {
+          "continuity": 0.9077823470841075,
+          "vitality": 0.9402412083390288,
+          "contextual_fit": 0.3416485600159615,
+          "differentiation": 0.8158089782472415,
+          "accountability": 0.8383430859238419,
+          "reflexivity": 0.31764139662740876
+        },
+        "slow": {
+          "continuity": 0.8799999999999988,
+          "vitality": 0.5599999999999989,
+          "contextual_fit": 0.619999999999999,
+          "differentiation": 0.0,
+          "accountability": 0.5399999999999996,
+          "reflexivity": 0.49999999999999933
+        },
+        "slow_age": {
+          "continuity": 3,
+          "vitality": 3,
+          "contextual_fit": 3,
+          "differentiation": 7,
+          "accountability": 3,
+          "reflexivity": 3
+        },
+        "active": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true,
+          "differentiation": false,
+          "accountability": true,
+          "reflexivity": true
+        },
+        "active_count": 5,
+        "coupling_score": 0.2600409523849313
+      },
+      "budget_remaining": 4.733000000000003,
+      "true_signals": {
+        "continuity": 0.7828427124746191,
+        "vitality": 1.0,
+        "contextual_fit": 0.5,
+        "differentiation": 0.6,
+        "accountability": 0.75,
+        "reflexivity": 0.4446643257326862
+      }
+    },
+    {
+      "cycle": 16,
+      "action": "invest_reflexivity",
+      "cost": 0.026000000000000002,
+      "coherence": 0.7845308896293969,
+      "delta": -0.01166476136549266,
+      "gco": "PARTIAL",
+      "dimensions": {
+        "continuity": 0.8542548947067317,
+        "vitality": 1.0,
+        "contextual_fit": 0.5529304430696497,
+        "differentiation": 1.0,
+        "accountability": 1.0,
+        "reflexivity": 0.3
+      },
+      "substrate_snapshot": {
+        "fast": {
+          "continuity": 0.761556260538632,
+          "vitality": 1.0,
+          "contextual_fit": 0.40767673345729705,
+          "differentiation": 0.3382867820747533,
+          "accountability": 0.7784309913581675,
+          "reflexivity": 0.46214179634231295
+        },
+        "slow": {
+          "continuity": 0.8599999999999988,
+          "vitality": 0.5399999999999989,
+          "contextual_fit": 0.599999999999999,
+          "differentiation": 0.0,
+          "accountability": 0.5199999999999996,
+          "reflexivity": 0.6799999999999993
+        },
+        "slow_age": {
+          "continuity": 4,
+          "vitality": 4,
+          "contextual_fit": 4,
+          "differentiation": 7,
+          "accountability": 4,
+          "reflexivity": 1
+        },
+        "active": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true,
+          "differentiation": false,
+          "accountability": true,
+          "reflexivity": true
+        },
+        "active_count": 5,
+        "coupling_score": 0.2705221706664742
+      },
+      "budget_remaining": 4.707000000000003,
+      "true_signals": {
+        "continuity": 0.7351141009169893,
+        "vitality": 0.9333333333333333,
+        "contextual_fit": 0.5,
+        "differentiation": 0.6,
+        "accountability": 0.8,
+        "reflexivity": 0.4426823856738839
+      }
+    },
+    {
+      "cycle": 17,
+      "action": "invest_contextual_fit",
+      "cost": 0.026000000000000002,
+      "coherence": 0.9284452663063029,
+      "delta": 0.143914376676906,
+      "gco": "STABLE",
+      "dimensions": {
+        "continuity": 0.8472546939402517,
+        "vitality": 1.0,
+        "contextual_fit": 0.7234169038975655,
+        "differentiation": 1.0,
+        "accountability": 1.0,
+        "reflexivity": 1.0
+      },
+      "substrate_snapshot": {
+        "fast": {
+          "continuity": 0.7589036959656499,
+          "vitality": 0.8532755684163649,
+          "contextual_fit": 0.3683458912060381,
+          "differentiation": 0.5148739881189262,
+          "accountability": 0.9327073177720002,
+          "reflexivity": 0.5732826723479227
+        },
+        "slow": {
+          "continuity": 0.8399999999999987,
+          "vitality": 0.5199999999999989,
+          "contextual_fit": 0.7799999999999989,
+          "differentiation": 0.0,
+          "accountability": 0.49999999999999956,
+          "reflexivity": 0.6599999999999993
+        },
+        "slow_age": {
+          "continuity": 5,
+          "vitality": 5,
+          "contextual_fit": 1,
+          "differentiation": 7,
+          "accountability": 5,
+          "reflexivity": 2
+        },
+        "active": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true,
+          "differentiation": false,
+          "accountability": true,
+          "reflexivity": true
+        },
+        "active_count": 5,
+        "coupling_score": 0.28153341843720836
+      },
+      "budget_remaining": 4.681000000000004,
+      "true_signals": {
+        "continuity": 0.6815961998958188,
+        "vitality": 0.8666666666666667,
+        "contextual_fit": 0.5,
+        "differentiation": 0.6,
+        "accountability": 0.85,
+        "reflexivity": 0.4538027221954588
+      }
+    },
+    {
+      "cycle": 18,
+      "action": "observe",
+      "cost": 0.005,
+      "coherence": 0.905828105815718,
+      "delta": -0.02261716049058482,
+      "gco": "STABLE",
+      "dimensions": {
+        "continuity": 0.8656383686103248,
+        "vitality": 1.0,
+        "contextual_fit": 0.5693302662839832,
+        "differentiation": 1.0,
+        "accountability": 1.0,
+        "reflexivity": 1.0
+      },
+      "substrate_snapshot": {
+        "fast": {
+          "continuity": 0.5912975943425277,
+          "vitality": 0.8433052763117749,
+          "contextual_fit": 0.45613429511479087,
+          "differentiation": 0.8281129610738116,
+          "accountability": 0.8356165125720904,
+          "reflexivity": 0.5329539466147747
+        },
+        "slow": {
+          "continuity": 0.8199999999999987,
+          "vitality": 0.4999999999999989,
+          "contextual_fit": 0.7599999999999989,
+          "differentiation": 0.0,
+          "accountability": 0.47999999999999954,
+          "reflexivity": 0.6399999999999992
+        },
+        "slow_age": {
+          "continuity": 6,
+          "vitality": 6,
+          "contextual_fit": 2,
+          "differentiation": 7,
+          "accountability": 6,
+          "reflexivity": 3
+        },
+        "active": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true,
+          "differentiation": false,
+          "accountability": true,
+          "reflexivity": true
+        },
+        "active_count": 5,
+        "coupling_score": 0.27359568010320273
+      },
+      "budget_remaining": 4.676000000000004,
+      "true_signals": {
+        "continuity": 0.6236067977499791,
+        "vitality": 0.8,
+        "contextual_fit": 0.5,
+        "differentiation": 0.6,
+        "accountability": 0.9,
+        "reflexivity": 0.5320633579718763
+      }
+    },
+    {
+      "cycle": 19,
+      "action": "invest_vitality",
+      "cost": 0.026000000000000002,
+      "coherence": 0.8822750715826828,
+      "delta": -0.02355303423303523,
+      "gco": "PARTIAL",
+      "dimensions": {
+        "continuity": 0.8977826270663328,
+        "vitality": 1.0,
+        "contextual_fit": 0.3958678024297639,
+        "differentiation": 1.0,
+        "accountability": 1.0,
+        "reflexivity": 1.0
+      },
+      "substrate_snapshot": {
+        "fast": {
+          "continuity": 0.5591548663917733,
+          "vitality": 0.775790100043714,
+          "contextual_fit": 0.5602921919541387,
+          "differentiation": 1.0,
+          "accountability": 1.0,
+          "reflexivity": 0.36049455070493797
+        },
+        "slow": {
+          "continuity": 0.7999999999999987,
+          "vitality": 0.6799999999999988,
+          "contextual_fit": 0.7399999999999989,
+          "differentiation": 0.0,
+          "accountability": 0.4599999999999995,
+          "reflexivity": 0.6199999999999992
+        },
+        "slow_age": {
+          "continuity": 7,
+          "vitality": 1,
+          "contextual_fit": 3,
+          "differentiation": 7,
+          "accountability": 7,
+          "reflexivity": 4
+        },
+        "active": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true,
+          "differentiation": false,
+          "accountability": true,
+          "reflexivity": true
+        },
+        "active_count": 5,
+        "coupling_score": 0.2755862046582516
+      },
+      "budget_remaining": 4.650000000000004,
+      "true_signals": {
+        "continuity": 0.5625737860160924,
+        "vitality": 0.7333333333333334,
+        "contextual_fit": 0.5745388140363993,
+        "differentiation": 0.6,
+        "accountability": 0.95,
+        "reflexivity": 0.5043186545109132
+      }
+    },
+    {
+      "cycle": 20,
+      "action": "invest_continuity",
+      "cost": 0.026000000000000002,
+      "coherence": 0.8664324526534334,
+      "delta": -0.01584261892924943,
+      "gco": "PARTIAL",
+      "dimensions": {
+        "continuity": 0.8668737664648906,
+        "vitality": 1.0,
+        "contextual_fit": 0.33172094945570957,
+        "differentiation": 1.0,
+        "accountability": 1.0,
+        "reflexivity": 1.0
+      },
+      "substrate_snapshot": {
+        "fast": {
+          "continuity": 0.4529743749659634,
+          "vitality": 0.7729425728822658,
+          "contextual_fit": 0.7980530703570019,
+          "differentiation": 0.8832405383038686,
+          "accountability": 0.0,
+          "reflexivity": 0.5630258749099781
+        },
+        "slow": {
+          "continuity": 0.9799999999999986,
+          "vitality": 0.6599999999999988,
+          "contextual_fit": 0.7199999999999989,
+          "differentiation": 0.0,
+          "accountability": 0.4399999999999995,
+          "reflexivity": 0.5999999999999992
+        },
+        "slow_age": {
+          "continuity": 1,
+          "vitality": 2,
+          "contextual_fit": 4,
+          "differentiation": 7,
+          "accountability": 8,
+          "reflexivity": 5
+        },
+        "active": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true,
+          "differentiation": false,
+          "accountability": true,
+          "reflexivity": true
+        },
+        "active_count": 5,
+        "coupling_score": 0.28587241539058705
+      },
+      "budget_remaining": 4.624000000000004,
+      "true_signals": {
+        "continuity": 0.5,
+        "vitality": 0.6666666666666667,
+        "contextual_fit": 0.5745388140363993,
+        "differentiation": 0.6,
+        "accountability": 0.0,
+        "reflexivity": 0.586206994106939
+      }
+    },
+    {
+      "cycle": 21,
+      "action": "invest_accountability",
+      "cost": 0.026000000000000002,
+      "coherence": 0.8256774704848701,
+      "delta": -0.040754982168563325,
+      "gco": "PARTIAL",
+      "dimensions": {
+        "continuity": 0.8113235273666959,
+        "vitality": 1.0,
+        "contextual_fit": 0.31774129554252434,
+        "differentiation": 1.0,
+        "accountability": 0.825,
+        "reflexivity": 1.0
+      },
+      "substrate_snapshot": {
+        "fast": {
+          "continuity": 0.36993961566970834,
+          "vitality": 0.4703382201071238,
+          "contextual_fit": 0.595077971243909,
+          "differentiation": 0.3830622899884125,
+          "accountability": 0.015357494699637243,
+          "reflexivity": 0.534574668909154
+        },
+        "slow": {
+          "continuity": 0.9599999999999986,
+          "vitality": 0.6399999999999988,
+          "contextual_fit": 0.6999999999999988,
+          "differentiation": 0.0,
+          "accountability": 0.6199999999999994,
+          "reflexivity": 0.5799999999999992
+        },
+        "slow_age": {
+          "continuity": 2,
+          "vitality": 3,
+          "contextual_fit": 5,
+          "differentiation": 7,
+          "accountability": 1,
+          "reflexivity": 6
+        },
+        "active": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true,
+          "differentiation": false,
+          "accountability": true,
+          "reflexivity": true
+        },
+        "active_count": 5,
+        "coupling_score": 0.2900495989219401
+      },
+      "budget_remaining": 4.598000000000004,
+      "true_signals": {
+        "continuity": 0.4374262139839077,
+        "vitality": 0.6000000000000001,
+        "contextual_fit": 0.5745388140363993,
+        "differentiation": 0.6,
+        "accountability": 0.05,
+        "reflexivity": 0.6437603589449082
+      }
+    },
+    {
+      "cycle": 22,
+      "action": "maintain",
+      "cost": 0.026000000000000002,
+      "coherence": 0.7433295477951819,
+      "delta": -0.08234792268968816,
+      "gco": "PARTIAL",
+      "dimensions": {
+        "continuity": 0.75464420787563,
+        "vitality": 1.0,
+        "contextual_fit": 0.33533307889546204,
+        "differentiation": 1.0,
+        "accountability": 0.72,
+        "reflexivity": 0.6499999999999999
+      },
+      "substrate_snapshot": {
+        "fast": {
+          "continuity": 0.3769257829012187,
+          "vitality": 0.5580796377030725,
+          "contextual_fit": 0.43151700473145305,
+          "differentiation": 0.3000793965502592,
+          "accountability": 0.12224617892154407,
+          "reflexivity": 0.6968908825809582
+        },
+        "slow": {
+          "continuity": 0.9799999999999986,
+          "vitality": 0.6599999999999988,
+          "contextual_fit": 0.7199999999999989,
+          "differentiation": 0.0,
+          "accountability": 0.6399999999999995,
+          "reflexivity": 0.5999999999999992
+        },
+        "slow_age": {
+          "continuity": 1,
+          "vitality": 1,
+          "contextual_fit": 1,
+          "differentiation": 7,
+          "accountability": 1,
+          "reflexivity": 1
+        },
+        "active": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true,
+          "differentiation": false,
+          "accountability": true,
+          "reflexivity": true
+        },
+        "active_count": 5,
+        "coupling_score": 0.2951577232233807
+      },
+      "budget_remaining": 4.5720000000000045,
+      "true_signals": {
+        "continuity": 0.37639320225002126,
+        "vitality": 0.5333333333333334,
+        "contextual_fit": 0.5745388140363993,
+        "differentiation": 0.6,
+        "accountability": 0.1,
+        "reflexivity": 0.6045368001832645
+      }
+    },
+    {
+      "cycle": 23,
+      "action": "observe",
+      "cost": 0.005,
+      "coherence": 0.7976144131079811,
+      "delta": 0.05428486531279919,
+      "gco": "STABLE",
+      "dimensions": {
+        "continuity": 0.7204886835754281,
+        "vitality": 1.0,
+        "contextual_fit": 0.6485311284057925,
+        "differentiation": 1.0,
+        "accountability": 0.6499999999999999,
+        "reflexivity": 0.7666666666666666
+      },
+      "substrate_snapshot": {
+        "fast": {
+          "continuity": 0.33774564364443094,
+          "vitality": 0.5930509481184225,
+          "contextual_fit": 0.47235690715051626,
+          "differentiation": 0.4793257253609871,
+          "accountability": 0.31481239309152065,
+          "reflexivity": 0.43326621355568
+        },
+        "slow": {
+          "continuity": 0.9599999999999986,
+          "vitality": 0.6399999999999988,
+          "contextual_fit": 0.6999999999999988,
+          "differentiation": 0.0,
+          "accountability": 0.6199999999999994,
+          "reflexivity": 0.5799999999999992
+        },
+        "slow_age": {
+          "continuity": 2,
+          "vitality": 2,
+          "contextual_fit": 2,
+          "differentiation": 7,
+          "accountability": 2,
+          "reflexivity": 2
+        },
+        "active": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true,
+          "differentiation": false,
+          "accountability": true,
+          "reflexivity": true
+        },
+        "active_count": 5,
+        "coupling_score": 0.286017478839249
+      },
+      "budget_remaining": 4.567000000000005,
+      "true_signals": {
+        "continuity": 0.31840380010418134,
+        "vitality": 0.46666666666666656,
+        "contextual_fit": 0.5745388140363993,
+        "differentiation": 0.6,
+        "accountability": 0.15,
+        "reflexivity": 0.5130701966044634
+      }
+    },
+    {
+      "cycle": 24,
+      "action": "observe",
+      "cost": 0.005,
+      "coherence": 0.8169872138765916,
+      "delta": 0.019372800768610476,
+      "gco": "STABLE",
+      "dimensions": {
+        "continuity": 0.7188616076754772,
+        "vitality": 1.0,
+        "contextual_fit": 0.6030616755840723,
+        "differentiation": 1.0,
+        "accountability": 0.58,
+        "reflexivity": 1.0
+      },
+      "substrate_snapshot": {
+        "fast": {
+          "continuity": 0.2605673189297545,
+          "vitality": 0.3739920627849283,
+          "contextual_fit": 0.5794646986863181,
+          "differentiation": 0.7022076204469082,
+          "accountability": 0.3625023615645007,
+          "reflexivity": 0.7196076679660638
+        },
+        "slow": {
+          "continuity": 0.9399999999999986,
+          "vitality": 0.6199999999999988,
+          "contextual_fit": 0.6799999999999988,
+          "differentiation": 0.0,
+          "accountability": 0.5999999999999994,
+          "reflexivity": 0.5599999999999992
+        },
+        "slow_age": {
+          "continuity": 3,
+          "vitality": 3,
+          "contextual_fit": 3,
+          "differentiation": 7,
+          "accountability": 3,
+          "reflexivity": 3
+        },
+        "active": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true,
+          "differentiation": false,
+          "accountability": true,
+          "reflexivity": true
+        },
+        "active_count": 5,
+        "coupling_score": 0.27601526031456175
+      },
+      "budget_remaining": 4.562000000000005,
+      "true_signals": {
+        "continuity": 0.26488589908301075,
+        "vitality": 0.3999999999999999,
+        "contextual_fit": 0.5745388140363993,
+        "differentiation": 0.6,
+        "accountability": 0.2,
+        "reflexivity": 0.5126312648317777
+      }
+    },
+    {
+      "cycle": 25,
+      "action": "invest_vitality",
+      "cost": 0.026000000000000002,
+      "coherence": 0.7946169614404069,
+      "delta": -0.022370252436184623,
+      "gco": "PARTIAL",
+      "dimensions": {
+        "continuity": 0.7114573637447126,
+        "vitality": 1.0,
+        "contextual_fit": 0.4762444048977297,
+        "differentiation": 1.0,
+        "accountability": 0.58,
+        "reflexivity": 1.0
+      },
+      "substrate_snapshot": {
+        "fast": {
+          "continuity": 0.20122023986854704,
+          "vitality": 0.27635757781229175,
+          "contextual_fit": 0.5580674574222684,
+          "differentiation": 0.43054382983724687,
+          "accountability": 0.3871833426712915,
+          "reflexivity": 0.33816070356062755
+        },
+        "slow": {
+          "continuity": 0.9199999999999986,
+          "vitality": 0.7999999999999987,
+          "contextual_fit": 0.6599999999999988,
+          "differentiation": 0.0,
+          "accountability": 0.5799999999999994,
+          "reflexivity": 0.5399999999999991
+        },
+        "slow_age": {
+          "continuity": 4,
+          "vitality": 1,
+          "contextual_fit": 4,
+          "differentiation": 7,
+          "accountability": 4,
+          "reflexivity": 4
+        },
+        "active": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true,
+          "differentiation": false,
+          "accountability": true,
+          "reflexivity": true
+        },
+        "active_count": 5,
+        "coupling_score": 0.2760830118844654
+      },
+      "budget_remaining": 4.536000000000005,
+      "true_signals": {
+        "continuity": 0.217157287525381,
+        "vitality": 0.33333333333333326,
+        "contextual_fit": 0.5745388140363993,
+        "differentiation": 0.6,
+        "accountability": 0.25,
+        "reflexivity": 0.4513255379403673
+      }
+    },
+    {
+      "cycle": 26,
+      "action": "maintain",
+      "cost": 0.026000000000000002,
+      "coherence": 0.7872651836875258,
+      "delta": -0.007351777752881095,
+      "gco": "PARTIAL",
+      "dimensions": {
+        "continuity": 0.7229937052708775,
+        "vitality": 1.0,
+        "contextual_fit": 0.4205973968542783,
+        "differentiation": 1.0,
+        "accountability": 0.58,
+        "reflexivity": 1.0
+      },
+      "substrate_snapshot": {
+        "fast": {
+          "continuity": 0.14386142372782054,
+          "vitality": 0.19576358165145089,
+          "contextual_fit": 0.572604627393576,
+          "differentiation": 0.6574133427902453,
+          "accountability": 0.5149396042292618,
+          "reflexivity": 0.32790986509141007
+        },
+        "slow": {
+          "continuity": 0.9399999999999986,
+          "vitality": 0.8199999999999987,
+          "contextual_fit": 0.6799999999999988,
+          "differentiation": 0.0,
+          "accountability": 0.5999999999999994,
+          "reflexivity": 0.5599999999999992
+        },
+        "slow_age": {
+          "continuity": 1,
+          "vitality": 1,
+          "contextual_fit": 1,
+          "differentiation": 7,
+          "accountability": 1,
+          "reflexivity": 1
+        },
+        "active": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true,
+          "differentiation": false,
+          "accountability": true,
+          "reflexivity": true
+        },
+        "active_count": 5,
+        "coupling_score": 0.27098278283059446
+      },
+      "budget_remaining": 4.510000000000005,
+      "true_signals": {
+        "continuity": 0.17639320225002103,
+        "vitality": 0.2666666666666666,
+        "contextual_fit": 0.5745388140363993,
+        "differentiation": 0.6,
+        "accountability": 0.3,
+        "reflexivity": 0.3501644695841392
+      }
+    },
+    {
+      "cycle": 27,
+      "action": "observe",
+      "cost": 0.005,
+      "coherence": 0.8345006374655504,
+      "delta": 0.047235453778024517,
+      "gco": "STABLE",
+      "dimensions": {
+        "continuity": 0.7363074690986053,
+        "vitality": 1.0,
+        "contextual_fit": 0.7373630223613638,
+        "differentiation": 1.0,
+        "accountability": 0.5333333333333333,
+        "reflexivity": 1.0
+      },
+      "substrate_snapshot": {
+        "fast": {
+          "continuity": 0.19972803739507544,
+          "vitality": 0.17773397412801756,
+          "contextual_fit": 0.4568258789578826,
+          "differentiation": 0.5562588641544323,
+          "accountability": 0.31818947387219043,
+          "reflexivity": 0.39441238667865
+        },
+        "slow": {
+          "continuity": 0.9199999999999986,
+          "vitality": 0.7999999999999987,
+          "contextual_fit": 0.6599999999999988,
+          "differentiation": 0.0,
+          "accountability": 0.5799999999999994,
+          "reflexivity": 0.5399999999999991
+        },
+        "slow_age": {
+          "continuity": 2,
+          "vitality": 2,
+          "contextual_fit": 2,
+          "differentiation": 7,
+          "accountability": 2,
+          "reflexivity": 2
+        },
+        "active": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true,
+          "differentiation": false,
+          "accountability": true,
+          "reflexivity": true
+        },
+        "active_count": 5,
+        "coupling_score": 0.2577863129323176
+      },
+      "budget_remaining": 4.505000000000005,
+      "true_signals": {
+        "continuity": 0.14359739032465285,
+        "vitality": 0.19999999999999996,
+        "contextual_fit": 0.5745388140363993,
+        "differentiation": 0.6,
+        "accountability": 0.35,
+        "reflexivity": 0.46788930496301595
+      }
+    },
+    {
+      "cycle": 28,
+      "action": "observe",
+      "cost": 0.005,
+      "coherence": 0.827392778170598,
+      "delta": -0.00710785929495239,
+      "gco": "STABLE",
+      "dimensions": {
+        "continuity": 0.7700365659442059,
+        "vitality": 1.0,
+        "contextual_fit": 0.660986769746049,
+        "differentiation": 1.0,
+        "accountability": 0.5333333333333333,
+        "reflexivity": 1.0
+      },
+      "substrate_snapshot": {
+        "fast": {
+          "continuity": 0.14326137493877764,
+          "vitality": 0.0,
+          "contextual_fit": 0.5452606014224645,
+          "differentiation": 0.49742493406761046,
+          "accountability": 0.23860931126321677,
+          "reflexivity": 0.48591728743177603
+        },
+        "slow": {
+          "continuity": 0.8999999999999986,
+          "vitality": 0.7799999999999987,
+          "contextual_fit": 0.6399999999999988,
+          "differentiation": 0.0,
+          "accountability": 0.5599999999999994,
+          "reflexivity": 0.5199999999999991
+        },
+        "slow_age": {
+          "continuity": 3,
+          "vitality": 3,
+          "contextual_fit": 3,
+          "differentiation": 7,
+          "accountability": 3,
+          "reflexivity": 3
+        },
+        "active": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true,
+          "differentiation": false,
+          "accountability": true,
+          "reflexivity": true
+        },
+        "active_count": 5,
+        "coupling_score": 0.23912231868250117
+      },
+      "budget_remaining": 4.500000000000005,
+      "true_signals": {
+        "continuity": 0.11957739348193858,
+        "vitality": 0.1333333333333333,
+        "contextual_fit": 0.5745388140363993,
+        "differentiation": 0.6,
+        "accountability": 0.4,
+        "reflexivity": 0.48656789490147206
+      }
+    },
+    {
+      "cycle": 29,
+      "action": "maintain",
+      "cost": 0.026000000000000002,
+      "coherence": 0.7949361486150468,
+      "delta": -0.032456629555551175,
+      "gco": "PARTIAL",
+      "dimensions": {
+        "continuity": 0.791587785387502,
+        "vitality": 1.0,
+        "contextual_fit": 0.5380291063027791,
+        "differentiation": 1.0,
+        "accountability": 0.43999999999999995,
+        "reflexivity": 1.0
+      },
+      "substrate_snapshot": {
+        "fast": {
+          "continuity": 0.09026312183064694,
+          "vitality": 0.2053264472873562,
+          "contextual_fit": 0.7268558172411,
+          "differentiation": 1.0,
+          "accountability": 0.641688573813316,
+          "reflexivity": 0.4819735514956255
+        },
+        "slow": {
+          "continuity": 0.9199999999999986,
+          "vitality": 0.7999999999999987,
+          "contextual_fit": 0.6599999999999988,
+          "differentiation": 0.0,
+          "accountability": 0.5799999999999994,
+          "reflexivity": 0.5399999999999991
+        },
+        "slow_age": {
+          "continuity": 1,
+          "vitality": 1,
+          "contextual_fit": 1,
+          "differentiation": 7,
+          "accountability": 1,
+          "reflexivity": 1
+        },
+        "active": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true,
+          "differentiation": false,
+          "accountability": true,
+          "reflexivity": true
+        },
+        "active_count": 5,
+        "coupling_score": 0.2362592216020257
+      },
+      "budget_remaining": 4.4740000000000055,
+      "true_signals": {
+        "continuity": 0.10492466376194493,
+        "vitality": 0.06666666666666665,
+        "contextual_fit": 0.5745388140363993,
+        "differentiation": 0.6,
+        "accountability": 0.45,
+        "reflexivity": 0.5555471062354198
+      }
+    },
+    {
+      "cycle": 30,
+      "action": "observe",
+      "cost": 0.005,
+      "coherence": 0.7562849418408962,
+      "delta": -0.03865120677415057,
+      "gco": "PARTIAL",
+      "dimensions": {
+        "continuity": 0.839002537691602,
+        "vitality": 1.0,
+        "contextual_fit": 0.6320404466871082,
+        "differentiation": 1.0,
+        "accountability": 0.3,
+        "reflexivity": 0.7666666666666666
+      },
+      "substrate_snapshot": {
+        "fast": {
+          "continuity": 0.06853225239662639,
+          "vitality": 0.0,
+          "contextual_fit": 0.4903554005994562,
+          "differentiation": 0.7812779947812907,
+          "accountability": 0.3636166841698516,
+          "reflexivity": 0.5924003086466414
+        },
+        "slow": {
+          "continuity": 0.8999999999999986,
+          "vitality": 0.7799999999999987,
+          "contextual_fit": 0.6399999999999988,
+          "differentiation": 0.0,
+          "accountability": 0.5599999999999994,
+          "reflexivity": 0.5199999999999991
+        },
+        "slow_age": {
+          "continuity": 2,
+          "vitality": 2,
+          "contextual_fit": 2,
+          "differentiation": 7,
+          "accountability": 2,
+          "reflexivity": 2
+        },
+        "active": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true,
+          "differentiation": false,
+          "accountability": true,
+          "reflexivity": true
+        },
+        "active_count": 5,
+        "coupling_score": 0.2196774966319071
+      },
+      "budget_remaining": 4.469000000000006,
+      "true_signals": {
+        "continuity": 0.09999999999999998,
+        "vitality": 0.0,
+        "contextual_fit": 0.5745388140363993,
+        "differentiation": 0.6,
+        "accountability": 0.5,
+        "reflexivity": 0.5881177238851519
+      }
+    },
+    {
+      "cycle": 31,
+      "action": "observe",
+      "cost": 0.005,
+      "coherence": 0.8024604006946369,
+      "delta": 0.046175458853740636,
+      "gco": "PARTIAL",
+      "dimensions": {
+        "continuity": 0.8673510152124315,
+        "vitality": 1.0,
+        "contextual_fit": 0.8224113889553896,
+        "differentiation": 1.0,
+        "accountability": 0.3,
+        "reflexivity": 0.825
+      },
+      "substrate_snapshot": {
+        "fast": {
+          "continuity": 0.03534119108051492,
+          "vitality": 0.14881974814108578,
+          "contextual_fit": 0.7057129819309161,
+          "differentiation": 0.7373151255904581,
+          "accountability": 0.3843678999112765,
+          "reflexivity": 0.44540190108264843
+        },
+        "slow": {
+          "continuity": 0.8799999999999986,
+          "vitality": 0.7599999999999987,
+          "contextual_fit": 0.6199999999999988,
+          "differentiation": 0.0,
+          "accountability": 0.5399999999999994,
+          "reflexivity": 0.4999999999999991
+        },
+        "slow_age": {
+          "continuity": 3,
+          "vitality": 3,
+          "contextual_fit": 3,
+          "differentiation": 7,
+          "accountability": 3,
+          "reflexivity": 3
+        },
+        "active": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true,
+          "differentiation": false,
+          "accountability": true,
+          "reflexivity": true
+        },
+        "active_count": 5,
+        "coupling_score": 0.20622706756933312
+      },
+      "budget_remaining": 4.464000000000006,
+      "true_signals": {
+        "continuity": 0.10492466376194487,
+        "vitality": 0.06666666666666665,
+        "contextual_fit": 0.5745388140363993,
+        "differentiation": 0.6,
+        "accountability": 0.55,
+        "reflexivity": 0.5838992627842553
+      }
+    },
+    {
+      "cycle": 32,
+      "action": "invest_reflexivity",
+      "cost": 0.026000000000000002,
+      "coherence": 0.7895574854158287,
+      "delta": -0.012902915278808158,
+      "gco": "PARTIAL",
+      "dimensions": {
+        "continuity": 0.8799791968429713,
+        "vitality": 1.0,
+        "contextual_fit": 0.7323657156520006,
+        "differentiation": 1.0,
+        "accountability": 0.3,
+        "reflexivity": 0.825
+      },
+      "substrate_snapshot": {
+        "fast": {
+          "continuity": 0.046424563887287884,
+          "vitality": 0.07991129452780886,
+          "contextual_fit": 0.6912696396721096,
+          "differentiation": 0.265202681564435,
+          "accountability": 0.39564891131956126,
+          "reflexivity": 0.47817324908426295
+        },
+        "slow": {
+          "continuity": 0.8599999999999985,
+          "vitality": 0.7399999999999987,
+          "contextual_fit": 0.5999999999999988,
+          "differentiation": 0.0,
+          "accountability": 0.5199999999999994,
+          "reflexivity": 0.679999999999999
+        },
+        "slow_age": {
+          "continuity": 4,
+          "vitality": 4,
+          "contextual_fit": 4,
+          "differentiation": 7,
+          "accountability": 4,
+          "reflexivity": 1
+        },
+        "active": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true,
+          "differentiation": false,
+          "accountability": true,
+          "reflexivity": true
+        },
+        "active_count": 5,
+        "coupling_score": 0.20998512122283453
+      },
+      "budget_remaining": 4.438000000000006,
+      "true_signals": {
+        "continuity": 0.11957739348193852,
+        "vitality": 0.1333333333333333,
+        "contextual_fit": 0.5745388140363993,
+        "differentiation": 0.6,
+        "accountability": 0.6,
+        "reflexivity": 0.6498371226540025
+      }
+    },
+    {
+      "cycle": 33,
+      "action": "maintain",
+      "cost": 0.026000000000000002,
+      "coherence": 0.745294368000995,
+      "delta": -0.044263117414833686,
+      "gco": "PARTIAL",
+      "dimensions": {
+        "continuity": 0.8990616693949771,
+        "vitality": 1.0,
+        "contextual_fit": 0.506037871944327,
+        "differentiation": 1.0,
+        "accountability": 0.3,
+        "reflexivity": 0.7666666666666666
+      },
+      "substrate_snapshot": {
+        "fast": {
+          "continuity": 0.2642595305589349,
+          "vitality": 0.22179260636614961,
+          "contextual_fit": 0.4810065612355815,
+          "differentiation": 0.8309732373878735,
+          "accountability": 0.5608555181857025,
+          "reflexivity": 0.6805387183374727
+        },
+        "slow": {
+          "continuity": 0.8799999999999986,
+          "vitality": 0.7599999999999987,
+          "contextual_fit": 0.6199999999999988,
+          "differentiation": 0.0,
+          "accountability": 0.5399999999999994,
+          "reflexivity": 0.6999999999999991
+        },
+        "slow_age": {
+          "continuity": 1,
+          "vitality": 1,
+          "contextual_fit": 1,
+          "differentiation": 7,
+          "accountability": 1,
+          "reflexivity": 1
+        },
+        "active": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true,
+          "differentiation": false,
+          "accountability": true,
+          "reflexivity": true
+        },
+        "active_count": 5,
+        "coupling_score": 0.21566003025877248
+      },
+      "budget_remaining": 4.412000000000006,
+      "true_signals": {
+        "continuity": 0.1435973903246528,
+        "vitality": 0.19999999999999996,
+        "contextual_fit": 0.5745388140363993,
+        "differentiation": 0.4591104705570097,
+        "accountability": 0.65,
+        "reflexivity": 0.5761839837344309
+      }
+    },
+    {
+      "cycle": 34,
+      "action": "observe",
+      "cost": 0.005,
+      "coherence": 0.7834107646376104,
+      "delta": 0.03811639663661537,
+      "gco": "STABLE",
+      "dimensions": {
+        "continuity": 0.9097859436321921,
+        "vitality": 1.0,
+        "contextual_fit": 0.607345310860137,
+        "differentiation": 1.0,
+        "accountability": 0.6499999999999999,
+        "reflexivity": 0.5333333333333333
+      },
+      "substrate_snapshot": {
+        "fast": {
+          "continuity": 0.2408199623111561,
+          "vitality": 0.19746427298259417,
+          "contextual_fit": 0.557134348283057,
+          "differentiation": 0.9281609519649177,
+          "accountability": 0.7102814913874457,
+          "reflexivity": 0.6066979900702022
+        },
+        "slow": {
+          "continuity": 0.8599999999999985,
+          "vitality": 0.7399999999999987,
+          "contextual_fit": 0.5999999999999988,
+          "differentiation": 0.0,
+          "accountability": 0.5199999999999994,
+          "reflexivity": 0.679999999999999
+        },
+        "slow_age": {
+          "continuity": 2,
+          "vitality": 2,
+          "contextual_fit": 2,
+          "differentiation": 7,
+          "accountability": 2,
+          "reflexivity": 2
+        },
+        "active": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true,
+          "differentiation": false,
+          "accountability": true,
+          "reflexivity": true
+        },
+        "active_count": 5,
+        "coupling_score": 0.2088542038281175
+      },
+      "budget_remaining": 4.407000000000006,
+      "true_signals": {
+        "continuity": 0.17639320225002098,
+        "vitality": 0.2666666666666666,
+        "contextual_fit": 0.5745388140363993,
+        "differentiation": 0.6,
+        "accountability": 0.7,
+        "reflexivity": 0.5808928600318923
+      }
+    },
+    {
+      "cycle": 35,
+      "action": "observe",
+      "cost": 0.005,
+      "coherence": 0.7668993062579498,
+      "delta": -0.016511458379660615,
+      "gco": "PARTIAL",
+      "dimensions": {
+        "continuity": 0.9047144921369006,
+        "vitality": 1.0,
+        "contextual_fit": 0.4466813454107988,
+        "differentiation": 0.8333333333333334,
+        "accountability": 0.6499999999999999,
+        "reflexivity": 0.7666666666666666
+      },
+      "substrate_snapshot": {
+        "fast": {
+          "continuity": 0.06874578873057025,
+          "vitality": 0.30612875125840855,
+          "contextual_fit": 0.42049807773599224,
+          "differentiation": 0.22073416762263703,
+          "accountability": 0.8220557588415993,
+          "reflexivity": 0.5241303777119564
+        },
+        "slow": {
+          "continuity": 0.8399999999999985,
+          "vitality": 0.7199999999999986,
+          "contextual_fit": 0.5799999999999987,
+          "differentiation": 0.0,
+          "accountability": 0.49999999999999933,
+          "reflexivity": 0.659999999999999
+        },
+        "slow_age": {
+          "continuity": 3,
+          "vitality": 3,
+          "contextual_fit": 3,
+          "differentiation": 7,
+          "accountability": 3,
+          "reflexivity": 3
+        },
+        "active": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true,
+          "differentiation": false,
+          "accountability": true,
+          "reflexivity": true
+        },
+        "active_count": 5,
+        "coupling_score": 0.20426049600197507
+      },
+      "budget_remaining": 4.402000000000006,
+      "true_signals": {
+        "continuity": 0.21715728752538094,
+        "vitality": 0.33333333333333326,
+        "contextual_fit": 0.5745388140363993,
+        "differentiation": 0.6,
+        "accountability": 0.75,
+        "reflexivity": 0.4815811739896882
+      }
+    },
+    {
+      "cycle": 36,
+      "action": "invest_vitality",
+      "cost": 0.026000000000000002,
+      "coherence": 0.7626067018240247,
+      "delta": -0.004292604433925096,
+      "gco": "STABLE",
+      "dimensions": {
+        "continuity": 0.8804270464964183,
+        "vitality": 1.0,
+        "contextual_fit": 0.6118798311143971,
+        "differentiation": 0.6666666666666666,
+        "accountability": 0.6499999999999999,
+        "reflexivity": 0.7666666666666666
+      },
+      "substrate_snapshot": {
+        "fast": {
+          "continuity": 0.22204308349431154,
+          "vitality": 0.3961385784678742,
+          "contextual_fit": 0.5982768177588457,
+          "differentiation": 0.3033889818985758,
+          "accountability": 0.7088551410816056,
+          "reflexivity": 0.5214422015466778
+        },
+        "slow": {
+          "continuity": 0.8199999999999985,
+          "vitality": 0.8999999999999986,
+          "contextual_fit": 0.5599999999999987,
+          "differentiation": 0.0,
+          "accountability": 0.4799999999999993,
+          "reflexivity": 0.639999999999999
+        },
+        "slow_age": {
+          "continuity": 4,
+          "vitality": 1,
+          "contextual_fit": 4,
+          "differentiation": 7,
+          "accountability": 4,
+          "reflexivity": 4
+        },
+        "active": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true,
+          "differentiation": false,
+          "accountability": true,
+          "reflexivity": true
+        },
+        "active_count": 5,
+        "coupling_score": 0.2085786358119262
+      },
+      "budget_remaining": 4.3760000000000066,
+      "true_signals": {
+        "continuity": 0.26488589908301063,
+        "vitality": 0.4,
+        "contextual_fit": 0.5745388140363993,
+        "differentiation": 0.6,
+        "accountability": 0.8,
+        "reflexivity": 0.5103063317742789
+      }
+    },
+    {
+      "cycle": 37,
+      "action": "invest_accountability",
+      "cost": 0.026000000000000002,
+      "coherence": 0.7543913654346754,
+      "delta": -0.008215336389349237,
+      "gco": "PARTIAL",
+      "dimensions": {
+        "continuity": 0.8641723932539305,
+        "vitality": 1.0,
+        "contextual_fit": 0.41217579935412213,
+        "differentiation": 0.8333333333333334,
+        "accountability": 0.6499999999999999,
+        "reflexivity": 0.7666666666666666
+      },
+      "substrate_snapshot": {
+        "fast": {
+          "continuity": 0.3044745176100334,
+          "vitality": 0.5011237078091465,
+          "contextual_fit": 0.2629364089432916,
+          "differentiation": 0.5580059070133346,
+          "accountability": 0.9676043257430689,
+          "reflexivity": 0.6779128252403511
+        },
+        "slow": {
+          "continuity": 0.7999999999999985,
+          "vitality": 0.8799999999999986,
+          "contextual_fit": 0.5399999999999987,
+          "differentiation": 0.0,
+          "accountability": 0.6599999999999993,
+          "reflexivity": 0.619999999999999
+        },
+        "slow_age": {
+          "continuity": 5,
+          "vitality": 2,
+          "contextual_fit": 5,
+          "differentiation": 7,
+          "accountability": 1,
+          "reflexivity": 5
+        },
+        "active": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true,
+          "differentiation": false,
+          "accountability": true,
+          "reflexivity": true
+        },
+        "active_count": 5,
+        "coupling_score": 0.21173862369146468
+      },
+      "budget_remaining": 4.350000000000007,
+      "true_signals": {
+        "continuity": 0.31840380010418123,
+        "vitality": 0.4666666666666667,
+        "contextual_fit": 0.5745388140363993,
+        "differentiation": 0.6,
+        "accountability": 0.85,
+        "reflexivity": 0.5970265867921272
+      }
+    },
+    {
+      "cycle": 38,
+      "action": "maintain",
+      "cost": 0.026000000000000002,
+      "coherence": 0.8040311606582217,
+      "delta": 0.049639795223546224,
+      "gco": "PARTIAL",
+      "dimensions": {
+        "continuity": 0.8344061636051867,
+        "vitality": 1.0,
+        "contextual_fit": 0.38978080034414325,
+        "differentiation": 0.8333333333333334,
+        "accountability": 1.0,
+        "reflexivity": 0.7666666666666666
+      },
+      "substrate_snapshot": {
+        "fast": {
+          "continuity": 0.36913583897467095,
+          "vitality": 0.4938044958133398,
+          "contextual_fit": 0.6989571311216651,
+          "differentiation": 0.8966248218461396,
+          "accountability": 0.9769969196363415,
+          "reflexivity": 0.7178153134354301
+        },
+        "slow": {
+          "continuity": 0.8199999999999985,
+          "vitality": 0.8999999999999986,
+          "contextual_fit": 0.5599999999999987,
+          "differentiation": 0.0,
+          "accountability": 0.6799999999999993,
+          "reflexivity": 0.639999999999999
+        },
+        "slow_age": {
+          "continuity": 1,
+          "vitality": 1,
+          "contextual_fit": 1,
+          "differentiation": 7,
+          "accountability": 1,
+          "reflexivity": 1
+        },
+        "active": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true,
+          "differentiation": false,
+          "accountability": true,
+          "reflexivity": true
+        },
+        "active_count": 5,
+        "coupling_score": 0.2193663134509582
+      },
+      "budget_remaining": 4.324000000000007,
+      "true_signals": {
+        "continuity": 0.37639320225002093,
+        "vitality": 0.5333333333333333,
+        "contextual_fit": 0.5745388140363993,
+        "differentiation": 0.6,
+        "accountability": 0.9,
+        "reflexivity": 0.6398359647271845
+      }
+    },
+    {
+      "cycle": 39,
+      "action": "observe",
+      "cost": 0.005,
+      "coherence": 0.8202080540935291,
+      "delta": 0.016176893435307482,
+      "gco": "PARTIAL",
+      "dimensions": {
+        "continuity": 0.8215795268240424,
+        "vitality": 1.0,
+        "contextual_fit": 0.4996687977371319,
+        "differentiation": 0.8333333333333334,
+        "accountability": 1.0,
+        "reflexivity": 0.7666666666666666
+      },
+      "substrate_snapshot": {
+        "fast": {
+          "continuity": 0.4603836801966541,
+          "vitality": 0.5354369351627949,
+          "contextual_fit": 0.6089296618553195,
+          "differentiation": 0.9012629528642954,
+          "accountability": 1.0,
+          "reflexivity": 0.6503269657137206
+        },
+        "slow": {
+          "continuity": 0.7999999999999985,
+          "vitality": 0.8799999999999986,
+          "contextual_fit": 0.5399999999999987,
+          "differentiation": 0.0,
+          "accountability": 0.6599999999999993,
+          "reflexivity": 0.619999999999999
+        },
+        "slow_age": {
+          "continuity": 2,
+          "vitality": 2,
+          "contextual_fit": 2,
+          "differentiation": 7,
+          "accountability": 2,
+          "reflexivity": 2
+        },
+        "active": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true,
+          "differentiation": false,
+          "accountability": true,
+          "reflexivity": true
+        },
+        "active_count": 5,
+        "coupling_score": 0.2159492512789714
+      },
+      "budget_remaining": 4.319000000000007,
+      "true_signals": {
+        "continuity": 0.4374262139839076,
+        "vitality": 0.6,
+        "contextual_fit": 0.5745388140363993,
+        "differentiation": 0.6,
+        "accountability": 0.95,
+        "reflexivity": 0.6475078028509467
+      }
+    },
+    {
+      "cycle": 40,
+      "action": "invest_differentiation",
+      "cost": 0.020000000000000004,
+      "coherence": 0.8443314739030124,
+      "delta": 0.024123419809483293,
+      "gco": "PARTIAL",
+      "dimensions": {
+        "continuity": 0.8081466429805497,
+        "vitality": 1.0,
+        "contextual_fit": 0.49117553377085893,
+        "differentiation": 1.0,
+        "accountability": 1.0,
+        "reflexivity": 0.7666666666666666
+      },
+      "substrate_snapshot": {
+        "fast": {
+          "continuity": 0.42745484573252374,
+          "vitality": 0.7216887341788957,
+          "contextual_fit": 0.6671829913632416,
+          "differentiation": 0.5585973665423786,
+          "accountability": 0.0,
+          "reflexivity": 0.7183112598598808
+        },
+        "slow": {
+          "continuity": 0.7799999999999985,
+          "vitality": 0.8599999999999985,
+          "contextual_fit": 0.5199999999999987,
+          "differentiation": 0.14,
+          "accountability": 0.6399999999999992,
+          "reflexivity": 0.599999999999999
+        },
+        "slow_age": {
+          "continuity": 3,
+          "vitality": 3,
+          "contextual_fit": 3,
+          "differentiation": 1,
+          "accountability": 3,
+          "reflexivity": 3
+        },
+        "active": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true,
+          "differentiation": false,
+          "accountability": true,
+          "reflexivity": true
+        },
+        "active_count": 5,
+        "coupling_score": 0.21021486967768804
+      },
+      "budget_remaining": 4.2990000000000075,
+      "true_signals": {
+        "continuity": 0.4999999999999999,
+        "vitality": 0.6666666666666666,
+        "contextual_fit": 0.5745388140363993,
+        "differentiation": 0.6,
+        "accountability": 0.0,
+        "reflexivity": 0.6512316475801043
+      }
+    },
+    {
+      "cycle": 41,
+      "action": "maintain",
+      "cost": 0.026000000000000002,
+      "coherence": 0.7861349301300361,
+      "delta": -0.05819654377297634,
+      "gco": "PARTIAL",
+      "dimensions": {
+        "continuity": 0.7684543504702646,
+        "vitality": 1.0,
+        "contextual_fit": 0.2983552303099517,
+        "differentiation": 1.0,
+        "accountability": 1.0,
+        "reflexivity": 0.6499999999999999
+      },
+      "substrate_snapshot": {
+        "fast": {
+          "continuity": 0.582714769522984,
+          "vitality": 0.7642957152169548,
+          "contextual_fit": 0.8852007656509189,
+          "differentiation": 0.4039720258843526,
+          "accountability": 0.18728787605470992,
+          "reflexivity": 0.6054272519553769
+        },
+        "slow": {
+          "continuity": 0.7999999999999985,
+          "vitality": 0.8799999999999986,
+          "contextual_fit": 0.5399999999999987,
+          "differentiation": 0.08000000000000002,
+          "accountability": 0.6599999999999993,
+          "reflexivity": 0.619999999999999
+        },
+        "slow_age": {
+          "continuity": 1,
+          "vitality": 1,
+          "contextual_fit": 1,
+          "differentiation": 2,
+          "accountability": 1,
+          "reflexivity": 1
+        },
+        "active": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true,
+          "differentiation": false,
+          "accountability": true,
+          "reflexivity": true
+        },
+        "active_count": 5,
+        "coupling_score": 0.21729335976269648
+      },
+      "budget_remaining": 4.273000000000008,
+      "true_signals": {
+        "continuity": 0.5625737860160919,
+        "vitality": 0.7333333333333333,
+        "contextual_fit": 0.5411459621443631,
+        "differentiation": 0.6,
+        "accountability": 0.05,
+        "reflexivity": 0.6861519336577169
+      }
+    },
+    {
+      "cycle": 42,
+      "action": "observe",
+      "cost": 0.005,
+      "coherence": 0.7801823857447294,
+      "delta": -0.0059525443853066795,
+      "gco": "PARTIAL",
+      "dimensions": {
+        "continuity": 0.7373944219887796,
+        "vitality": 1.0,
+        "contextual_fit": 0.46869989247959704,
+        "differentiation": 1.0,
+        "accountability": 0.825,
+        "reflexivity": 0.6499999999999999
+      },
+      "substrate_snapshot": {
+        "fast": {
+          "continuity": 0.694340938564208,
+          "vitality": 0.7096853318789014,
+          "contextual_fit": 0.5774276126404844,
+          "differentiation": 0.5231156788379914,
+          "accountability": 0.017509811050155574,
+          "reflexivity": 0.843511267410403
+        },
+        "slow": {
+          "continuity": 0.7799999999999985,
+          "vitality": 0.8599999999999985,
+          "contextual_fit": 0.5199999999999987,
+          "differentiation": 0.020000000000000018,
+          "accountability": 0.6399999999999992,
+          "reflexivity": 0.599999999999999
+        },
+        "slow_age": {
+          "continuity": 2,
+          "vitality": 2,
+          "contextual_fit": 2,
+          "differentiation": 3,
+          "accountability": 2,
+          "reflexivity": 2
+        },
+        "active": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true,
+          "differentiation": false,
+          "accountability": true,
+          "reflexivity": true
+        },
+        "active_count": 5,
+        "coupling_score": 0.2091133387503837
+      },
+      "budget_remaining": 4.268000000000008,
+      "true_signals": {
+        "continuity": 0.6236067977499788,
+        "vitality": 0.8,
+        "contextual_fit": 0.5411459621443631,
+        "differentiation": 0.6,
+        "accountability": 0.1,
+        "reflexivity": 0.712109286735727
+      }
+    },
+    {
+      "cycle": 43,
+      "action": "observe",
+      "cost": 0.005,
+      "coherence": 0.8384968464364917,
+      "delta": 0.05831446069176227,
+      "gco": "PARTIAL",
+      "dimensions": {
+        "continuity": 0.7202289304199899,
+        "vitality": 1.0,
+        "contextual_fit": 0.48575214819896007,
+        "differentiation": 1.0,
+        "accountability": 0.825,
+        "reflexivity": 1.0
+      },
+      "substrate_snapshot": {
+        "fast": {
+          "continuity": 0.6631221923175359,
+          "vitality": 0.9130258674902483,
+          "contextual_fit": 0.5759777573396252,
+          "differentiation": 0.5312143362604316,
+          "accountability": 0.19108891972872763,
+          "reflexivity": 0.8288822027768292
+        },
+        "slow": {
+          "continuity": 0.7599999999999985,
+          "vitality": 0.8399999999999985,
+          "contextual_fit": 0.49999999999999867,
+          "differentiation": 0.0,
+          "accountability": 0.6199999999999992,
+          "reflexivity": 0.579999999999999
+        },
+        "slow_age": {
+          "continuity": 3,
+          "vitality": 3,
+          "contextual_fit": 3,
+          "differentiation": 4,
+          "accountability": 3,
+          "reflexivity": 3
+        },
+        "active": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true,
+          "differentiation": false,
+          "accountability": true,
+          "reflexivity": true
+        },
+        "active_count": 5,
+        "coupling_score": 0.2018254289947449
+      },
+      "budget_remaining": 4.263000000000008,
+      "true_signals": {
+        "continuity": 0.6815961998958187,
+        "vitality": 0.8666666666666667,
+        "contextual_fit": 0.5411459621443631,
+        "differentiation": 0.6,
+        "accountability": 0.15,
+        "reflexivity": 0.7585474276687342
+      }
+    },
+    {
+      "cycle": 44,
+      "action": "invest_contextual_fit",
+      "cost": 0.026000000000000002,
+      "coherence": 0.8705128947987352,
+      "delta": 0.03201604836224348,
+      "gco": "STABLE",
+      "dimensions": {
+        "continuity": 0.6974082711169186,
+        "vitality": 1.0,
+        "contextual_fit": 0.7006690976754923,
+        "differentiation": 1.0,
+        "accountability": 0.825,
+        "reflexivity": 1.0
+      },
+      "substrate_snapshot": {
+        "fast": {
+          "continuity": 0.5894825629479823,
+          "vitality": 1.0,
+          "contextual_fit": 0.5639655978643378,
+          "differentiation": 0.4896574727162802,
+          "accountability": 0.3478293826213745,
+          "reflexivity": 0.7712956127747694
+        },
+        "slow": {
+          "continuity": 0.7399999999999984,
+          "vitality": 0.8199999999999985,
+          "contextual_fit": 0.6799999999999986,
+          "differentiation": 0.0,
+          "accountability": 0.5999999999999992,
+          "reflexivity": 0.5599999999999989
+        },
+        "slow_age": {
+          "continuity": 4,
+          "vitality": 4,
+          "contextual_fit": 1,
+          "differentiation": 4,
+          "accountability": 4,
+          "reflexivity": 4
+        },
+        "active": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true,
+          "differentiation": false,
+          "accountability": true,
+          "reflexivity": true
+        },
+        "active_count": 5,
+        "coupling_score": 0.2144844706658157
+      },
+      "budget_remaining": 4.237000000000008,
+      "true_signals": {
+        "continuity": 0.7351141009169889,
+        "vitality": 0.9333333333333333,
+        "contextual_fit": 0.5411459621443631,
+        "differentiation": 0.6,
+        "accountability": 0.2,
+        "reflexivity": 0.6191785583743933
+      }
+    },
+    {
+      "cycle": 45,
+      "action": "maintain",
+      "cost": 0.026000000000000002,
+      "coherence": 0.8393525098745281,
+      "delta": -0.03116038492420703,
+      "gco": "STABLE",
+      "dimensions": {
+        "continuity": 0.7080615290694612,
+        "vitality": 1.0,
+        "contextual_fit": 0.5613868635110407,
+        "differentiation": 1.0,
+        "accountability": 0.7666666666666666,
+        "reflexivity": 1.0
+      },
+      "substrate_snapshot": {
+        "fast": {
+          "continuity": 0.6944544919977731,
+          "vitality": 1.0,
+          "contextual_fit": 0.5262042266698459,
+          "differentiation": 0.7593230358329839,
+          "accountability": 0.32005840735549596,
+          "reflexivity": 0.7146251339563348
+        },
+        "slow": {
+          "continuity": 0.7599999999999985,
+          "vitality": 0.8399999999999985,
+          "contextual_fit": 0.6999999999999986,
+          "differentiation": 0.0,
+          "accountability": 0.6199999999999992,
+          "reflexivity": 0.579999999999999
+        },
+        "slow_age": {
+          "continuity": 1,
+          "vitality": 1,
+          "contextual_fit": 1,
+          "differentiation": 4,
+          "accountability": 1,
+          "reflexivity": 1
+        },
+        "active": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true,
+          "differentiation": false,
+          "accountability": true,
+          "reflexivity": true
+        },
+        "active_count": 5,
+        "coupling_score": 0.2243849482982255
+      },
+      "budget_remaining": 4.211000000000008,
+      "true_signals": {
+        "continuity": 0.7828427124746189,
+        "vitality": 1.0,
+        "contextual_fit": 0.5411459621443631,
+        "differentiation": 0.6,
+        "accountability": 0.25,
+        "reflexivity": 0.6300388058576232
+      }
+    },
+    {
+      "cycle": 46,
+      "action": "observe",
+      "cost": 0.005,
+      "coherence": 0.8071766850221788,
+      "delta": -0.03217582485234938,
+      "gco": "STABLE",
+      "dimensions": {
+        "continuity": 0.7396964001984843,
+        "vitality": 1.0,
+        "contextual_fit": 0.8033637099345887,
+        "differentiation": 1.0,
+        "accountability": 0.6499999999999999,
+        "reflexivity": 0.6499999999999999
+      },
+      "substrate_snapshot": {
+        "fast": {
+          "continuity": 0.8283069459118845,
+          "vitality": 0.9005640374311507,
+          "contextual_fit": 0.5817482338495794,
+          "differentiation": 0.5214334551112065,
+          "accountability": 0.3192761400383981,
+          "reflexivity": 0.7366735966546075
+        },
+        "slow": {
+          "continuity": 0.7399999999999984,
+          "vitality": 0.8199999999999985,
+          "contextual_fit": 0.6799999999999986,
+          "differentiation": 0.0,
+          "accountability": 0.5999999999999992,
+          "reflexivity": 0.5599999999999989
+        },
+        "slow_age": {
+          "continuity": 2,
+          "vitality": 2,
+          "contextual_fit": 2,
+          "differentiation": 4,
+          "accountability": 2,
+          "reflexivity": 2
+        },
+        "active": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true,
+          "differentiation": false,
+          "accountability": true,
+          "reflexivity": true
+        },
+        "active_count": 5,
+        "coupling_score": 0.22316515253541702
+      },
+      "budget_remaining": 4.206000000000008,
+      "true_signals": {
+        "continuity": 0.8236067977499789,
+        "vitality": 0.9333333333333333,
+        "contextual_fit": 0.5411459621443631,
+        "differentiation": 0.6,
+        "accountability": 0.3,
+        "reflexivity": 0.7448137787132405
+      }
+    },
+    {
+      "cycle": 47,
+      "action": "observe",
+      "cost": 0.005,
+      "coherence": 0.8415727273205252,
+      "delta": 0.034396042298346474,
+      "gco": "STABLE",
+      "dimensions": {
+        "continuity": 0.7634774051845203,
+        "vitality": 1.0,
+        "contextual_fit": 0.694292292071964,
+        "differentiation": 1.0,
+        "accountability": 0.825,
+        "reflexivity": 0.7666666666666666
+      },
+      "substrate_snapshot": {
+        "fast": {
+          "continuity": 0.7585166903466499,
+          "vitality": 0.8983795923759323,
+          "contextual_fit": 0.5955977363043703,
+          "differentiation": 0.3614432135991988,
+          "accountability": 0.2561999610552208,
+          "reflexivity": 0.4895189275219838
+        },
+        "slow": {
+          "continuity": 0.7199999999999984,
+          "vitality": 0.7999999999999985,
+          "contextual_fit": 0.6599999999999986,
+          "differentiation": 0.0,
+          "accountability": 0.5799999999999992,
+          "reflexivity": 0.5399999999999989
+        },
+        "slow_age": {
+          "continuity": 3,
+          "vitality": 3,
+          "contextual_fit": 3,
+          "differentiation": 4,
+          "accountability": 3,
+          "reflexivity": 3
+        },
+        "active": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true,
+          "differentiation": false,
+          "accountability": true,
+          "reflexivity": true
+        },
+        "active_count": 5,
+        "coupling_score": 0.22173195575026483
+      },
+      "budget_remaining": 4.2010000000000085,
+      "true_signals": {
+        "continuity": 0.8564026096753472,
+        "vitality": 0.8666666666666667,
+        "contextual_fit": 0.5411459621443631,
+        "differentiation": 0.6,
+        "accountability": 0.35,
+        "reflexivity": 0.7379185120351226
+      }
+    },
+    {
+      "cycle": 48,
+      "action": "maintain",
+      "cost": 0.026000000000000002,
+      "coherence": 0.8009247341500402,
+      "delta": -0.040647993170485064,
+      "gco": "PARTIAL",
+      "dimensions": {
+        "continuity": 0.8029384838072714,
+        "vitality": 1.0,
+        "contextual_fit": 0.4109432544263032,
+        "differentiation": 1.0,
+        "accountability": 0.825,
+        "reflexivity": 0.7666666666666666
+      },
+      "substrate_snapshot": {
+        "fast": {
+          "continuity": 0.9790286413966307,
+          "vitality": 0.8731129604750029,
+          "contextual_fit": 0.4896653272165489,
+          "differentiation": 0.28371758167363437,
+          "accountability": 0.5037400401480242,
+          "reflexivity": 1.0
+        },
+        "slow": {
+          "continuity": 0.7399999999999984,
+          "vitality": 0.8199999999999985,
+          "contextual_fit": 0.6799999999999986,
+          "differentiation": 0.0,
+          "accountability": 0.5999999999999992,
+          "reflexivity": 0.5599999999999989
+        },
+        "slow_age": {
+          "continuity": 1,
+          "vitality": 1,
+          "contextual_fit": 1,
+          "differentiation": 4,
+          "accountability": 1,
+          "reflexivity": 1
+        },
+        "active": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true,
+          "differentiation": false,
+          "accountability": true,
+          "reflexivity": true
+        },
+        "active_count": 5,
+        "coupling_score": 0.234584208667563
+      },
+      "budget_remaining": 4.175000000000009,
+      "true_signals": {
+        "continuity": 0.8804226065180614,
+        "vitality": 0.8,
+        "contextual_fit": 0.5411459621443631,
+        "differentiation": 0.6,
+        "accountability": 0.4,
+        "reflexivity": 0.7577540712620031
+      }
+    },
+    {
+      "cycle": 49,
+      "action": "invest_accountability",
+      "cost": 0.026000000000000002,
+      "coherence": 0.7985081344863757,
+      "delta": -0.002416599663664476,
+      "gco": "STABLE",
+      "dimensions": {
+        "continuity": 0.838020603886331,
+        "vitality": 1.0,
+        "contextual_fit": 0.5363615363652561,
+        "differentiation": 1.0,
+        "accountability": 0.7666666666666666,
+        "reflexivity": 0.6499999999999999
+      },
+      "substrate_snapshot": {
+        "fast": {
+          "continuity": 1.0,
+          "vitality": 0.7438521280449076,
+          "contextual_fit": 0.5020877073173295,
+          "differentiation": 0.7599482690715038,
+          "accountability": 0.46781383784186503,
+          "reflexivity": 0.680321936349989
+        },
+        "slow": {
+          "continuity": 0.7199999999999984,
+          "vitality": 0.7999999999999985,
+          "contextual_fit": 0.6599999999999986,
+          "differentiation": 0.0,
+          "accountability": 0.7799999999999991,
+          "reflexivity": 0.5399999999999989
+        },
+        "slow_age": {
+          "continuity": 2,
+          "vitality": 2,
+          "contextual_fit": 2,
+          "differentiation": 4,
+          "accountability": 1,
+          "reflexivity": 2
+        },
+        "active": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true,
+          "differentiation": false,
+          "accountability": true,
+          "reflexivity": true
+        },
+        "active_count": 5,
+        "coupling_score": 0.2426789565219596
+      },
+      "budget_remaining": 4.149000000000009,
+      "true_signals": {
+        "continuity": 0.895075336238055,
+        "vitality": 0.7333333333333334,
+        "contextual_fit": 0.5411459621443631,
+        "differentiation": 0.6,
+        "accountability": 0.45,
+        "reflexivity": 0.776285806968764
+      }
+    },
+    {
+      "cycle": 50,
+      "action": "observe",
+      "cost": 0.005,
+      "coherence": 0.8264367096736503,
+      "delta": 0.02792857518727465,
+      "gco": "STABLE",
+      "dimensions": {
+        "continuity": 0.8937141864043702,
+        "vitality": 1.0,
+        "contextual_fit": 0.5899060716375322,
+        "differentiation": 1.0,
+        "accountability": 0.6499999999999999,
+        "reflexivity": 0.825
+      },
+      "substrate_snapshot": {
+        "fast": {
+          "continuity": 0.8341740720704677,
+          "vitality": 0.7230860595391365,
+          "contextual_fit": 0.5850422729302515,
+          "differentiation": 0.7919882305326879,
+          "accountability": 0.48838198777138936,
+          "reflexivity": 0.9506717530178489
+        },
+        "slow": {
+          "continuity": 0.6999999999999984,
+          "vitality": 0.7799999999999985,
+          "contextual_fit": 0.6399999999999986,
+          "differentiation": 0.0,
+          "accountability": 0.7599999999999991,
+          "reflexivity": 0.5199999999999989
+        },
+        "slow_age": {
+          "continuity": 3,
+          "vitality": 3,
+          "contextual_fit": 3,
+          "differentiation": 4,
+          "accountability": 2,
+          "reflexivity": 3
+        },
+        "active": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true,
+          "differentiation": false,
+          "accountability": true,
+          "reflexivity": true
+        },
+        "active_count": 5,
+        "coupling_score": 0.2467132308135144
+      },
+      "budget_remaining": 4.144000000000009,
+      "true_signals": {
+        "continuity": 0.9,
+        "vitality": 0.6666666666666667,
+        "contextual_fit": 0.5411459621443631,
+        "differentiation": 0.6,
+        "accountability": 0.5,
+        "reflexivity": 0.7709414360157998
+      }
+    }
+  ]
+}

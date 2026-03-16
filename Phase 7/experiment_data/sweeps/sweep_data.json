@@ -1,0 +1,305 @@
+{
+  "sweeps": {
+    "slow_decay": [
+      {
+        "label": "slow_decay=0.01",
+        "config": {
+          "slow_decay": 0.01,
+          "budget": 5.0
+        },
+        "mean_coherence": 0.7479782384278311,
+        "stable_pct": 0.4613333333333333,
+        "mean_active": 5.8,
+        "mean_coupling": 0.27399007232241895
+      },
+      {
+        "label": "slow_decay=0.02",
+        "config": {
+          "slow_decay": 0.02,
+          "budget": 5.0
+        },
+        "mean_coherence": 0.7891480130011549,
+        "stable_pct": 0.5546666666666666,
+        "mean_active": 5.666666666666667,
+        "mean_coupling": 0.23350626574787522
+      },
+      {
+        "label": "slow_decay=0.03",
+        "config": {
+          "slow_decay": 0.03,
+          "budget": 5.0
+        },
+        "mean_coherence": 0.7954781130930227,
+        "stable_pct": 0.536,
+        "mean_active": 5,
+        "mean_coupling": 0.19469815490663375
+      },
+      {
+        "label": "slow_decay=0.05",
+        "config": {
+          "slow_decay": 0.05,
+          "budget": 5.0
+        },
+        "mean_coherence": 0.7693464026824238,
+        "stable_pct": 0.36133333333333334,
+        "mean_active": 2.2666666666666666,
+        "mean_coupling": 0.2227560975841973
+      }
+    ],
+    "budget": [
+      {
+        "label": "budget=2.0",
+        "config": {
+          "budget": 2.0
+        },
+        "mean_coherence": 0.7891480130011549,
+        "stable_pct": 0.5546666666666666,
+        "mean_active": 5.666666666666667,
+        "mean_coupling": 0.23350626574787522
+      },
+      {
+        "label": "budget=3.5",
+        "config": {
+          "budget": 3.5
+        },
+        "mean_coherence": 0.7891480130011549,
+        "stable_pct": 0.5546666666666666,
+        "mean_active": 5.666666666666667,
+        "mean_coupling": 0.23350626574787522
+      },
+      {
+        "label": "budget=5.0",
+        "config": {
+          "budget": 5.0
+        },
+        "mean_coherence": 0.7891480130011549,
+        "stable_pct": 0.5546666666666666,
+        "mean_active": 5.666666666666667,
+        "mean_coupling": 0.23350626574787522
+      },
+      {
+        "label": "budget=7.0",
+        "config": {
+          "budget": 7.0
+        },
+        "mean_coherence": 0.7891480130011549,
+        "stable_pct": 0.5546666666666666,
+        "mean_active": 5.666666666666667,
+        "mean_coupling": 0.23350626574787522
+      }
+    ],
+    "bistable_threshold": [
+      {
+        "label": "bistable_threshold=0.15",
+        "config": {
+          "bistable_threshold": 0.15,
+          "budget": 5.0
+        },
+        "mean_coherence": 0.7891818428173913,
+        "stable_pct": 0.5306666666666666,
+        "mean_active": 5.866666666666666,
+        "mean_coupling": 0.24172379413011105
+      },
+      {
+        "label": "bistable_threshold=0.25",
+        "config": {
+          "bistable_threshold": 0.25,
+          "budget": 5.0
+        },
+        "mean_coherence": 0.7891480130011549,
+        "stable_pct": 0.5546666666666666,
+        "mean_active": 5.666666666666667,
+        "mean_coupling": 0.23350626574787522
+      },
+      {
+        "label": "bistable_threshold=0.35",
+        "config": {
+          "bistable_threshold": 0.35,
+          "budget": 5.0
+        },
+        "mean_coherence": 0.7787537271476993,
+        "stable_pct": 0.496,
+        "mean_active": 4.733333333333333,
+        "mean_coupling": 0.2189837793606046
+      },
+      {
+        "label": "bistable_threshold=0.45",
+        "config": {
+          "bistable_threshold": 0.45,
+          "budget": 5.0
+        },
+        "mean_coherence": 0.7456139885393567,
+        "stable_pct": 0.4186666666666667,
+        "mean_active": 4.266666666666667,
+        "mean_coupling": 0.29459541339112805
+      }
+    ],
+    "accelerated_decay_factor": [
+      {
+        "label": "accelerated_decay_factor=1.5",
+        "config": {
+          "accelerated_decay_factor": 1.5,
+          "budget": 5.0
+        },
+        "mean_coherence": 0.791332395810151,
+        "stable_pct": 0.568,
+        "mean_active": 5.8,
+        "mean_coupling": 0.23896728854672783
+      },
+      {
+        "label": "accelerated_decay_factor=3.0",
+        "config": {
+          "accelerated_decay_factor": 3.0,
+          "budget": 5.0
+        },
+        "mean_coherence": 0.7891480130011549,
+        "stable_pct": 0.5546666666666666,
+        "mean_active": 5.666666666666667,
+        "mean_coupling": 0.23350626574787522
+      },
+      {
+        "label": "accelerated_decay_factor=5.0",
+        "config": {
+          "accelerated_decay_factor": 5.0,
+          "budget": 5.0
+        },
+        "mean_coherence": 0.7933046073686281,
+        "stable_pct": 0.5426666666666666,
+        "mean_active": 5.333333333333333,
+        "mean_coupling": 0.22565779049377493
+      },
+      {
+        "label": "accelerated_decay_factor=8.0",
+        "config": {
+          "accelerated_decay_factor": 8.0,
+          "budget": 5.0
+        },
+        "mean_coherence": 0.7686088054966482,
+        "stable_pct": 0.43333333333333335,
+        "mean_active": 3.7333333333333334,
+        "mean_coupling": 0.23451843392249241
+      }
+    ]
+  },
+  "closure": {
+    "perturbed_dims": [
+      "continuity",
+      "vitality",
+      "contextual_fit"
+    ],
+    "kept_dims": [
+      "differentiation",
+      "accountability",
+      "reflexivity"
+    ],
+    "pre_perturbation": {
+      "continuity": 0.6599999999999957,
+      "vitality": 0.6199999999999997,
+      "contextual_fit": 0.6199999999999992,
+      "differentiation": 0.49999999999999734,
+      "accountability": 0.5199999999999965,
+      "reflexivity": 0.6799999999999962
+    },
+    "post_perturbation": {
+      "continuity": 0.0,
+      "vitality": 0.0,
+      "contextual_fit": 0.0,
+      "differentiation": 0.49999999999999734,
+      "accountability": 0.5199999999999965,
+      "reflexivity": 0.6799999999999962
+    },
+    "recovery_session": 10,
+    "build_coherence": 0.7809291724595179,
+    "recovery_coherence": 0.7854445552008851,
+    "recovery_trajectory": [
+      {
+        "session": 9,
+        "coherence": 0.7427385616562165,
+        "active": 5,
+        "coupling": 0.27105018561651156,
+        "perturbed_status": {
+          "continuity": true,
+          "vitality": false,
+          "contextual_fit": true
+        }
+      },
+      {
+        "session": 10,
+        "coherence": 0.8071072938103185,
+        "active": 6,
+        "coupling": 0.2096226395553671,
+        "perturbed_status": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true
+        }
+      },
+      {
+        "session": 11,
+        "coherence": 0.7945601599295737,
+        "active": 6,
+        "coupling": 0.2591869452589443,
+        "perturbed_status": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true
+        }
+      },
+      {
+        "session": 12,
+        "coherence": 0.756644525087224,
+        "active": 6,
+        "coupling": 0.20437183991909247,
+        "perturbed_status": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true
+        }
+      },
+      {
+        "session": 13,
+        "coherence": 0.8237581840687898,
+        "active": 6,
+        "coupling": 0.26684230348893695,
+        "perturbed_status": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true
+        }
+      },
+      {
+        "session": 14,
+        "coherence": 0.7602348912291049,
+        "active": 6,
+        "coupling": 0.25706145102684075,
+        "perturbed_status": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true
+        }
+      },
+      {
+        "session": 15,
+        "coherence": 0.7725816100166496,
+        "active": 6,
+        "coupling": 0.20569620922451085,
+        "perturbed_status": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true
+        }
+      },
+      {
+        "session": 16,
+        "coherence": 0.8259312158092036,
+        "active": 6,
+        "coupling": 0.17862719521110984,
+        "perturbed_status": {
+          "continuity": true,
+          "vitality": true,
+          "contextual_fit": true
+        }
+      }
+    ]
+  }
+}

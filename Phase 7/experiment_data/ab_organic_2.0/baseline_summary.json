@@ -1,0 +1,34 @@
+{
+  "condition": "baseline",
+  "mean_coherence": 0.728092578027154,
+  "coherence_std": 0.015345411324031964,
+  "stable_rate": 0.7290666666666666,
+  "gco": {
+    "STABLE": 0.7290666666666666,
+    "PARTIAL": 0.20106666666666667,
+    "DEGRADED": 0.06986666666666666,
+    "CRITICAL": 0.0
+  },
+  "trajectory": {
+    "early": 0.7289929208308642,
+    "mid": 0.7285072383943076,
+    "late": 0.72677757485629
+  },
+  "dim_means": {
+    "continuity": 0.8509787471436231,
+    "vitality": 0.9371758683127573,
+    "contextual_fit": 0.6453637911330675,
+    "differentiation": 0.7059036647260689,
+    "accountability": 0.5300658502136621,
+    "reflexivity": 0.6990675466337449
+  },
+  "obs_variance": {
+    "continuity": 0.08019820329355204,
+    "vitality": 0.08566893424036283,
+    "contextual_fit": 0.01289003209240043,
+    "differentiation": 0.0027748010036444002,
+    "accountability": 0.08418367346938775,
+    "reflexivity": 0.018117232466699097
+  },
+  "n_sessions": 75
+}
