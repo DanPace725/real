@@ -19,6 +19,10 @@ def _compact(summary: dict[str, object]) -> dict[str, object]:
         "delivery_ratio": summary["delivery_ratio"],
         "dropped_packets": summary["dropped_packets"],
         "drop_ratio": summary["drop_ratio"],
+        "exact_matches": summary["exact_matches"],
+        "partial_matches": summary["partial_matches"],
+        "mean_bit_accuracy": summary["mean_bit_accuracy"],
+        "mean_feedback_award": summary["mean_feedback_award"],
         "source_buffer": summary["source_buffer"],
         "mean_latency": summary["mean_latency"],
         "mean_route_cost": summary["mean_route_cost"],
@@ -69,7 +73,7 @@ def run_comparison_demo(seed: int, scenario_name: str) -> None:
     print(f"Description: {scenario.description}")
     print(
         "Workload: "
-        f"{json.dumps({'cycles': scenario.cycles, 'initial_packets': scenario.initial_packets, 'packet_schedule': scenario.packet_schedule, 'packet_ttl': scenario.packet_ttl, 'source_admission_policy': scenario.source_admission_policy, 'source_admission_rate': scenario.source_admission_rate, 'source_admission_min_rate': scenario.source_admission_min_rate, 'source_admission_max_rate': scenario.source_admission_max_rate})}"
+        f"{json.dumps({'cycles': scenario.cycles, 'initial_packets': scenario.initial_packets, 'packet_schedule': scenario.packet_schedule, 'initial_signal_specs': len(scenario.initial_signal_specs), 'signal_schedule_cycles': sorted((scenario.signal_schedule_specs or {}).keys()), 'packet_ttl': scenario.packet_ttl, 'source_admission_policy': scenario.source_admission_policy, 'source_admission_rate': scenario.source_admission_rate, 'source_admission_min_rate': scenario.source_admission_min_rate, 'source_admission_max_rate': scenario.source_admission_max_rate})}"
     )
     print()
 
@@ -77,6 +81,16 @@ def run_comparison_demo(seed: int, scenario_name: str) -> None:
     pprint(_compact(training_summary))
     print("Training supports")
     pprint(training_summary["supports"])
+    print("Training action supports")
+    pprint(training_summary["action_supports"])
+    print("Training context action supports")
+    pprint(training_summary["context_action_supports"])
+    print("Training substrate maintenance")
+    pprint(training_summary["substrate_maintenance"])
+    print("Training context breakdown")
+    pprint(training_summary["context_breakdown"])
+    print("Training final transforms")
+    pprint(training_summary["final_transform_counts"])
     print()
 
     print("Evaluation summaries")
@@ -108,20 +122,29 @@ def run_comparison_demo(seed: int, scenario_name: str) -> None:
 def run_detailed_trace(seed: int, scenario_name: str) -> None:
     scenario = SCENARIOS[scenario_name]
     system = build_system(seed, scenario_name)
-    system.inject_signal(count=scenario.initial_packets)
+    if scenario.initial_signal_specs:
+        system.inject_signal_specs(scenario.initial_signal_specs)
+    elif scenario.initial_packets > 0:
+        system.inject_signal(count=scenario.initial_packets)
     print("Detailed trace")
     print(f"Seed: {seed}")
     print(f"Scenario: {scenario_name}")
     for cycle in range(1, scenario.cycles + 1):
-        scheduled = scenario.packet_schedule.get(cycle, 0)
-        if scheduled > 0:
-            system.inject_signal(count=scheduled)
+        scheduled_specs = (scenario.signal_schedule_specs or {}).get(cycle)
+        if scheduled_specs:
+            system.inject_signal_specs(scheduled_specs)
+        else:
+            scheduled = scenario.packet_schedule.get(cycle, 0)
+            if scheduled > 0:
+                system.inject_signal(count=scheduled)
         report = system.run_global_cycle()
         if cycle == 1 or cycle % 4 == 0 or cycle == scenario.cycles:
             print(f"Cycle {cycle}")
             pprint(report["snapshot"])
             print("Supports")
             pprint(system.summarize()["supports"])
+            print("Context action supports")
+            pprint(system.summarize()["context_action_supports"])
             print("-" * 60)
 
     print("Detailed summary")
@@ -133,7 +156,7 @@ def run_stress_demo() -> None:
     print("Phase 8 Stress Demo")
     print(f"Seeds: {seeds}")
     print()
-    for scenario_name in ("branch_pressure", "sustained_pressure", "detour_resilience"):
+    for scenario_name in ("branch_pressure", "sustained_pressure", "detour_resilience", "cvt1_task_a_stage1"):
         scenario = SCENARIOS[scenario_name]
         results = [compare_for_seed(seed, scenario_name) for seed in seeds]
         scenario_aggregate = aggregate(results)
@@ -145,6 +168,8 @@ def run_stress_demo() -> None:
                     "cycles": scenario.cycles,
                     "initial_packets": scenario.initial_packets,
                     "packet_schedule": scenario.packet_schedule,
+                    "initial_signal_specs": len(scenario.initial_signal_specs),
+                    "signal_schedule_cycles": sorted((scenario.signal_schedule_specs or {}).keys()),
                     "packet_ttl": scenario.packet_ttl,
                     "source_admission_policy": scenario.source_admission_policy,
                     "source_admission_rate": scenario.source_admission_rate,

@@ -97,7 +97,7 @@ Phase 8 is the realization of REAL not just as an algorithm, but as a fundamenta
 
 ## 5. Instructions for Coding Agents (Meta-Substrate Integration)
 
-As AI coding agents actively developing the REAL codebase, we are not just building the Phase 8 NodeAgents; we are participants in the REAL architecture itself. We must explicitly implement Phase 4.5 memory mechanics **Episodic Traces (He), Consolidated Patterns (Hc), and Maintained Substrates (Ms)** within our own coding and project management workflows.
+As AI coding agents actively developing the REAL codebase, we are not just building the Phase 8 NodeAgents; we are participants in the REAL architecture itself. We must explicitly implement Phase 4.5 memory mechanics **Episodic Traces (He), Consolidated Patterns (Hc), and Maintained Substrates (Ms)** within our own coding and project management workflows. Each trace needs to be timestamped and dated and include the name of the model that wrote the trace. 
 
 When working on the Phase 8 architecture (or any subsequent domain), coding agents MUST adhere to the following meta-substrate practices:
 

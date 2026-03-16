@@ -41,6 +41,8 @@ def run_workload(
         cycles=scenario.cycles,
         initial_packets=scenario.initial_packets,
         packet_schedule=scenario.packet_schedule,
+        initial_signal_specs=scenario.initial_signal_specs,
+        signal_schedule_specs=scenario.signal_schedule_specs,
     )
     return result["summary"]
 
@@ -85,6 +87,8 @@ def compare_for_seed(seed: int, scenario_name: str = "branch_pressure") -> dict[
             "mean_route_cost": round(warm_full_summary["mean_route_cost"] - cold_summary["mean_route_cost"], 5),
             "node_atp_total": round(warm_full_summary["node_atp_total"] - cold_summary["node_atp_total"], 4),
             "dropped_packets": warm_full_summary["dropped_packets"] - cold_summary["dropped_packets"],
+            "exact_matches": warm_full_summary["exact_matches"] - cold_summary["exact_matches"],
+            "mean_bit_accuracy": round(warm_full_summary["mean_bit_accuracy"] - cold_summary["mean_bit_accuracy"], 4),
         },
         "delta_substrate": {
             "delivered_packets": warm_substrate_summary["delivered_packets"] - cold_summary["delivered_packets"],
@@ -93,6 +97,11 @@ def compare_for_seed(seed: int, scenario_name: str = "branch_pressure") -> dict[
             "mean_route_cost": round(warm_substrate_summary["mean_route_cost"] - cold_summary["mean_route_cost"], 5),
             "node_atp_total": round(warm_substrate_summary["node_atp_total"] - cold_summary["node_atp_total"], 4),
             "dropped_packets": warm_substrate_summary["dropped_packets"] - cold_summary["dropped_packets"],
+            "exact_matches": warm_substrate_summary["exact_matches"] - cold_summary["exact_matches"],
+            "mean_bit_accuracy": round(
+                warm_substrate_summary["mean_bit_accuracy"] - cold_summary["mean_bit_accuracy"],
+                4,
+            ),
         },
     }
 
@@ -136,13 +145,27 @@ def aggregate(results: list[dict[str, object]]) -> dict[str, float]:
         "avg_cold_overload_events": round(mean(item["cold"]["overload_events"] for item in results), 4),
         "avg_warm_full_overload_events": round(mean(item["warm_full"]["overload_events"] for item in results), 4),
         "avg_warm_substrate_overload_events": round(mean(item["warm_substrate"]["overload_events"] for item in results), 4),
+        "avg_cold_exact_matches": round(mean(item["cold"]["exact_matches"] for item in results), 4),
+        "avg_warm_full_exact_matches": round(mean(item["warm_full"]["exact_matches"] for item in results), 4),
+        "avg_warm_substrate_exact_matches": round(mean(item["warm_substrate"]["exact_matches"] for item in results), 4),
+        "avg_cold_bit_accuracy": round(mean(item["cold"]["mean_bit_accuracy"] for item in results), 4),
+        "avg_warm_full_bit_accuracy": round(mean(item["warm_full"]["mean_bit_accuracy"] for item in results), 4),
+        "avg_warm_substrate_bit_accuracy": round(mean(item["warm_substrate"]["mean_bit_accuracy"] for item in results), 4),
+        "avg_cold_feedback_award": round(mean(item["cold"]["mean_feedback_award"] for item in results), 4),
+        "avg_warm_full_feedback_award": round(mean(item["warm_full"]["mean_feedback_award"] for item in results), 4),
+        "avg_warm_substrate_feedback_award": round(mean(item["warm_substrate"]["mean_feedback_award"] for item in results), 4),
     }
 
 
 def main() -> None:
     seeds = [13, 23, 37, 51, 79]
     scenario_results = {}
-    for scenario_name in ("branch_pressure", "sustained_pressure", "detour_resilience"):
+    for scenario_name in (
+        "branch_pressure",
+        "sustained_pressure",
+        "detour_resilience",
+        "cvt1_task_a_stage1",
+    ):
         results = [compare_for_seed(seed, scenario_name) for seed in seeds]
         scenario_results[scenario_name] = {
             "description": SCENARIOS[scenario_name].description,
@@ -150,6 +173,8 @@ def main() -> None:
                 "cycles": SCENARIOS[scenario_name].cycles,
                 "initial_packets": SCENARIOS[scenario_name].initial_packets,
                 "packet_schedule": SCENARIOS[scenario_name].packet_schedule,
+                "initial_signal_specs": len(SCENARIOS[scenario_name].initial_signal_specs),
+                "signal_schedule_cycles": sorted((SCENARIOS[scenario_name].signal_schedule_specs or {}).keys()),
                 "packet_ttl": SCENARIOS[scenario_name].packet_ttl,
                 "source_admission_policy": SCENARIOS[scenario_name].source_admission_policy,
                 "source_admission_rate": SCENARIOS[scenario_name].source_admission_rate,

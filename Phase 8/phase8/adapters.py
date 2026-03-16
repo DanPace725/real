@@ -5,7 +5,20 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Tuple
 
 from .environment import RoutingEnvironment
-from .substrate import ConnectionSubstrate
+from .substrate import ConnectionSubstrate, SUPPORTED_TRANSFORMS
+
+TRANSFORM_ACTIONS: Tuple[str, ...] = SUPPORTED_TRANSFORMS
+
+
+def _route_neighbor(action: str) -> str | None:
+    if action.startswith("route_transform:"):
+        parts = action.split(":")
+        if len(parts) == 3:
+            return parts[1]
+        return None
+    if action.startswith("route:"):
+        return action.split(":", 1)[1]
+    return None
 
 
 class LocalNodeObservationAdapter:
@@ -37,10 +50,16 @@ class LocalNodeActionBackend:
     def available_actions(self, history_size: int) -> List[str]:
         actions = ["rest"]
         local_inbox = len(self.environment.inboxes[self.node_id])
+        head_packet = self.environment.inboxes[self.node_id][0] if local_inbox > 0 else None
+        context_bit = head_packet.context_bit if head_packet is not None else None
         for neighbor_id in self.neighbor_ids:
             route_cost = self.substrate.use_cost(neighbor_id)
             if self.environment.route_available(self.node_id, neighbor_id, route_cost):
                 actions.append(f"route:{neighbor_id}")
+                for transform_name in TRANSFORM_ACTIONS:
+                    transform_cost = self.substrate.use_cost(neighbor_id, transform_name, context_bit)
+                    if self.environment.route_available(self.node_id, neighbor_id, transform_cost):
+                        actions.append(f"route_transform:{neighbor_id}:{transform_name}")
             neighbor_congestion = len(self.environment.inboxes.get(neighbor_id, []))
             if (
                 local_inbox > 0
@@ -66,6 +85,23 @@ class LocalNodeActionBackend:
             neighbor_id = action.split(":", 1)[1]
             cost = self.substrate.use_cost(neighbor_id)
             result = self.environment.route_signal(self.node_id, neighbor_id, cost)
+            return ActionOutcome(
+                success=bool(result["success"]),
+                result=result,
+                cost_secs=float(result["cost"]),
+            )
+
+        if action.startswith("route_transform:"):
+            _, neighbor_id, transform_name = action.split(":", 2)
+            head_packet = self.environment.inboxes[self.node_id][0] if self.environment.inboxes[self.node_id] else None
+            context_bit = head_packet.context_bit if head_packet is not None else None
+            cost = self.substrate.use_cost(neighbor_id, transform_name, context_bit)
+            result = self.environment.route_signal(
+                self.node_id,
+                neighbor_id,
+                cost,
+                transform_name=transform_name,
+            )
             return ActionOutcome(
                 success=bool(result["success"]),
                 result=result,
@@ -102,6 +138,8 @@ class LocalNodeCoherenceModel:
         oldest_packet_age = state_after.get("oldest_packet_age", 0.0)
         queue_pressure = state_after.get("queue_pressure", 0.0)
         ingress_backlog = state_after.get("ingress_backlog", 0.0)
+        last_match_ratio = state_after.get("last_match_ratio", 0.0)
+        last_feedback_amount = state_after.get("last_feedback_amount", 0.0)
 
         continuity = 0.4 + 0.6 * atp_ratio - 0.12 * queue_pressure
         vitality = max(
@@ -111,6 +149,7 @@ class LocalNodeCoherenceModel:
                 0.25
                 + 0.45 * inbox_load
                 + 0.35 * reward_buffer
+                + 0.10 * last_feedback_amount
                 - 0.18 * oldest_packet_age
                 - 0.10 * ingress_backlog,
             ),
@@ -122,12 +161,13 @@ class LocalNodeCoherenceModel:
             if key.startswith("progress_")
         ]
         contextual_fit = max(progress_values) if progress_values else 0.5
+        contextual_fit = max(0.0, min(1.0, contextual_fit + 0.18 * last_match_ratio))
 
-        route_actions = [
-            entry.action.split(":", 1)[1]
-            for entry in history[-10:]
-            if entry.action.startswith("route:")
-        ]
+        route_actions = []
+        for entry in history[-10:]:
+            neighbor_id = _route_neighbor(entry.action)
+            if neighbor_id is not None:
+                route_actions.append(neighbor_id)
         if not route_actions:
             differentiation = 0.35
         else:
@@ -160,6 +200,10 @@ class LocalNodeCoherenceModel:
                 if revision_attempts > 0
                 else 0.45
             )
+        reflexivity = max(
+            0.0,
+            min(1.0, reflexivity + 0.12 * last_match_ratio + 0.08 * last_feedback_amount),
+        )
 
         return {
             "continuity": max(0.0, min(1.0, continuity)),
@@ -212,6 +256,26 @@ class LocalNodeMemoryBinding:
                 modulated[key] = max(0.0, min(1.0, modulated[key] + jitter))
             modulated[f"support_{neighbor_id}"] = support
             modulated[f"support_velocity_{neighbor_id}"] = self.substrate.velocity(neighbor_id)
+            for transform_name in TRANSFORM_ACTIONS:
+                modulated[f"action_support_{neighbor_id}_{transform_name}"] = (
+                    self.substrate.action_support(
+                        neighbor_id,
+                        transform_name,
+                    )
+                )
+                if modulated.get("head_has_context", 0.0) >= 0.5:
+                    modulated[f"context_action_support_{neighbor_id}_{transform_name}"] = (
+                        self.substrate.action_support(
+                            neighbor_id,
+                            transform_name,
+                            int(modulated.get("head_context_bit", 0.0)),
+                        )
+                    )
+        maintenance = self.substrate.maintenance_metrics()
+        modulated["edge_maintenance_ratio"] = maintenance["edge_maintenance_ratio"]
+        modulated["action_maintenance_ratio"] = maintenance["action_maintenance_ratio"]
+        modulated["substrate_maintenance_ratio"] = maintenance["maintenance_ratio"]
+        modulated["mean_active_support"] = maintenance["mean_active_support"]
         return modulated
 
     def extra_actions(self, substrate, history: List[object]):
@@ -230,10 +294,7 @@ class LocalNodeMemoryBinding:
                             estimated_cost=cost,
                         )
                     )
-            maintain_cost = sum(
-                self.substrate.maintain_cost(neighbor_id)
-                for neighbor_id in self.substrate.active_neighbors()
-            )
+            maintain_cost = self.substrate.estimate_maintenance_cost()
             if maintain_cost > 0.0 and maintain_cost <= state.atp + 1e-9:
                 actions.append(
                     MemoryActionSpec(
@@ -245,10 +306,7 @@ class LocalNodeMemoryBinding:
 
     def estimate_memory_action_cost(self, action: str, substrate) -> float | None:
         if action == "maintain_edges":
-            return sum(
-                self.substrate.maintain_cost(neighbor_id)
-                for neighbor_id in self.substrate.active_neighbors()
-            )
+            return self.substrate.estimate_maintenance_cost()
         if action.startswith("invest:"):
             neighbor_id = action.split(":", 1)[1]
             return self.substrate.write_cost(neighbor_id)
@@ -259,13 +317,22 @@ class LocalNodeMemoryBinding:
 
         state = self.environment.state_for(self.node_id)
         if action == "maintain_edges":
-            spent = self.substrate.maintain_connections(state.atp)
+            observation = self.environment.observe_local(self.node_id)
+            context_bit = None
+            if observation.get("head_has_context", 0.0) >= 0.5:
+                context_bit = int(observation.get("head_context_bit", 0.0))
+            maintenance = self.substrate.maintain_supports(
+                state.atp,
+                transform_credit=dict(state.transform_credit),
+                context_bit=context_bit,
+            )
+            spent = float(maintenance["spent"])
             if spent <= 0.0:
                 return ActionOutcome(success=False, cost_secs=0.0)
             state.atp = max(0.0, state.atp - spent)
             return ActionOutcome(
                 success=True,
-                result={"maintained_edges": self.substrate.active_neighbors()},
+                result=maintenance,
                 cost_secs=spent,
             )
 
@@ -295,8 +362,9 @@ class LocalNodeMemoryBinding:
             self.substrate.support(neighbor_id)
             for neighbor_id in self.neighbor_ids
         ) / total
+        maintenance = self.substrate.maintenance_metrics()
         return {
-            "continuity": 0.4 + 0.6 * active_ratio,
-            "contextual_fit": 0.35 + 0.65 * mean_support,
-            "reflexivity": 0.3 + 0.7 * active_ratio,
+            "continuity": 0.35 + 0.45 * active_ratio + 0.20 * maintenance["maintenance_ratio"],
+            "contextual_fit": 0.25 + 0.45 * mean_support + 0.30 * maintenance["mean_active_support"],
+            "reflexivity": 0.20 + 0.40 * active_ratio + 0.40 * maintenance["action_maintenance_ratio"],
         }

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, Tuple
+from typing import Dict, Sequence, Tuple
+
+from .models import SignalSpec
 
 
 def basic_demo_topology() -> tuple[Dict[str, tuple[str, ...]], Dict[str, int], str, str]:
@@ -104,6 +106,56 @@ def detour_resilience_workload() -> Tuple[int, int, Dict[int, int]]:
     return cycles, initial_packets, packet_schedule
 
 
+def _bits4(value: int) -> list[int]:
+    return [
+        (value >> 3) & 1,
+        (value >> 2) & 1,
+        (value >> 1) & 1,
+        value & 1,
+    ]
+
+
+def _parity(bits: Sequence[int]) -> int:
+    return sum(int(bit) for bit in bits) % 2
+
+
+def cvt1_task_a_stage1_signals() -> Tuple[SignalSpec, ...]:
+    values = [
+        0b0001,
+        0b0110,
+        0b1011,
+        0b0101,
+        0b1110,
+        0b0011,
+        0b1100,
+        0b1001,
+        0b0111,
+        0b1010,
+        0b0100,
+        0b1111,
+        0b0000,
+        0b1101,
+        0b0010,
+        0b1000,
+        0b0110,
+        0b1011,
+    ]
+    previous_bits = [0, 0, 0, 0]
+    signals = []
+    for value in values:
+        bits = _bits4(value)
+        context_bit = _parity(previous_bits)
+        signals.append(
+            SignalSpec(
+                input_bits=bits,
+                context_bit=context_bit,
+                task_id="task_a",
+            )
+        )
+        previous_bits = bits
+    return tuple(signals)
+
+
 @dataclass(frozen=True)
 class ScenarioSpec:
     name: str
@@ -120,6 +172,8 @@ class ScenarioSpec:
     source_admission_rate: int | None = None
     source_admission_min_rate: int = 1
     source_admission_max_rate: int | None = None
+    initial_signal_specs: Tuple[SignalSpec, ...] = ()
+    signal_schedule_specs: Dict[int, Tuple[SignalSpec, ...]] | None = None
 
 
 def phase8_scenarios() -> Dict[str, ScenarioSpec]:
@@ -127,6 +181,11 @@ def phase8_scenarios() -> Dict[str, ScenarioSpec]:
     branch_adjacency, branch_positions, branch_source, branch_sink = branch_pressure_topology()
     sustained_adjacency, sustained_positions, sustained_source, sustained_sink = sustained_pressure_topology()
     detour_adjacency, detour_positions, detour_source, detour_sink = detour_resilience_topology()
+    cvt_signals = cvt1_task_a_stage1_signals()
+    cvt_schedule = {
+        cycle: (signal_spec,)
+        for cycle, signal_spec in enumerate(cvt_signals[1:], start=2)
+    }
 
     return {
         "basic_demo": ScenarioSpec(
@@ -189,5 +248,22 @@ def phase8_scenarios() -> Dict[str, ScenarioSpec]:
             source_admission_policy="adaptive",
             source_admission_min_rate=1,
             source_admission_max_rate=2,
+        ),
+        "cvt1_task_a_stage1": ScenarioSpec(
+            name="cvt1_task_a_stage1",
+            description="First computational Stage 1 workload with explicit context bits and task-A target transforms.",
+            adjacency=branch_adjacency,
+            positions=branch_positions,
+            source_id=branch_source,
+            sink_id=branch_sink,
+            cycles=len(cvt_signals) + 6,
+            initial_packets=0,
+            packet_schedule={},
+            packet_ttl=10,
+            source_admission_policy="adaptive",
+            source_admission_min_rate=1,
+            source_admission_max_rate=2,
+            initial_signal_specs=(cvt_signals[0],),
+            signal_schedule_specs=cvt_schedule,
         ),
     }

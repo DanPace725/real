@@ -3,16 +3,66 @@ from __future__ import annotations
 import itertools
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Dict, Iterable, List
+from typing import Dict, Iterable, List, Sequence
 
 import json
 
 from .admission import AdmissionSubstrate
-from .models import FeedbackPulse, NodeRuntimeState, SignalPacket
+from .models import FeedbackPulse, NodeRuntimeState, SignalPacket, SignalSpec
+
+TRANSFORM_NAMES = ("identity", "rotate_left_1", "xor_mask_1010", "xor_mask_0101")
 
 
 def _edge_id(source_id: str, target_id: str) -> str:
     return f"{source_id}->{target_id}"
+
+
+def _normalize_transform_name(transform_name: str | None) -> str:
+    return str(transform_name or "identity")
+
+
+def _apply_transform(bits: Sequence[int], transform_name: str | None) -> List[int]:
+    transform = _normalize_transform_name(transform_name)
+    payload = [1 if int(bit) else 0 for bit in bits]
+    if transform == "identity":
+        return list(payload)
+    if transform == "rotate_left_1":
+        if not payload:
+            return []
+        return payload[1:] + payload[:1]
+    if transform == "xor_mask_1010":
+        mask = [1, 0, 1, 0]
+        return [payload[index] ^ mask[index] for index in range(min(len(payload), len(mask)))]
+    if transform == "xor_mask_0101":
+        mask = [0, 1, 0, 1]
+        return [payload[index] ^ mask[index] for index in range(min(len(payload), len(mask)))]
+    raise ValueError(f"Unsupported transform '{transform}'")
+
+
+def _target_bits_for_task(
+    input_bits: Sequence[int],
+    *,
+    context_bit: int | None,
+    task_id: str | None,
+) -> List[int] | None:
+    if not input_bits or task_id is None or context_bit is None:
+        return None
+    if task_id == "task_a":
+        transform = "rotate_left_1" if context_bit == 0 else "xor_mask_1010"
+        return _apply_transform(input_bits, transform)
+    if task_id == "task_b":
+        transform = "rotate_left_1" if context_bit == 0 else "xor_mask_0101"
+        return _apply_transform(input_bits, transform)
+    return None
+
+
+def _bit_match_ratio(observed_bits: Sequence[int], target_bits: Sequence[int]) -> float:
+    if not target_bits:
+        return 0.0
+    matched = 0
+    for observed, target in zip(observed_bits, target_bits):
+        matched += 1 if int(observed) == int(target) else 0
+    return matched / max(len(target_bits), 1)
 
 
 @dataclass
@@ -82,23 +132,76 @@ class RoutingEnvironment:
     def state_for(self, node_id: str) -> NodeRuntimeState:
         return self.node_states[node_id]
 
-    def inject_signal(self, count: int = 1, cycle: int = 0) -> None:
-        self.current_cycle = max(self.current_cycle, cycle)
-        for _ in range(count):
-            packet_number = next(self.packet_counter)
-            self._next_packet_id = packet_number + 1
-            packet_id = f"pkt-{packet_number}"
-            self.source_buffer.append(
-                SignalPacket(
-                    packet_id=packet_id,
-                    origin=self.source_id,
-                    target=self.sink_id,
-                    created_cycle=cycle,
-                )
-            )
+    def create_packet(
+        self,
+        *,
+        cycle: int,
+        input_bits: Sequence[int] | None = None,
+        payload_bits: Sequence[int] | None = None,
+        context_bit: int | None = None,
+        task_id: str | None = None,
+        target_bits: Sequence[int] | None = None,
+    ) -> SignalPacket:
+        packet_number = next(self.packet_counter)
+        self._next_packet_id = packet_number + 1
+        packet_id = f"pkt-{packet_number}"
+        return SignalPacket(
+            packet_id=packet_id,
+            origin=self.source_id,
+            target=self.sink_id,
+            created_cycle=cycle,
+            input_bits=list(input_bits or payload_bits or []),
+            payload_bits=list(payload_bits or input_bits or []),
+            context_bit=context_bit,
+            task_id=task_id,
+            target_bits=list(target_bits or []),
+        )
+
+    def inject_packets(
+        self,
+        packets: Iterable[SignalPacket],
+        *,
+        cycle: int | None = None,
+    ) -> None:
+        if cycle is not None:
+            self.current_cycle = max(self.current_cycle, cycle)
+        for packet in packets:
+            self.source_buffer.append(packet)
             self.total_injected += 1
         self._admit_source_packets()
         self._record_inbox_pressure()
+
+    def inject_signal(
+        self,
+        count: int = 1,
+        cycle: int = 0,
+        *,
+        packet_payloads: Sequence[Sequence[int]] | None = None,
+        context_bits: Sequence[int | None] | None = None,
+        task_id: str | None = None,
+    ) -> None:
+        self.current_cycle = max(self.current_cycle, cycle)
+        payloads = list(packet_payloads or [])
+        contexts = list(context_bits or [])
+        if payloads and len(payloads) != count:
+            raise ValueError("packet_payloads length must match count")
+        if contexts and len(contexts) != count:
+            raise ValueError("context_bits length must match count")
+
+        packets = []
+        for index in range(count):
+            payload_bits = payloads[index] if payloads else None
+            context_bit = contexts[index] if contexts else None
+            packets.append(
+                self.create_packet(
+                    cycle=cycle,
+                    input_bits=payload_bits,
+                    payload_bits=payload_bits,
+                    context_bit=context_bit,
+                    task_id=task_id,
+                )
+            )
+        self.inject_packets(packets, cycle=cycle)
 
     def prepare_cycle(self, cycle: int) -> None:
         self.current_cycle = cycle
@@ -117,6 +220,7 @@ class RoutingEnvironment:
         local_ages = [self._packet_wait_age(packet) for packet in local_packets]
         oldest_age = max(local_ages, default=0)
         overflow = max(0, len(local_packets) - self.inbox_capacity)
+        head_packet = local_packets[0] if local_packets else None
         local = {
             "atp_ratio": state.atp / max(state.max_atp, 1e-9),
             "inbox_load": min(1.0, len(self.inboxes[node_id]) / max(self.inbox_capacity, 1)),
@@ -130,8 +234,37 @@ class RoutingEnvironment:
                 if node_id == self.source_id
                 else 0.0
             ),
+            "has_packet": 1.0 if head_packet is not None else 0.0,
+            "head_transform_depth": (
+                min(1.0, len(head_packet.transform_trace) / 4.0)
+                if head_packet is not None
+                else 0.0
+            ),
+            "head_has_context": (
+                1.0 if head_packet is not None and head_packet.context_bit is not None else 0.0
+            ),
+            "head_context_bit": (
+                float(head_packet.context_bit)
+                if head_packet is not None and head_packet.context_bit is not None
+                else 0.0
+            ),
+            "last_feedback_amount": min(
+                1.0,
+                state.last_feedback_amount / max(self.feedback_amount, 1e-9),
+            ),
+            "last_match_ratio": min(1.0, max(0.0, state.last_match_ratio)),
             "dormant": 1.0 if state.dormant else 0.0,
         }
+        payload_bits = head_packet.payload_bits if head_packet is not None else []
+        for index in range(4):
+            local[f"payload_bit_{index}"] = (
+                float(payload_bits[index]) if index < len(payload_bits) else 0.0
+            )
+        for transform_name in TRANSFORM_NAMES:
+            local[f"feedback_credit_{transform_name}"] = min(
+                1.0,
+                max(0.0, state.transform_credit.get(transform_name, 0.0)),
+            )
         sink_position = self.positions[self.sink_id]
         span = max(abs(sink_position - self.positions[self.source_id]), 1)
 
@@ -174,12 +307,41 @@ class RoutingEnvironment:
         state.rest_count += 1
         return recovered
 
-    def route_signal(self, node_id: str, neighbor_id: str, cost: float) -> dict:
+    def score_packet(self, packet: SignalPacket) -> float:
+        target_bits = _target_bits_for_task(
+            packet.input_bits,
+            context_bit=packet.context_bit,
+            task_id=packet.task_id,
+        )
+        if target_bits is None:
+            packet.target_bits = []
+            packet.matched_target = None
+            packet.bit_match_ratio = None
+            packet.feedback_award = self.feedback_amount
+            return self.feedback_amount
+
+        packet.target_bits = list(target_bits)
+        packet.bit_match_ratio = _bit_match_ratio(packet.payload_bits, packet.target_bits)
+        packet.matched_target = packet.bit_match_ratio >= 1.0 - 1e-9
+        packet.feedback_award = self.feedback_amount * packet.bit_match_ratio
+        return packet.feedback_award
+
+    def route_signal(
+        self,
+        node_id: str,
+        neighbor_id: str,
+        cost: float,
+        *,
+        transform_name: str | None = None,
+    ) -> dict:
         if not self.route_available(node_id, neighbor_id, cost):
             return {"success": False, "cost": 0.0, "delivered": False}
 
         self._prioritize_inbox(node_id)
         packet = self.inboxes[node_id].pop(0)
+        transform = _normalize_transform_name(transform_name)
+        packet.payload_bits = _apply_transform(packet.payload_bits, transform)
+        packet.transform_trace.append(transform)
         packet.hops.append(node_id)
         packet.edge_path.append(_edge_id(node_id, neighbor_id))
         packet.last_moved_cycle = self.current_cycle
@@ -194,19 +356,26 @@ class RoutingEnvironment:
             packet.hops.append(neighbor_id)
             packet.delivered = True
             packet.delivered_cycle = self.current_cycle
+            feedback_award = self.score_packet(packet)
             self.delivered_packets.append(packet)
-            self.pending_feedback.append(
-                FeedbackPulse(
-                    packet_id=packet.packet_id,
-                    edge_path=list(packet.edge_path),
-                    amount=self.feedback_amount,
+            if feedback_award > 0.0:
+                self.pending_feedback.append(
+                    FeedbackPulse(
+                        packet_id=packet.packet_id,
+                        edge_path=list(packet.edge_path),
+                        amount=feedback_award,
+                        transform_path=list(packet.transform_trace),
+                        bit_match_ratio=float(packet.bit_match_ratio or 0.0),
+                        matched_target=bool(packet.matched_target),
+                    )
                 )
-            )
             return {
                 "success": True,
                 "cost": cost,
                 "delivered": True,
                 "packet_id": packet.packet_id,
+                "transform": transform,
+                "feedback_award": feedback_award,
             }
 
         self.inboxes[neighbor_id].append(packet)
@@ -217,6 +386,7 @@ class RoutingEnvironment:
             "cost": cost,
             "delivered": False,
             "packet_id": packet.packet_id,
+            "transform": transform,
         }
 
     def inhibit_neighbor(self, node_id: str, neighbor_id: str) -> dict:
@@ -242,12 +412,23 @@ class RoutingEnvironment:
             state.atp = min(state.max_atp, state.atp + pulse.amount)
             state.reward_buffer = min(state.max_atp, state.reward_buffer + pulse.amount)
             state.received_feedback += 1
+            state.last_feedback_amount = pulse.amount
+            state.last_match_ratio = pulse.bit_match_ratio
+            transform_name = pulse.next_transform() or "identity"
+            prior_credit = state.transform_credit.get(transform_name, 0.0)
+            credit_signal = min(1.0, pulse.amount / max(self.feedback_amount, 1e-9))
+            state.transform_credit[transform_name] = min(
+                1.0,
+                0.55 * prior_credit + 0.45 * credit_signal,
+            )
             delivered.append(
                 {
                     "packet_id": pulse.packet_id,
                     "edge": edge,
                     "node_id": source_id,
                     "amount": pulse.amount,
+                    "transform": transform_name,
+                    "bit_match_ratio": pulse.bit_match_ratio,
                 }
             )
             pulse.advance()
@@ -262,6 +443,12 @@ class RoutingEnvironment:
         for state in self.node_states.values():
             if state.inhibited_for > 0:
                 state.inhibited_for -= 1
+            state.last_feedback_amount *= 0.85
+            state.last_match_ratio *= 0.90
+            for transform_name in list(state.transform_credit.keys()):
+                state.transform_credit[transform_name] *= 0.92
+                if state.transform_credit[transform_name] < 1e-4:
+                    del state.transform_credit[transform_name]
         self._update_admission_substrate()
         self._expire_stale_packets()
         self._admit_source_packets()
@@ -269,6 +456,15 @@ class RoutingEnvironment:
         self._record_inbox_pressure()
 
     def snapshot(self) -> dict:
+        scored_packets = [
+            packet for packet in self.delivered_packets if packet.bit_match_ratio is not None
+        ]
+        exact_matches = sum(1 for packet in scored_packets if packet.matched_target)
+        partial_matches = sum(
+            1
+            for packet in scored_packets
+            if packet.bit_match_ratio is not None and 0.0 < packet.bit_match_ratio < 1.0
+        )
         return {
             "nodes": {
                 node_id: {
@@ -289,6 +485,13 @@ class RoutingEnvironment:
             "source_admission_support": round(self.admission_substrate.support, 4),
             "source_admission_velocity": round(self.admission_substrate.velocity, 4),
             "last_source_efficiency": round(self.last_source_efficiency, 4),
+            "exact_matches": exact_matches,
+            "partial_matches": partial_matches,
+            "mean_bit_accuracy": round(
+                sum(packet.bit_match_ratio for packet in scored_packets)
+                / max(len(scored_packets), 1),
+                4,
+            ),
             "overload_events": self.overload_events,
             "max_inbox_depth": self.max_inbox_depth,
             "max_source_backlog": self.max_source_backlog,
@@ -559,6 +762,19 @@ class NativeSubstrateSystem:
     def inject_signal(self, count: int = 1) -> None:
         self.environment.inject_signal(count=count, cycle=self.global_cycle)
 
+    def inject_signal_specs(self, signal_specs: Iterable[SignalSpec]) -> None:
+        packets = [
+            self.environment.create_packet(
+                cycle=self.global_cycle,
+                input_bits=spec.input_bits,
+                payload_bits=spec.payload_bits,
+                context_bit=spec.context_bit,
+                task_id=spec.task_id,
+            )
+            for spec in signal_specs
+        ]
+        self.environment.inject_packets(packets, cycle=self.global_cycle)
+
     def run_global_cycle(self) -> dict[str, object]:
         self.global_cycle += 1
         self.environment.prepare_cycle(self.global_cycle)
@@ -579,6 +795,35 @@ class NativeSubstrateSystem:
 
     def summarize(self) -> dict[str, object]:
         delivered = self.environment.delivered_packets
+        scored_packets = [
+            packet for packet in delivered if packet.bit_match_ratio is not None
+        ]
+        context_breakdown = {}
+        transform_counts = {}
+        for packet in scored_packets:
+            context_key = f"context_{packet.context_bit}"
+            stats = context_breakdown.setdefault(
+                context_key,
+                {"count": 0, "exact_matches": 0, "bit_accuracy_total": 0.0},
+            )
+            stats["count"] += 1
+            stats["exact_matches"] += 1 if packet.matched_target else 0
+            stats["bit_accuracy_total"] += float(packet.bit_match_ratio or 0.0)
+            if packet.transform_trace:
+                transform_key = packet.transform_trace[-1]
+                transform_counts[transform_key] = transform_counts.get(transform_key, 0) + 1
+        for stats in context_breakdown.values():
+            stats["mean_bit_accuracy"] = round(
+                stats["bit_accuracy_total"] / max(stats["count"], 1),
+                4,
+            )
+            del stats["bit_accuracy_total"]
+        exact_matches = sum(1 for packet in scored_packets if packet.matched_target)
+        partial_matches = sum(
+            1
+            for packet in scored_packets
+            if packet.bit_match_ratio is not None and 0.0 < packet.bit_match_ratio < 1.0
+        )
         mean_latency = (
             sum(
                 max(0, (packet.delivered_cycle or self.global_cycle) - packet.created_cycle)
@@ -605,7 +850,11 @@ class NativeSubstrateSystem:
             for agent in self.agents.values()
             for entry in agent.engine.memory.entries
         ]
-        route_entries = [entry for entry in all_entries if entry.action.startswith("route:")]
+        route_entries = [
+            entry
+            for entry in all_entries
+            if entry.action.startswith("route:") or entry.action.startswith("route_transform:")
+        ]
         mean_route_cost = (
             sum(entry.cost_secs for entry in route_entries) / len(route_entries)
             if route_entries
@@ -649,9 +898,22 @@ class NativeSubstrateSystem:
                 4,
             ),
             "last_source_efficiency": round(self.environment.last_source_efficiency, 4),
+            "exact_matches": exact_matches,
+            "partial_matches": partial_matches,
+            "mean_bit_accuracy": round(
+                sum(packet.bit_match_ratio for packet in scored_packets)
+                / max(len(scored_packets), 1),
+                4,
+            ),
+            "mean_feedback_award": round(
+                sum(packet.feedback_award for packet in delivered) / max(len(delivered), 1),
+                4,
+            ),
             "overload_events": self.environment.overload_events,
             "max_inbox_depth": self.environment.max_inbox_depth,
             "max_source_backlog": self.environment.max_source_backlog,
+            "context_breakdown": context_breakdown,
+            "final_transform_counts": transform_counts,
             "active_edges": {
                 node_id: agent.substrate.active_neighbors()
                 for node_id, agent in self.agents.items()
@@ -667,6 +929,46 @@ class NativeSubstrateSystem:
                 }
                 for node_id, agent in self.agents.items()
             },
+            "action_supports": {
+                node_id: {
+                    neighbor_id: {
+                        transform_name: round(
+                            agent.substrate.action_support(neighbor_id, transform_name),
+                            4,
+                        )
+                        for transform_name in ("identity", "rotate_left_1", "xor_mask_1010", "xor_mask_0101")
+                    }
+                    for neighbor_id in agent.neighbor_ids
+                }
+                for node_id, agent in self.agents.items()
+            },
+            "context_action_supports": {
+                node_id: {
+                    neighbor_id: {
+                        f"context_{context_bit}": {
+                            transform_name: round(
+                                agent.substrate.action_support(
+                                    neighbor_id,
+                                    transform_name,
+                                    context_bit,
+                                ),
+                                4,
+                            )
+                            for transform_name in ("identity", "rotate_left_1", "xor_mask_1010", "xor_mask_0101")
+                        }
+                        for context_bit in (0, 1)
+                    }
+                    for neighbor_id in agent.neighbor_ids
+                }
+                for node_id, agent in self.agents.items()
+            },
+            "substrate_maintenance": {
+                node_id: {
+                    key: round(value, 4)
+                    for key, value in agent.substrate.maintenance_metrics().items()
+                }
+                for node_id, agent in self.agents.items()
+            },
         }
 
     def run_workload(
@@ -675,14 +977,24 @@ class NativeSubstrateSystem:
         cycles: int,
         initial_packets: int,
         packet_schedule: Dict[int, int] | None = None,
+        initial_signal_specs: Sequence[SignalSpec] | None = None,
+        signal_schedule_specs: Dict[int, Sequence[SignalSpec]] | None = None,
     ) -> dict[str, object]:
-        self.inject_signal(count=initial_packets)
+        if initial_signal_specs:
+            self.inject_signal_specs(initial_signal_specs)
+        elif initial_packets > 0:
+            self.inject_signal(count=initial_packets)
         schedule = dict(packet_schedule or {})
+        signal_schedule = dict(signal_schedule_specs or {})
         reports = []
         for cycle_index in range(1, cycles + 1):
-            scheduled = schedule.get(cycle_index, 0)
-            if scheduled > 0:
-                self.inject_signal(count=scheduled)
+            scheduled_specs = signal_schedule.get(cycle_index)
+            if scheduled_specs:
+                self.inject_signal_specs(scheduled_specs)
+            else:
+                scheduled = schedule.get(cycle_index, 0)
+                if scheduled > 0:
+                    self.inject_signal(count=scheduled)
             reports.append(self.run_global_cycle())
         return {
             "reports": reports,

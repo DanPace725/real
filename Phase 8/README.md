@@ -17,6 +17,13 @@ Current focus:
 - source admission now has its own maintained substrate that learns boundary openness from local success and friction
 - admission learning now scores source-side metabolic efficiency, not just successful throughput
 - each node now prioritizes older local packets before fresher ones when routing
+- packets can now carry content payload bits, optional context flags, task ids, and transform traces
+- nodes can now mutate packet payloads locally through discrete `route_transform:*` actions
+- the sink can now score task packets for exact and partial bit matches and return graded sequential feedback
+- Phase 8 now includes a first runnable CVT-1 Stage 1 computational scenario in the comparison and demo harness
+- transform choices now have their own local slow-memory support, selector bias, and diagnostic reporting
+- returned feedback now writes local transform-credit signals back onto the nodes that used those transforms, and Stage 1 transform memory can be context-sensitive
+- active edge and transform supports can now be explicitly maintained, and summaries now distinguish recently maintained substrate from support that is merely lingering
 - comparisons and demos now cover multiple routing scenarios instead of one smoke run
 - the initial environment is a small routing graph, not a dense network
 
@@ -47,10 +54,19 @@ Current focus:
 - adaptive admission reads only source-local metabolic state, backlog, and queue age
 - admission substrate state persists through full and substrate carryover paths
 - source admission now tracks efficiency signals from local action cost versus returned feedback energy
+- local observation can now expose the head packet payload without exposing sink targets or global task labels
+- route-transform actions are treated as local routing history by the selector and consolidation pipeline
+- routing-only packets still receive the legacy full feedback pulse, while task packets now receive feedback scaled by sink match quality
+- workload runners can now inject explicit task packets via signal-spec schedules instead of only count-based routing bursts
+- summaries now expose context-level task accuracy, final transform counts, and per-node transform supports
+- summaries and demos now expose context-specific transform supports and per-node substrate-maintenance ratios
+- selector pressure can now use transform-specific returned credit and explicit-context transform bias instead of relying only on route cost and generic edge support
 
 ## Next likely steps
 
 - deepen Phase 7-style pattern merging and pruning inside the connection substrate
+- improve task-quality stability so warm starts beat cold not just on exact matches but also on mean bit accuracy before moving to Task B transfer
+- keep strengthening carryover by promoting and maintaining context-specific transform support, not just route support
 - add explicit neighbor inhibition effects to routing pressure
 - let admission substrate learn richer tradeoffs such as latency sensitivity, not just energy efficiency
 - measure specialization and path emergence over longer runs

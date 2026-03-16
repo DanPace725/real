@@ -13,12 +13,22 @@ from real_core.substrate import MemorySubstrate, SubstrateConfig
 from real_core.patterns import ConstraintPattern
 from real_core.types import DimensionScores, SubstrateSnapshot
 
+SUPPORTED_TRANSFORMS = (
+    "identity",
+    "rotate_left_1",
+    "xor_mask_1010",
+    "xor_mask_0101",
+)
+SUPPORTED_CONTEXTS = (0, 1)
+RECENT_MAINTENANCE_AGE = 2
+
 
 @dataclass
 class ConnectionSubstrateConfig:
     fire_base_cost: float = 0.05
     fire_floor_cost: float = 0.01
     fire_discount_scale: float = 0.04
+    transform_discount_scale: float = 0.015
     write_base_cost: float = 0.14
     maintain_base_cost: float = 0.03
     slow_decay: float = 0.025
@@ -42,9 +52,26 @@ class ConnectionSubstrate:
             neighbor_id: self._edge_key(neighbor_id)
             for neighbor_id in self.neighbor_ids
         }
+        self._action_keys = {
+            (neighbor_id, transform_name): self._action_key(neighbor_id, transform_name)
+            for neighbor_id in self.neighbor_ids
+            for transform_name in SUPPORTED_TRANSFORMS
+        }
+        self._context_action_keys = {
+            (neighbor_id, transform_name, context_bit): self._context_action_key(
+                neighbor_id,
+                transform_name,
+                context_bit,
+            )
+            for neighbor_id in self.neighbor_ids
+            for transform_name in SUPPORTED_TRANSFORMS
+            for context_bit in SUPPORTED_CONTEXTS
+        }
         self._inner = MemorySubstrate(
             config=SubstrateConfig(
-                keys=tuple(self._edge_keys.values()),
+                keys=tuple(self._edge_keys.values())
+                + tuple(self._action_keys.values())
+                + tuple(self._context_action_keys.values()),
                 slow_decay=self.config.slow_decay,
                 bistable_threshold=self.config.bistable_threshold,
                 write_base_cost=self.config.write_base_cost,
@@ -59,11 +86,66 @@ class ConnectionSubstrate:
     def _edge_key(neighbor_id: str) -> str:
         return f"edge:{neighbor_id}"
 
+    @staticmethod
+    def _action_key(neighbor_id: str, transform_name: str) -> str:
+        return f"action:{neighbor_id}:{transform_name}"
+
+    @staticmethod
+    def _context_action_key(
+        neighbor_id: str,
+        transform_name: str,
+        context_bit: int,
+    ) -> str:
+        return f"context_action:{neighbor_id}:{transform_name}:{context_bit}"
+
     def support(self, neighbor_id: str) -> float:
         return self._inner.slow.get(self._edge_keys[neighbor_id], 0.0)
 
     def velocity(self, neighbor_id: str) -> float:
         return self._inner.slow_velocity.get(self._edge_keys[neighbor_id], 0.0)
+
+    def support_age(self, neighbor_id: str) -> int:
+        return self._inner.slow_age.get(self._edge_keys[neighbor_id], 0)
+
+    def action_support(
+        self,
+        neighbor_id: str,
+        transform_name: str,
+        context_bit: int | None = None,
+    ) -> float:
+        key = self._action_keys[(neighbor_id, transform_name)]
+        support = self._inner.slow.get(key, 0.0)
+        if context_bit in SUPPORTED_CONTEXTS:
+            context_key = self._context_action_keys[(neighbor_id, transform_name, context_bit)]
+            support = max(support, self._inner.slow.get(context_key, 0.0))
+        return support
+
+    def action_velocity(
+        self,
+        neighbor_id: str,
+        transform_name: str,
+        context_bit: int | None = None,
+    ) -> float:
+        key = self._action_keys[(neighbor_id, transform_name)]
+        velocity = self._inner.slow_velocity.get(key, 0.0)
+        if context_bit in SUPPORTED_CONTEXTS:
+            context_key = self._context_action_keys[(neighbor_id, transform_name, context_bit)]
+            velocity = max(velocity, self._inner.slow_velocity.get(context_key, 0.0))
+        return velocity
+
+    def action_support_age(
+        self,
+        neighbor_id: str,
+        transform_name: str,
+        context_bit: int | None = None,
+    ) -> int:
+        key = self._action_keys[(neighbor_id, transform_name)]
+        age = self._inner.slow_age.get(key, 0)
+        if context_bit in SUPPORTED_CONTEXTS:
+            context_key = self._context_action_keys[(neighbor_id, transform_name, context_bit)]
+            if self._inner.slow.get(context_key, 0.0) > 0.0:
+                return self._inner.slow_age.get(context_key, 0)
+        return age
 
     @property
     def dim_history(self) -> List[DimensionScores]:
@@ -77,9 +159,21 @@ class ConnectionSubstrate:
     def constraint_patterns(self) -> List[ConstraintPattern]:
         return self._inner.constraint_patterns
 
-    def use_cost(self, neighbor_id: str) -> float:
+    def use_cost(
+        self,
+        neighbor_id: str,
+        transform_name: str | None = None,
+        context_bit: int | None = None,
+    ) -> float:
         support = self.support(neighbor_id)
-        discounted = self.config.fire_base_cost - self.config.fire_discount_scale * support
+        action_support = 0.0
+        if transform_name is not None and (neighbor_id, transform_name) in self._action_keys:
+            action_support = self.action_support(neighbor_id, transform_name, context_bit)
+        discounted = (
+            self.config.fire_base_cost
+            - self.config.fire_discount_scale * support
+            - self.config.transform_discount_scale * action_support
+        )
         return max(self.config.fire_floor_cost, discounted)
 
     def edge_key(self, neighbor_id: str) -> str:
@@ -88,6 +182,15 @@ class ConnectionSubstrate:
     def edge_scores(self) -> Dict[str, float]:
         return {
             neighbor_id: self.support(neighbor_id)
+            for neighbor_id in self.neighbor_ids
+        }
+
+    def action_scores(self) -> Dict[str, Dict[str, float]]:
+        return {
+            neighbor_id: {
+                transform_name: self.action_support(neighbor_id, transform_name)
+                for transform_name in SUPPORTED_TRANSFORMS
+            }
             for neighbor_id in self.neighbor_ids
         }
 
@@ -100,6 +203,16 @@ class ConnectionSubstrate:
             for neighbor_id in self.neighbor_ids
             if self.is_active_connection(neighbor_id)
         ]
+
+    def active_action_supports(self) -> List[tuple[str, str, int | None]]:
+        active: List[tuple[str, str, int | None]] = []
+        for (neighbor_id, transform_name), key in self._action_keys.items():
+            if self._inner.is_active(key):
+                active.append((neighbor_id, transform_name, None))
+        for (neighbor_id, transform_name, context_bit), key in self._context_action_keys.items():
+            if self._inner.is_active(key):
+                active.append((neighbor_id, transform_name, context_bit))
+        return active
 
     def write_cost(self, neighbor_id: str) -> float:
         return self._inner.write_cost(self._edge_keys[neighbor_id])
@@ -120,16 +233,119 @@ class ConnectionSubstrate:
         total = 0.0
         for neighbor_id in self.active_neighbors():
             key = self._edge_keys[neighbor_id]
-            cost = self._inner.maintain_cost(key)
-            if atp_budget - total < cost:
-                continue
-            self._inner.slow[key] = min(
-                1.0,
-                self._inner.slow[key] + self._inner.config.slow_decay * 2.0,
-            )
-            self._inner.slow_age[key] = 0
-            total += cost
+            cost = self._maintain_key(key, atp_budget - total)
+            if cost is not None:
+                total += cost
         return total
+
+    def estimate_maintenance_cost(self) -> float:
+        total = 0.0
+        for neighbor_id in self.active_neighbors():
+            total += self._inner.maintain_cost(self._edge_keys[neighbor_id])
+        for neighbor_id, transform_name, context_bit in self.active_action_supports():
+            if context_bit in SUPPORTED_CONTEXTS:
+                key = self._context_action_keys[(neighbor_id, transform_name, context_bit)]
+            else:
+                key = self._action_keys[(neighbor_id, transform_name)]
+            total += self._inner.maintain_cost(key)
+        return total
+
+    def maintain_supports(
+        self,
+        atp_budget: float,
+        *,
+        transform_credit: Dict[str, float] | None = None,
+        context_bit: int | None = None,
+    ) -> dict[str, object]:
+        total = 0.0
+        maintained_edges: List[str] = []
+        maintained_actions: List[str] = []
+        credit = transform_credit or {}
+        candidates: List[tuple[float, str, str, str, str | None, int | None]] = []
+
+        for neighbor_id in self.active_neighbors():
+            key = self._edge_keys[neighbor_id]
+            priority = (
+                1.0
+                + self.support(neighbor_id)
+                + 0.05 * min(self.support_age(neighbor_id), 6)
+                + max(0.0, -self.velocity(neighbor_id)) * 4.0
+            )
+            candidates.append((priority, key, "edge", neighbor_id, None, None))
+
+        for neighbor_id, transform_name, action_context in self.active_action_supports():
+            if action_context in SUPPORTED_CONTEXTS:
+                key = self._context_action_keys[(neighbor_id, transform_name, action_context)]
+            else:
+                key = self._action_keys[(neighbor_id, transform_name)]
+            support = self._inner.slow.get(key, 0.0)
+            velocity = self._inner.slow_velocity.get(key, 0.0)
+            age = self._inner.slow_age.get(key, 0)
+            priority = 0.8 + support + 0.05 * min(age, 6) + max(0.0, -velocity) * 4.0
+            priority += 0.50 * max(0.0, credit.get(transform_name, 0.0))
+            if (
+                action_context in SUPPORTED_CONTEXTS
+                and context_bit in SUPPORTED_CONTEXTS
+                and action_context == context_bit
+            ):
+                priority += 0.15
+            candidates.append(
+                (priority, key, "action", neighbor_id, transform_name, action_context)
+            )
+
+        candidates.sort(key=lambda item: item[0], reverse=True)
+
+        for _, key, kind, neighbor_id, transform_name, action_context in candidates:
+            cost = self._maintain_key(key, atp_budget - total)
+            if cost is None:
+                continue
+            total += cost
+            if kind == "edge":
+                maintained_edges.append(neighbor_id)
+                continue
+            label = f"{neighbor_id}:{transform_name}"
+            if action_context in SUPPORTED_CONTEXTS:
+                label = f"{label}:context_{action_context}"
+            maintained_actions.append(label)
+
+        return {
+            "spent": total,
+            "maintained_edges": maintained_edges,
+            "maintained_actions": maintained_actions,
+        }
+
+    def maintenance_metrics(self) -> Dict[str, float]:
+        edge_active = self.active_neighbors()
+        action_active = self.active_action_supports()
+        edge_recent = [
+            neighbor_id
+            for neighbor_id in edge_active
+            if self.support_age(neighbor_id) <= RECENT_MAINTENANCE_AGE
+        ]
+        action_recent = [
+            (neighbor_id, transform_name, context_bit)
+            for neighbor_id, transform_name, context_bit in action_active
+            if self.action_support_age(neighbor_id, transform_name, context_bit) <= RECENT_MAINTENANCE_AGE
+        ]
+        active_count = len(edge_active) + len(action_active)
+        recent_count = len(edge_recent) + len(action_recent)
+        support_total = sum(self.support(neighbor_id) for neighbor_id in edge_active)
+        for neighbor_id, transform_name, context_bit in action_active:
+            if context_bit in SUPPORTED_CONTEXTS:
+                key = self._context_action_keys[(neighbor_id, transform_name, context_bit)]
+            else:
+                key = self._action_keys[(neighbor_id, transform_name)]
+            support_total += self._inner.slow.get(key, 0.0)
+        return {
+            "active_edge_count": float(len(edge_active)),
+            "active_action_count": float(len(action_active)),
+            "recently_maintained_edge_count": float(len(edge_recent)),
+            "recently_maintained_action_count": float(len(action_recent)),
+            "edge_maintenance_ratio": len(edge_recent) / max(len(edge_active), 1),
+            "action_maintenance_ratio": len(action_recent) / max(len(action_active), 1),
+            "maintenance_ratio": recent_count / max(active_count, 1),
+            "mean_active_support": support_total / max(active_count, 1),
+        }
 
     def update_fast(self, observation: dict[str, float]) -> None:
         self._inner.update_fast(observation)
@@ -147,7 +363,11 @@ class ConnectionSubstrate:
         second_half = recent[half:]
 
         trends = {}
-        for key in self._edge_keys.values():
+        for key in (
+            tuple(self._edge_keys.values())
+            + tuple(self._action_keys.values())
+            + tuple(self._context_action_keys.values())
+        ):
             early = sum(item.get(key, 0.0) for item in first_half) / max(len(first_half), 1)
             late = sum(item.get(key, 0.0) for item in second_half) / max(len(second_half), 1)
             trends[key] = late - early
@@ -159,6 +379,25 @@ class ConnectionSubstrate:
             value=value,
         )
 
+    def seed_action_support(
+        self,
+        neighbor_id: str,
+        transform_name: str,
+        value: float = 0.25,
+        context_bit: int | None = None,
+    ) -> None:
+        keys = []
+        if context_bit in SUPPORTED_CONTEXTS:
+            context_key = self._context_action_keys.get((neighbor_id, transform_name, context_bit))
+            if context_key is not None:
+                keys.append(context_key)
+        else:
+            key = self._action_keys.get((neighbor_id, transform_name))
+            if key is not None:
+                keys.append(key)
+        if keys:
+            self._inner.seed_support(keys, value=value)
+
     def add_pattern(self, pattern: ConstraintPattern) -> None:
         self._inner.constraint_patterns.append(pattern)
 
@@ -169,13 +408,28 @@ class ConnectionSubstrate:
         snapshot = self._inner.snapshot()
         snapshot.metadata["neighbor_ids"] = list(self.neighbor_ids)
         snapshot.metadata["active_neighbors"] = self.active_neighbors()
+        snapshot.metadata["maintenance_metrics"] = self.maintenance_metrics()
         return snapshot
 
     def save_state(self) -> SubstrateSnapshot:
         snapshot = self._inner.save_state()
         snapshot.metadata["neighbor_ids"] = list(self.neighbor_ids)
         snapshot.metadata["active_neighbors"] = self.active_neighbors()
+        snapshot.metadata["maintenance_metrics"] = self.maintenance_metrics()
         return snapshot
 
     def load_state(self, snapshot: SubstrateSnapshot) -> None:
         self._inner.load_state(snapshot)
+
+    def _maintain_key(self, key: str, atp_budget: float) -> float | None:
+        if self._inner.slow.get(key, 0.0) <= 0.0:
+            return None
+        cost = self._inner.maintain_cost(key)
+        if atp_budget < cost:
+            return None
+        self._inner.slow[key] = min(
+            1.0,
+            self._inner.slow[key] + self._inner.config.slow_decay * 2.0,
+        )
+        self._inner.slow_age[key] = 0
+        return cost

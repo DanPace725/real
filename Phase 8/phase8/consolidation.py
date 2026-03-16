@@ -16,11 +16,23 @@ from real_core.types import CycleEntry
 from .substrate import ConnectionSubstrate
 
 
+def _route_neighbor(action: str) -> str | None:
+    if action.startswith("route_transform:"):
+        parts = action.split(":")
+        if len(parts) == 3:
+            return parts[1]
+        return None
+    if action.startswith("route:"):
+        return action.split(":", 1)[1]
+    return None
+
+
 @dataclass
 class Phase8ConsolidationPipeline(BasicConsolidationPipeline):
     """Promotes routing attractors into edge-local maintained substrate."""
 
     support_seed_value: float = 0.32
+    action_support_seed_value: float = 0.24
     pattern_strength: float = 0.45
     min_route_uses: int = 2
     positive_delta_floor: float = 0.0
@@ -34,6 +46,7 @@ class Phase8ConsolidationPipeline(BasicConsolidationPipeline):
         retained = super().consolidate(entries, substrate)
         if isinstance(substrate, ConnectionSubstrate):
             self._promote_route_patterns(entries, substrate)
+            self._promote_transform_patterns(entries, substrate)
         return retained
 
     def _promote_route_patterns(
@@ -41,13 +54,15 @@ class Phase8ConsolidationPipeline(BasicConsolidationPipeline):
         entries: List[CycleEntry],
         substrate: ConnectionSubstrate,
     ) -> None:
-        route_entries = [entry for entry in entries if entry.action.startswith("route:")]
+        route_entries = [entry for entry in entries if _route_neighbor(entry.action) is not None]
         if len(route_entries) < self.min_route_uses:
             return
 
         grouped: Dict[str, List[CycleEntry]] = {}
         for entry in route_entries:
-            neighbor_id = entry.action.split(":", 1)[1]
+            neighbor_id = _route_neighbor(entry.action)
+            if neighbor_id is None:
+                continue
             if neighbor_id not in substrate.neighbor_ids:
                 continue
             grouped.setdefault(neighbor_id, []).append(entry)
@@ -91,6 +106,47 @@ class Phase8ConsolidationPipeline(BasicConsolidationPipeline):
 
         if len(promoted_positive) > 1:
             substrate.seed_support(promoted_positive, value=self.support_seed_value)
+
+    def _promote_transform_patterns(
+        self,
+        entries: List[CycleEntry],
+        substrate: ConnectionSubstrate,
+    ) -> None:
+        grouped: Dict[tuple[str, str], List[CycleEntry]] = {}
+        for entry in entries:
+            if not entry.action.startswith("route_transform:"):
+                continue
+            _, neighbor_id, transform_name = entry.action.split(":", 2)
+            if neighbor_id not in substrate.neighbor_ids:
+                continue
+            grouped.setdefault((neighbor_id, transform_name), []).append(entry)
+
+        for (neighbor_id, transform_name), action_entries in grouped.items():
+            if len(action_entries) < self.min_route_uses:
+                continue
+            mean_delta = sum(entry.delta for entry in action_entries) / len(action_entries)
+            if mean_delta < self.positive_delta_floor:
+                continue
+            context_groups: Dict[int | None, List[CycleEntry]] = {}
+            for entry in action_entries:
+                context_value = entry.state_before.get("head_context_bit")
+                if entry.state_before.get("head_has_context", 0.0) < 0.5:
+                    context_value = None
+                elif context_value is not None:
+                    context_value = int(float(context_value))
+                context_groups.setdefault(context_value, []).append(entry)
+
+            for context_bit, context_entries in context_groups.items():
+                context_delta = sum(entry.delta for entry in context_entries) / len(context_entries)
+                if context_delta < self.positive_delta_floor:
+                    continue
+                if substrate.action_support(neighbor_id, transform_name, context_bit) < self.action_support_seed_value:
+                    substrate.seed_action_support(
+                        neighbor_id,
+                        transform_name,
+                        value=self.action_support_seed_value,
+                        context_bit=context_bit,
+                    )
 
     def _build_pattern(
         self,

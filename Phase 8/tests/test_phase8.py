@@ -14,8 +14,31 @@ PHASE4_ROOT = ROOT.parent / "Phase 4"
 if str(PHASE4_ROOT) not in sys.path:
     sys.path.insert(0, str(PHASE4_ROOT))
 
-from phase8 import ConnectionSubstrate, NativeSubstrateSystem, RoutingEnvironment, SignalPacket
+from phase8 import (
+    ConnectionSubstrate,
+    NativeSubstrateSystem,
+    RoutingEnvironment,
+    SignalPacket,
+    SignalSpec,
+    phase8_scenarios,
+)
 from real_core.types import CycleEntry, GCOStatus
+
+
+class TestSignalPacket(unittest.TestCase):
+    def test_payload_defaults_to_input_bits(self) -> None:
+        packet = SignalPacket(
+            packet_id="pkt-test",
+            origin="n0",
+            target="sink",
+            created_cycle=0,
+            input_bits=[1, 0, 1, 2],
+            context_bit=3,
+        )
+
+        self.assertEqual(packet.input_bits, [1, 0, 1, 1])
+        self.assertEqual(packet.payload_bits, [1, 0, 1, 1])
+        self.assertEqual(packet.context_bit, 1)
 
 
 class TestConnectionSubstrate(unittest.TestCase):
@@ -28,6 +51,30 @@ class TestConnectionSubstrate(unittest.TestCase):
         self.assertIsNotNone(first)
         self.assertIsNotNone(second)
         self.assertLess(substrate.use_cost("n1"), baseline)
+
+    def test_maintenance_refreshes_context_action_support(self) -> None:
+        substrate = ConnectionSubstrate(("n1",))
+        substrate.seed_action_support(
+            "n1",
+            "rotate_left_1",
+            value=0.4,
+            context_bit=0,
+        )
+
+        for _ in range(3):
+            substrate.tick()
+
+        self.assertGreater(substrate.action_support_age("n1", "rotate_left_1", 0), 0)
+
+        result = substrate.maintain_supports(
+            1.0,
+            transform_credit={"rotate_left_1": 1.0},
+            context_bit=0,
+        )
+
+        self.assertGreater(result["spent"], 0.0)
+        self.assertIn("n1:rotate_left_1:context_0", result["maintained_actions"])
+        self.assertEqual(substrate.action_support_age("n1", "rotate_left_1", 0), 0)
 
 
 class TestRoutingEnvironment(unittest.TestCase):
@@ -223,6 +270,236 @@ class TestRoutingEnvironment(unittest.TestCase):
 
         self.assertEqual(env.delivered_packets[0].packet_id, "stale")
 
+    def test_content_packet_survives_routing_to_sink(self) -> None:
+        env = RoutingEnvironment(
+            adjacency={
+                "n0": ("n1",),
+                "n1": ("sink",),
+            },
+            positions={"n0": 0, "n1": 1, "sink": 2},
+            source_id="n0",
+            sink_id="sink",
+            max_atp=1.0,
+        )
+        env.inject_signal(
+            count=1,
+            cycle=0,
+            packet_payloads=[[1, 0, 1, 1]],
+            context_bits=[1],
+            task_id="task_a",
+        )
+
+        env.route_signal("n0", "n1", cost=0.05)
+        env.route_signal("n1", "sink", cost=0.05)
+
+        delivered = env.delivered_packets[0]
+        self.assertEqual(delivered.input_bits, [1, 0, 1, 1])
+        self.assertEqual(delivered.payload_bits, [1, 0, 1, 1])
+        self.assertEqual(delivered.context_bit, 1)
+        self.assertEqual(delivered.task_id, "task_a")
+
+    def test_route_signal_applies_transform_and_records_trace(self) -> None:
+        env = RoutingEnvironment(
+            adjacency={
+                "n0": ("n1",),
+                "n1": ("sink",),
+            },
+            positions={"n0": 0, "n1": 1, "sink": 2},
+            source_id="n0",
+            sink_id="sink",
+            max_atp=1.0,
+        )
+        env.inject_signal(
+            count=1,
+            cycle=0,
+            packet_payloads=[[1, 0, 1, 1]],
+            context_bits=[1],
+            task_id="task_a",
+        )
+
+        result = env.route_signal(
+            "n0",
+            "n1",
+            cost=0.05,
+            transform_name="rotate_left_1",
+        )
+
+        self.assertTrue(result["success"])
+        packet = env.inboxes["n1"][0]
+        self.assertEqual(packet.payload_bits, [0, 1, 1, 1])
+        self.assertEqual(packet.transform_trace, ["rotate_left_1"])
+
+    def test_runtime_state_restores_packet_content_fields(self) -> None:
+        env = RoutingEnvironment(
+            adjacency={
+                "n0": ("sink",),
+            },
+            positions={"n0": 0, "sink": 1},
+            source_id="n0",
+            sink_id="sink",
+            max_atp=1.0,
+        )
+        env.inject_signal(
+            count=1,
+            cycle=0,
+            packet_payloads=[[1, 1, 0, 0]],
+            context_bits=[0],
+            task_id="task_a",
+        )
+        env.inboxes["n0"][0].transform_trace.append("identity")
+
+        restored = RoutingEnvironment(
+            adjacency={
+                "n0": ("sink",),
+            },
+            positions={"n0": 0, "sink": 1},
+            source_id="n0",
+            sink_id="sink",
+            max_atp=1.0,
+        )
+        restored.load_runtime_state(env.export_runtime_state())
+
+        packet = restored.inboxes["n0"][0]
+        self.assertEqual(packet.payload_bits, [1, 1, 0, 0])
+        self.assertEqual(packet.input_bits, [1, 1, 0, 0])
+        self.assertEqual(packet.context_bit, 0)
+        self.assertEqual(packet.task_id, "task_a")
+        self.assertEqual(packet.transform_trace, ["identity"])
+
+    def test_sink_scores_exact_match_and_returns_full_feedback(self) -> None:
+        env = RoutingEnvironment(
+            adjacency={
+                "n0": ("sink",),
+            },
+            positions={"n0": 0, "sink": 1},
+            source_id="n0",
+            sink_id="sink",
+            max_atp=1.0,
+        )
+        env.inject_signal(
+            count=1,
+            cycle=0,
+            packet_payloads=[[1, 0, 1, 1]],
+            context_bits=[0],
+            task_id="task_a",
+        )
+
+        result = env.route_signal(
+            "n0",
+            "sink",
+            cost=0.05,
+            transform_name="rotate_left_1",
+        )
+
+        packet = env.delivered_packets[0]
+        self.assertTrue(packet.matched_target)
+        self.assertEqual(packet.target_bits, [0, 1, 1, 1])
+        self.assertEqual(packet.bit_match_ratio, 1.0)
+        self.assertAlmostEqual(result["feedback_award"], env.feedback_amount, places=6)
+        self.assertEqual(len(env.pending_feedback), 1)
+        self.assertAlmostEqual(env.pending_feedback[0].amount, env.feedback_amount, places=6)
+
+    def test_sink_scores_partial_match_with_smaller_feedback(self) -> None:
+        env = RoutingEnvironment(
+            adjacency={
+                "n0": ("sink",),
+            },
+            positions={"n0": 0, "sink": 1},
+            source_id="n0",
+            sink_id="sink",
+            max_atp=1.0,
+        )
+        env.inject_signal(
+            count=1,
+            cycle=0,
+            packet_payloads=[[1, 0, 1, 1]],
+            context_bits=[0],
+            task_id="task_a",
+        )
+
+        result = env.route_signal(
+            "n0",
+            "sink",
+            cost=0.05,
+            transform_name="identity",
+        )
+
+        packet = env.delivered_packets[0]
+        self.assertFalse(packet.matched_target)
+        self.assertAlmostEqual(packet.bit_match_ratio, 0.5, places=6)
+        self.assertGreater(result["feedback_award"], 0.0)
+        self.assertLess(result["feedback_award"], env.feedback_amount)
+        self.assertEqual(len(env.pending_feedback), 1)
+        self.assertAlmostEqual(
+            env.pending_feedback[0].amount,
+            env.feedback_amount * 0.5,
+            places=6,
+        )
+
+    def test_sink_scores_zero_match_with_no_feedback(self) -> None:
+        env = RoutingEnvironment(
+            adjacency={
+                "n0": ("sink",),
+            },
+            positions={"n0": 0, "sink": 1},
+            source_id="n0",
+            sink_id="sink",
+            max_atp=1.0,
+        )
+        env.inject_signal(
+            count=1,
+            cycle=0,
+            packet_payloads=[[1, 0, 0, 1]],
+            context_bits=[0],
+            task_id="task_a",
+        )
+
+        result = env.route_signal(
+            "n0",
+            "sink",
+            cost=0.05,
+            transform_name="xor_mask_0101",
+        )
+
+        packet = env.delivered_packets[0]
+        self.assertFalse(packet.matched_target)
+        self.assertEqual(packet.bit_match_ratio, 0.0)
+        self.assertEqual(result["feedback_award"], 0.0)
+        self.assertEqual(packet.feedback_award, 0.0)
+        self.assertEqual(env.pending_feedback, [])
+
+    def test_feedback_pulse_updates_transform_credit_on_returning_node(self) -> None:
+        env = RoutingEnvironment(
+            adjacency={
+                "n0": ("sink",),
+            },
+            positions={"n0": 0, "sink": 1},
+            source_id="n0",
+            sink_id="sink",
+            max_atp=1.0,
+        )
+        env.inject_signal(
+            count=1,
+            cycle=0,
+            packet_payloads=[[1, 0, 1, 1]],
+            context_bits=[0],
+            task_id="task_a",
+        )
+        env.route_signal(
+            "n0",
+            "sink",
+            cost=0.05,
+            transform_name="rotate_left_1",
+        )
+
+        delivered = env.advance_feedback()
+        self.assertEqual(len(delivered), 1)
+        observation = env.observe_local("n0")
+
+        self.assertGreater(observation["feedback_credit_rotate_left_1"], 0.0)
+        self.assertGreater(observation["last_match_ratio"], 0.0)
+        self.assertGreater(observation["last_feedback_amount"], 0.0)
+
 
 class TestNativeSubstrateSystem(unittest.TestCase):
     def test_local_observation_excludes_non_neighbors(self) -> None:
@@ -240,6 +517,154 @@ class TestNativeSubstrateSystem(unittest.TestCase):
 
         self.assertIn("progress_n1", observation)
         self.assertNotIn("progress_sink", observation)
+
+    def test_local_observation_exposes_head_payload_without_target_bits(self) -> None:
+        system = NativeSubstrateSystem(
+            adjacency={
+                "n0": ("n1",),
+                "n1": ("sink",),
+            },
+            positions={"n0": 0, "n1": 1, "sink": 2},
+            source_id="n0",
+            sink_id="sink",
+            selector_seed=13,
+        )
+        packet = system.environment.create_packet(
+            cycle=0,
+            input_bits=[1, 0, 0, 1],
+            payload_bits=[1, 1, 0, 1],
+            context_bit=1,
+            task_id="task_a",
+            target_bits=[0, 1, 1, 0],
+        )
+        packet.transform_trace.append("identity")
+        system.environment.inject_packets([packet], cycle=0)
+
+        observation = system.environment.observe_local("n0")
+
+        self.assertEqual(observation["has_packet"], 1.0)
+        self.assertEqual(observation["payload_bit_0"], 1.0)
+        self.assertEqual(observation["payload_bit_1"], 1.0)
+        self.assertEqual(observation["payload_bit_2"], 0.0)
+        self.assertEqual(observation["payload_bit_3"], 1.0)
+        self.assertEqual(observation["head_has_context"], 1.0)
+        self.assertEqual(observation["head_context_bit"], 1.0)
+        self.assertGreater(observation["head_transform_depth"], 0.0)
+        self.assertNotIn("target_bit_0", observation)
+
+    def test_inject_signal_specs_preserves_task_metadata(self) -> None:
+        system = NativeSubstrateSystem(
+            adjacency={
+                "n0": ("n1",),
+                "n1": ("sink",),
+            },
+            positions={"n0": 0, "n1": 1, "sink": 2},
+            source_id="n0",
+            sink_id="sink",
+            selector_seed=29,
+        )
+        system.inject_signal_specs(
+            [
+                SignalSpec(
+                    input_bits=[1, 0, 1, 0],
+                    context_bit=1,
+                    task_id="task_a",
+                )
+            ]
+        )
+
+        packet = system.environment.inboxes["n0"][0]
+        self.assertEqual(packet.input_bits, [1, 0, 1, 0])
+        self.assertEqual(packet.payload_bits, [1, 0, 1, 0])
+        self.assertEqual(packet.context_bit, 1)
+        self.assertEqual(packet.task_id, "task_a")
+
+    def test_available_actions_include_route_transform_variants(self) -> None:
+        system = NativeSubstrateSystem(
+            adjacency={
+                "n0": ("n1",),
+                "n1": ("sink",),
+            },
+            positions={"n0": 0, "n1": 1, "sink": 2},
+            source_id="n0",
+            sink_id="sink",
+            selector_seed=19,
+        )
+        system.environment.inject_signal(count=1, cycle=0, packet_payloads=[[1, 0, 0, 1]])
+
+        available = system.agents["n0"].engine.actions.available_actions(history_size=0)
+
+        self.assertIn("route:n1", available)
+        self.assertIn("route_transform:n1:identity", available)
+        self.assertIn("route_transform:n1:rotate_left_1", available)
+        self.assertIn("route_transform:n1:xor_mask_1010", available)
+        self.assertIn("route_transform:n1:xor_mask_0101", available)
+
+    def test_route_transform_action_executes_through_backend(self) -> None:
+        system = NativeSubstrateSystem(
+            adjacency={
+                "n0": ("n1",),
+                "n1": ("sink",),
+            },
+            positions={"n0": 0, "n1": 1, "sink": 2},
+            source_id="n0",
+            sink_id="sink",
+            selector_seed=23,
+        )
+        system.environment.inject_signal(count=1, cycle=0, packet_payloads=[[1, 0, 1, 0]])
+
+        outcome = system.agents["n0"].engine.actions.execute(
+            "route_transform:n1:xor_mask_0101"
+        )
+
+        self.assertTrue(outcome.success)
+        packet = system.environment.inboxes["n1"][0]
+        self.assertEqual(packet.payload_bits, [1, 1, 1, 1])
+        self.assertEqual(packet.transform_trace, ["xor_mask_0101"])
+
+    def test_route_transform_execution_uses_context_shaped_cost(self) -> None:
+        system = NativeSubstrateSystem(
+            adjacency={
+                "n0": ("n1",),
+                "n1": ("sink",),
+            },
+            positions={"n0": 0, "n1": 1, "sink": 2},
+            source_id="n0",
+            sink_id="sink",
+            selector_seed=41,
+        )
+        system.environment.inject_signal(
+            count=1,
+            cycle=0,
+            packet_payloads=[[1, 0, 1, 1]],
+            context_bits=[0],
+            task_id="task_a",
+        )
+        system.agents["n0"].substrate.seed_action_support(
+            "n1",
+            "rotate_left_1",
+            value=1.0,
+            context_bit=0,
+        )
+
+        before_atp = system.environment.state_for("n0").atp
+        expected_cost = system.agents["n0"].substrate.use_cost(
+            "n1",
+            "rotate_left_1",
+            0,
+        )
+
+        outcome = system.agents["n0"].engine.actions.execute(
+            "route_transform:n1:rotate_left_1"
+        )
+
+        self.assertTrue(outcome.success)
+        self.assertAlmostEqual(outcome.cost_secs, expected_cost, places=6)
+        self.assertAlmostEqual(
+            before_atp - system.environment.state_for("n0").atp,
+            expected_cost,
+            places=6,
+        )
 
     def test_dormant_node_only_rests(self) -> None:
         system = NativeSubstrateSystem(
@@ -334,6 +759,49 @@ class TestNativeSubstrateSystem(unittest.TestCase):
         agent.engine._run_consolidation()
         self.assertGreaterEqual(agent.substrate.support("n1"), 0.32)
         self.assertGreaterEqual(len(agent.substrate.constraint_patterns), 1)
+
+    def test_consolidation_promotes_transform_history_into_action_support(self) -> None:
+        system = NativeSubstrateSystem(
+            adjacency={
+                "n0": ("n1",),
+                "n1": ("sink",),
+            },
+            positions={"n0": 0, "n1": 1, "sink": 2},
+            source_id="n0",
+            sink_id="sink",
+            selector_seed=33,
+        )
+        agent = system.agents["n0"]
+
+        for cycle in range(1, 9):
+            agent.engine.memory.record(
+                CycleEntry(
+                    cycle=cycle,
+                    action="route_transform:n1:rotate_left_1",
+                    mode="constraint",
+                    state_before={"head_context_bit": 0.0, "head_has_context": 1.0},
+                    state_after={"reward_buffer": 0.8},
+                    dimensions={"contextual_fit": 0.8},
+                    coherence=0.81,
+                    delta=0.06,
+                    gco=GCOStatus.PARTIAL,
+                    cost_secs=0.04,
+                )
+            )
+
+        agent.engine._run_consolidation()
+        self.assertEqual(
+            agent.substrate.action_support("n1", "rotate_left_1"),
+            0.0,
+        )
+        self.assertGreaterEqual(
+            agent.substrate.action_support("n1", "rotate_left_1", 0),
+            0.24,
+        )
+        self.assertLess(
+            agent.substrate.action_support("n1", "rotate_left_1", 1),
+            0.24,
+        )
 
     def test_save_and_load_carryover_restores_node_state(self) -> None:
         system = NativeSubstrateSystem(
@@ -493,6 +961,54 @@ class TestNativeSubstrateSystem(unittest.TestCase):
             )
         finally:
             shutil.rmtree(temp_dir, ignore_errors=True)
+
+    def test_summary_reports_context_breakdown_and_action_supports(self) -> None:
+        system = NativeSubstrateSystem(
+            adjacency={
+                "n0": ("sink",),
+            },
+            positions={"n0": 0, "sink": 1},
+            source_id="n0",
+            sink_id="sink",
+            selector_seed=35,
+        )
+        system.environment.inject_signal(
+            count=1,
+            cycle=0,
+            packet_payloads=[[1, 0, 1, 1]],
+            context_bits=[0],
+            task_id="task_a",
+        )
+        system.environment.route_signal(
+            "n0",
+            "sink",
+            cost=0.05,
+            transform_name="rotate_left_1",
+        )
+
+        summary = system.summarize()
+
+        self.assertIn("context_breakdown", summary)
+        self.assertIn("context_0", summary["context_breakdown"])
+        self.assertEqual(summary["context_breakdown"]["context_0"]["exact_matches"], 1)
+        self.assertIn("final_transform_counts", summary)
+        self.assertEqual(summary["final_transform_counts"]["rotate_left_1"], 1)
+        self.assertIn("action_supports", summary)
+        self.assertIn("context_action_supports", summary)
+        self.assertIn("substrate_maintenance", summary)
+        self.assertIn("n0", summary["substrate_maintenance"])
+
+
+class TestScenarioCatalog(unittest.TestCase):
+    def test_cvt1_stage1_scenario_is_available(self) -> None:
+        scenarios = phase8_scenarios()
+        scenario = scenarios["cvt1_task_a_stage1"]
+
+        self.assertGreater(len(scenario.initial_signal_specs), 0)
+        self.assertGreater(len(scenario.signal_schedule_specs or {}), 0)
+        first_signal = scenario.initial_signal_specs[0]
+        self.assertEqual(first_signal.task_id, "task_a")
+        self.assertIsNotNone(first_signal.context_bit)
 
 
 if __name__ == "__main__":
