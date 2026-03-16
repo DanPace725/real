@@ -24,6 +24,9 @@ Current focus:
 - transform choices now have their own local slow-memory support, selector bias, and diagnostic reporting
 - returned feedback now writes local transform-credit signals back onto the nodes that used those transforms, and Stage 1 transform memory can be context-sensitive
 - active edge and transform supports can now be explicitly maintained, and summaries now distinguish recently maintained substrate from support that is merely lingering
+- returned transform credit is now context-bound as well as transform-bound, which helps reduce warm-start interference across task contexts
+- repeated local context-bound credit can now promote durable context-specific action support and reinforce the supporting edge, so substrate-only carryover inherits more of the learned task structure
+- Phase 8 now includes the first explicit `Task A -> Task B` transfer harness for CVT-1 Stage 1
 - comparisons and demos now cover multiple routing scenarios instead of one smoke run
 - the initial environment is a small routing graph, not a dense network
 
@@ -38,6 +41,7 @@ Current focus:
 - `phase8/selector.py` - Phase 8-specific local route selector
 - `phase8/scenarios.py` - reusable scenario catalog for branch, sustained-load, and detour runs
 - `compare_cold_warm.py` - repeated-session cold vs warm comparison runner
+- `compare_task_transfer.py` - first Task A -> Task B transfer comparison runner
 - `run_phase8_demo.py` - multi-scenario stress, comparison, and detailed trace demo
 
 ## Design constraints enforced in this slice
@@ -61,12 +65,18 @@ Current focus:
 - summaries now expose context-level task accuracy, final transform counts, and per-node transform supports
 - summaries and demos now expose context-specific transform supports and per-node substrate-maintenance ratios
 - selector pressure can now use transform-specific returned credit and explicit-context transform bias instead of relying only on route cost and generic edge support
+- selector pressure can now prefer context-matched returned credit over generic transform credit when packets carry explicit task context
+- substrate-only warm starts can now recover part of the task benefit by carrying forward promoted context-action support plus its local routing scaffold
+- transfer feedback now relaxes contradictory context-transform credit, and selector history is only strongly trusted when maintained substrate still supports it
+- the first Task B transfer loop now shows warm full carryover improving exact-match counts over cold start in the aggregate, but mean bit accuracy is still slightly behind cold and still needs stabilization
 
 ## Next likely steps
 
 - deepen Phase 7-style pattern merging and pruning inside the connection substrate
-- improve task-quality stability so warm starts beat cold not just on exact matches but also on mean bit accuracy before moving to Task B transfer
+- improve Task B transfer quality so warm full carryover beats cold on mean bit accuracy as well as exact matches
 - keep strengthening carryover by promoting and maintaining context-specific transform support, not just route support
+- add clearer per-context transfer diagnostics so we can see whether remaining error is branch choice, transform persistence, or overuse of partial-match actions
+- retune Task B adaptation so full carryover preserves useful route and transform scaffold while reducing partial-match drift under the new task
 - add explicit neighbor inhibition effects to routing pressure
 - let admission substrate learn richer tradeoffs such as latency sensitivity, not just energy efficiency
 - measure specialization and path emergence over longer runs

@@ -1,0 +1,18 @@
+{
+  "global_cycle": 18,
+  "agent_ids": [
+    "n0",
+    "n1",
+    "n2",
+    "n3",
+    "n4",
+    "n5"
+  ],
+  "admission_substrate": {
+    "support": 0.678704661282165,
+    "velocity": -0.002038498307626143,
+    "learning_rate": 0.1,
+    "baseline_decay": 0.05,
+    "velocity_alpha": 0.35
+  }
+}

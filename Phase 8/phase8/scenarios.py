@@ -119,7 +119,7 @@ def _parity(bits: Sequence[int]) -> int:
     return sum(int(bit) for bit in bits) % 2
 
 
-def cvt1_task_a_stage1_signals() -> Tuple[SignalSpec, ...]:
+def cvt1_stage1_signals(task_id: str = "task_a") -> Tuple[SignalSpec, ...]:
     values = [
         0b0001,
         0b0110,
@@ -149,11 +149,19 @@ def cvt1_task_a_stage1_signals() -> Tuple[SignalSpec, ...]:
             SignalSpec(
                 input_bits=bits,
                 context_bit=context_bit,
-                task_id="task_a",
+                task_id=task_id,
             )
         )
         previous_bits = bits
     return tuple(signals)
+
+
+def cvt1_task_a_stage1_signals() -> Tuple[SignalSpec, ...]:
+    return cvt1_stage1_signals("task_a")
+
+
+def cvt1_task_b_stage1_signals() -> Tuple[SignalSpec, ...]:
+    return cvt1_stage1_signals("task_b")
 
 
 @dataclass(frozen=True)
@@ -181,10 +189,15 @@ def phase8_scenarios() -> Dict[str, ScenarioSpec]:
     branch_adjacency, branch_positions, branch_source, branch_sink = branch_pressure_topology()
     sustained_adjacency, sustained_positions, sustained_source, sustained_sink = sustained_pressure_topology()
     detour_adjacency, detour_positions, detour_source, detour_sink = detour_resilience_topology()
-    cvt_signals = cvt1_task_a_stage1_signals()
-    cvt_schedule = {
+    cvt_a_signals = cvt1_task_a_stage1_signals()
+    cvt_a_schedule = {
         cycle: (signal_spec,)
-        for cycle, signal_spec in enumerate(cvt_signals[1:], start=2)
+        for cycle, signal_spec in enumerate(cvt_a_signals[1:], start=2)
+    }
+    cvt_b_signals = cvt1_task_b_stage1_signals()
+    cvt_b_schedule = {
+        cycle: (signal_spec,)
+        for cycle, signal_spec in enumerate(cvt_b_signals[1:], start=2)
     }
 
     return {
@@ -256,14 +269,31 @@ def phase8_scenarios() -> Dict[str, ScenarioSpec]:
             positions=branch_positions,
             source_id=branch_source,
             sink_id=branch_sink,
-            cycles=len(cvt_signals) + 6,
+            cycles=len(cvt_a_signals) + 6,
             initial_packets=0,
             packet_schedule={},
             packet_ttl=10,
             source_admission_policy="adaptive",
             source_admission_min_rate=1,
             source_admission_max_rate=2,
-            initial_signal_specs=(cvt_signals[0],),
-            signal_schedule_specs=cvt_schedule,
+            initial_signal_specs=(cvt_a_signals[0],),
+            signal_schedule_specs=cvt_a_schedule,
+        ),
+        "cvt1_task_b_stage1": ScenarioSpec(
+            name="cvt1_task_b_stage1",
+            description="Related Stage 1 transfer workload where the odd-context branch switches to xor_mask_0101.",
+            adjacency=branch_adjacency,
+            positions=branch_positions,
+            source_id=branch_source,
+            sink_id=branch_sink,
+            cycles=len(cvt_b_signals) + 6,
+            initial_packets=0,
+            packet_schedule={},
+            packet_ttl=10,
+            source_admission_policy="adaptive",
+            source_admission_min_rate=1,
+            source_admission_max_rate=2,
+            initial_signal_specs=(cvt_b_signals[0],),
+            signal_schedule_specs=cvt_b_schedule,
         ),
     }

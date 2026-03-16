@@ -1,0 +1,430 @@
+{
+  "substrate": {
+    "fast": {
+      "edge:n5": 0.0,
+      "action:n5:identity": 0.0,
+      "action:n5:rotate_left_1": 0.0,
+      "action:n5:xor_mask_1010": 0.0,
+      "action:n5:xor_mask_0101": 0.0,
+      "context_action:n5:identity:0": 0.0,
+      "context_action:n5:identity:1": 0.0,
+      "context_action:n5:rotate_left_1:0": 0.0,
+      "context_action:n5:rotate_left_1:1": 0.0,
+      "context_action:n5:xor_mask_1010:0": 0.0,
+      "context_action:n5:xor_mask_1010:1": 0.0,
+      "context_action:n5:xor_mask_0101:0": 0.0,
+      "context_action:n5:xor_mask_0101:1": 0.0
+    },
+    "slow": {
+      "edge:n5": 0.1375,
+      "action:n5:identity": 0.0,
+      "action:n5:rotate_left_1": 0.0,
+      "action:n5:xor_mask_1010": 0.0,
+      "action:n5:xor_mask_0101": 0.0,
+      "context_action:n5:identity:0": 0.0,
+      "context_action:n5:identity:1": 0.0,
+      "context_action:n5:rotate_left_1:0": 0.0,
+      "context_action:n5:rotate_left_1:1": 0.0,
+      "context_action:n5:xor_mask_1010:0": 0.0,
+      "context_action:n5:xor_mask_1010:1": 0.0,
+      "context_action:n5:xor_mask_0101:0": 0.0,
+      "context_action:n5:xor_mask_0101:1": 0.0
+    },
+    "slow_age": {
+      "edge:n5": 1,
+      "action:n5:identity": 0,
+      "action:n5:rotate_left_1": 0,
+      "action:n5:xor_mask_1010": 0,
+      "action:n5:xor_mask_0101": 0,
+      "context_action:n5:identity:0": 0,
+      "context_action:n5:identity:1": 0,
+      "context_action:n5:rotate_left_1:0": 0,
+      "context_action:n5:rotate_left_1:1": 0,
+      "context_action:n5:xor_mask_1010:0": 0,
+      "context_action:n5:xor_mask_1010:1": 0,
+      "context_action:n5:xor_mask_0101:0": 0,
+      "context_action:n5:xor_mask_0101:1": 0
+    },
+    "slow_velocity": {
+      "edge:n5": 0.040974833352498484,
+      "action:n5:identity": 0.0,
+      "action:n5:rotate_left_1": 0.0,
+      "action:n5:xor_mask_1010": 0.0,
+      "action:n5:xor_mask_0101": 0.0,
+      "context_action:n5:identity:0": 0.0,
+      "context_action:n5:identity:1": 0.0,
+      "context_action:n5:rotate_left_1:0": 0.0,
+      "context_action:n5:rotate_left_1:1": 0.0,
+      "context_action:n5:xor_mask_1010:0": 0.0,
+      "context_action:n5:xor_mask_1010:1": 0.0,
+      "context_action:n5:xor_mask_0101:0": 0.0,
+      "context_action:n5:xor_mask_0101:1": 0.0
+    },
+    "metadata": {
+      "active_keys": [],
+      "active_count": 0,
+      "pattern_count": 0,
+      "keys": [
+        "edge:n5",
+        "action:n5:identity",
+        "action:n5:rotate_left_1",
+        "action:n5:xor_mask_1010",
+        "action:n5:xor_mask_0101",
+        "context_action:n5:identity:0",
+        "context_action:n5:identity:1",
+        "context_action:n5:rotate_left_1:0",
+        "context_action:n5:rotate_left_1:1",
+        "context_action:n5:xor_mask_1010:0",
+        "context_action:n5:xor_mask_1010:1",
+        "context_action:n5:xor_mask_0101:0",
+        "context_action:n5:xor_mask_0101:1"
+      ],
+      "patterns": [],
+      "dim_history": [
+        {
+          "continuity": 0.633,
+          "vitality": 0.25,
+          "contextual_fit": 0.5966182899503125,
+          "differentiation": 0.35,
+          "accountability": 0.34,
+          "reflexivity": 0.25
+        },
+        {
+          "continuity": 0.6345000000000001,
+          "vitality": 0.25,
+          "contextual_fit": 0.5265292515578799,
+          "differentiation": 0.35,
+          "accountability": 0.41000000000000003,
+          "reflexivity": 0.25
+        },
+        {
+          "continuity": 0.636,
+          "vitality": 0.25,
+          "contextual_fit": 0.49206411353683155,
+          "differentiation": 0.35,
+          "accountability": 0.48000000000000004,
+          "reflexivity": 0.325
+        },
+        {
+          "continuity": 0.6375,
+          "vitality": 0.25,
+          "contextual_fit": 0.48368631911477833,
+          "differentiation": 0.35,
+          "accountability": 0.55,
+          "reflexivity": 0.325
+        },
+        {
+          "continuity": 0.639,
+          "vitality": 0.25,
+          "contextual_fit": 0.49952053599496626,
+          "differentiation": 0.35,
+          "accountability": 0.6200000000000001,
+          "reflexivity": 0.325
+        },
+        {
+          "continuity": 0.597,
+          "vitality": 0.25,
+          "contextual_fit": 0.5355859075261264,
+          "differentiation": 0.35,
+          "accountability": 0.6900000000000001,
+          "reflexivity": 0.325
+        },
+        {
+          "continuity": 0.5985,
+          "vitality": 0.25,
+          "contextual_fit": 0.6154102094181186,
+          "differentiation": 0.35,
+          "accountability": 0.76,
+          "reflexivity": 0.325
+        },
+        {
+          "continuity": 0.6,
+          "vitality": 0.25,
+          "contextual_fit": 0.4969917526586094,
+          "differentiation": 0.35,
+          "accountability": 0.8300000000000001,
+          "reflexivity": 0.325
+        },
+        {
+          "continuity": 0.6014999999999999,
+          "vitality": 0.25,
+          "contextual_fit": 0.5096060519231169,
+          "differentiation": 0.35,
+          "accountability": 0.9000000000000001,
+          "reflexivity": 0.325
+        },
+        {
+          "continuity": 0.603,
+          "vitality": 0.25,
+          "contextual_fit": 0.5458980987509984,
+          "differentiation": 0.35,
+          "accountability": 0.97,
+          "reflexivity": 0.325
+        },
+        {
+          "continuity": 0.6045,
+          "vitality": 0.25,
+          "contextual_fit": 0.548114156803093,
+          "differentiation": 0.35,
+          "accountability": 1.0,
+          "reflexivity": 0.325
+        },
+        {
+          "continuity": 0.606,
+          "vitality": 0.25,
+          "contextual_fit": 0.48246811402017487,
+          "differentiation": 0.35,
+          "accountability": 1.0,
+          "reflexivity": 0.325
+        },
+        {
+          "continuity": 0.6074999999999999,
+          "vitality": 0.25,
+          "contextual_fit": 0.532629206377325,
+          "differentiation": 0.35,
+          "accountability": 1.0,
+          "reflexivity": 0.325
+        },
+        {
+          "continuity": 0.609,
+          "vitality": 0.25,
+          "contextual_fit": 0.49803971686716664,
+          "differentiation": 0.35,
+          "accountability": 1.0,
+          "reflexivity": 0.325
+        },
+        {
+          "continuity": 0.6105,
+          "vitality": 0.25,
+          "contextual_fit": 0.4809303813080004,
+          "differentiation": 0.35,
+          "accountability": 1.0,
+          "reflexivity": 0.325
+        },
+        {
+          "continuity": 0.612,
+          "vitality": 0.25,
+          "contextual_fit": 0.6190500392046612,
+          "differentiation": 0.35,
+          "accountability": 1.0,
+          "reflexivity": 0.325
+        },
+        {
+          "continuity": 0.6134999999999999,
+          "vitality": 0.25,
+          "contextual_fit": 0.505294998174884,
+          "differentiation": 0.35,
+          "accountability": 1.0,
+          "reflexivity": 0.325
+        },
+        {
+          "continuity": 0.615,
+          "vitality": 0.25,
+          "contextual_fit": 0.5375448388963897,
+          "differentiation": 0.35,
+          "accountability": 1.0,
+          "reflexivity": 0.325
+        },
+        {
+          "continuity": 0.6165,
+          "vitality": 0.25,
+          "contextual_fit": 0.4916122827645607,
+          "differentiation": 0.35,
+          "accountability": 1.0,
+          "reflexivity": 0.325
+        },
+        {
+          "continuity": 0.5745,
+          "vitality": 0.25,
+          "contextual_fit": 0.47089604736924273,
+          "differentiation": 0.35,
+          "accountability": 1.0,
+          "reflexivity": 0.325
+        }
+      ],
+      "neighbor_ids": [
+        "n5"
+      ],
+      "active_neighbors": [],
+      "maintenance_metrics": {
+        "active_edge_count": 0.0,
+        "active_action_count": 0.0,
+        "recently_maintained_edge_count": 0.0,
+        "recently_maintained_action_count": 0.0,
+        "edge_maintenance_ratio": 0.0,
+        "action_maintenance_ratio": 0.0,
+        "maintenance_ratio": 0.0,
+        "mean_active_support": 0.0
+      },
+      "context_credit_accumulator": {}
+    }
+  },
+  "episodic_entries": [],
+  "dim_history": [
+    {
+      "continuity": 0.633,
+      "vitality": 0.25,
+      "contextual_fit": 0.5966182899503125,
+      "differentiation": 0.35,
+      "accountability": 0.34,
+      "reflexivity": 0.25
+    },
+    {
+      "continuity": 0.6345000000000001,
+      "vitality": 0.25,
+      "contextual_fit": 0.5265292515578799,
+      "differentiation": 0.35,
+      "accountability": 0.41000000000000003,
+      "reflexivity": 0.25
+    },
+    {
+      "continuity": 0.636,
+      "vitality": 0.25,
+      "contextual_fit": 0.49206411353683155,
+      "differentiation": 0.35,
+      "accountability": 0.48000000000000004,
+      "reflexivity": 0.325
+    },
+    {
+      "continuity": 0.6375,
+      "vitality": 0.25,
+      "contextual_fit": 0.48368631911477833,
+      "differentiation": 0.35,
+      "accountability": 0.55,
+      "reflexivity": 0.325
+    },
+    {
+      "continuity": 0.639,
+      "vitality": 0.25,
+      "contextual_fit": 0.49952053599496626,
+      "differentiation": 0.35,
+      "accountability": 0.6200000000000001,
+      "reflexivity": 0.325
+    },
+    {
+      "continuity": 0.597,
+      "vitality": 0.25,
+      "contextual_fit": 0.5355859075261264,
+      "differentiation": 0.35,
+      "accountability": 0.6900000000000001,
+      "reflexivity": 0.325
+    },
+    {
+      "continuity": 0.5985,
+      "vitality": 0.25,
+      "contextual_fit": 0.6154102094181186,
+      "differentiation": 0.35,
+      "accountability": 0.76,
+      "reflexivity": 0.325
+    },
+    {
+      "continuity": 0.6,
+      "vitality": 0.25,
+      "contextual_fit": 0.4969917526586094,
+      "differentiation": 0.35,
+      "accountability": 0.8300000000000001,
+      "reflexivity": 0.325
+    },
+    {
+      "continuity": 0.6014999999999999,
+      "vitality": 0.25,
+      "contextual_fit": 0.5096060519231169,
+      "differentiation": 0.35,
+      "accountability": 0.9000000000000001,
+      "reflexivity": 0.325
+    },
+    {
+      "continuity": 0.603,
+      "vitality": 0.25,
+      "contextual_fit": 0.5458980987509984,
+      "differentiation": 0.35,
+      "accountability": 0.97,
+      "reflexivity": 0.325
+    },
+    {
+      "continuity": 0.6045,
+      "vitality": 0.25,
+      "contextual_fit": 0.548114156803093,
+      "differentiation": 0.35,
+      "accountability": 1.0,
+      "reflexivity": 0.325
+    },
+    {
+      "continuity": 0.606,
+      "vitality": 0.25,
+      "contextual_fit": 0.48246811402017487,
+      "differentiation": 0.35,
+      "accountability": 1.0,
+      "reflexivity": 0.325
+    },
+    {
+      "continuity": 0.6074999999999999,
+      "vitality": 0.25,
+      "contextual_fit": 0.532629206377325,
+      "differentiation": 0.35,
+      "accountability": 1.0,
+      "reflexivity": 0.325
+    },
+    {
+      "continuity": 0.609,
+      "vitality": 0.25,
+      "contextual_fit": 0.49803971686716664,
+      "differentiation": 0.35,
+      "accountability": 1.0,
+      "reflexivity": 0.325
+    },
+    {
+      "continuity": 0.6105,
+      "vitality": 0.25,
+      "contextual_fit": 0.4809303813080004,
+      "differentiation": 0.35,
+      "accountability": 1.0,
+      "reflexivity": 0.325
+    },
+    {
+      "continuity": 0.612,
+      "vitality": 0.25,
+      "contextual_fit": 0.6190500392046612,
+      "differentiation": 0.35,
+      "accountability": 1.0,
+      "reflexivity": 0.325
+    },
+    {
+      "continuity": 0.6134999999999999,
+      "vitality": 0.25,
+      "contextual_fit": 0.505294998174884,
+      "differentiation": 0.35,
+      "accountability": 1.0,
+      "reflexivity": 0.325
+    },
+    {
+      "continuity": 0.615,
+      "vitality": 0.25,
+      "contextual_fit": 0.5375448388963897,
+      "differentiation": 0.35,
+      "accountability": 1.0,
+      "reflexivity": 0.325
+    },
+    {
+      "continuity": 0.6165,
+      "vitality": 0.25,
+      "contextual_fit": 0.4916122827645607,
+      "differentiation": 0.35,
+      "accountability": 1.0,
+      "reflexivity": 0.325
+    },
+    {
+      "continuity": 0.5745,
+      "vitality": 0.25,
+      "contextual_fit": 0.47089604736924273,
+      "differentiation": 0.35,
+      "accountability": 1.0,
+      "reflexivity": 0.325
+    }
+  ],
+  "prior_coherence": 0.4950660078948738,
+  "metadata": {
+    "retained_entries": 22,
+    "source": "basic_consolidation_pipeline"
+  }
+}

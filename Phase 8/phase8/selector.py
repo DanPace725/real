@@ -131,6 +131,10 @@ class Phase8Selector:
         support = self.substrate.support(neighbor_id)
         support_velocity = self.substrate.velocity(neighbor_id)
         transform_name = _route_transform(action)
+        generic_action_support = self.substrate.base_action_support(
+            neighbor_id,
+            transform_name,
+        )
         action_support = self.substrate.action_support(
             neighbor_id,
             transform_name,
@@ -142,12 +146,49 @@ class Phase8Selector:
             context_bit if has_context >= 0.5 else None,
         )
         feedback_credit = observation.get(f"feedback_credit_{transform_name}", 0.0)
+        context_feedback_credit = observation.get(
+            f"context_feedback_credit_{transform_name}",
+            0.0,
+        )
         last_match_ratio = observation.get("last_match_ratio", 0.0)
         last_feedback_amount = observation.get("last_feedback_amount", 0.0)
         identity_penalty = 0.0
         task_transform_bonus = 0.0
+        context_support_bonus = 0.0
+        context_support_penalty = 0.0
+        history_alignment = 1.0
         if has_context >= 0.5:
-            if transform_name == "identity" and action_support < 0.35 and feedback_credit < 0.35:
+            context_action_support = self.substrate.contextual_action_support(
+                neighbor_id,
+                transform_name,
+                context_bit,
+            )
+            context_action_velocity = self.substrate.contextual_action_velocity(
+                neighbor_id,
+                transform_name,
+                context_bit,
+            )
+            context_support_bonus = max(
+                0.0,
+                context_action_support - generic_action_support,
+            ) * 0.18 + max(0.0, context_action_velocity) * 0.08
+            context_support_penalty = max(
+                0.0,
+                generic_action_support - context_action_support,
+            ) * 0.12
+            context_evidence = min(
+                1.0,
+                context_action_support
+                + context_feedback_credit
+                + 0.35 * max(0.0, last_match_ratio - 0.5),
+            )
+            history_alignment = 0.35 + 0.65 * context_evidence
+            if (
+                transform_name == "identity"
+                and action_support < 0.35
+                and feedback_credit < 0.35
+                and context_feedback_credit < 0.30
+            ):
                 identity_penalty = 0.14
             elif transform_name != "identity":
                 task_transform_bonus = 0.08
@@ -167,18 +208,20 @@ class Phase8Selector:
         maintenance = self.substrate.maintenance_metrics()
 
         score = (
-            0.32 * recent_delta
-            + 0.28 * context_delta
-            + 0.18 * recent_coherence
+            0.32 * recent_delta * history_alignment
+            + 0.28 * context_delta * history_alignment
+            + 0.18 * recent_coherence * (0.55 + 0.45 * history_alignment)
             + 0.30 * support
             + 0.22 * action_support
             + 0.24 * progress
             + 0.08 * support_velocity
             + 0.06 * action_velocity
-            + 0.30 * feedback_credit
+            + 0.18 * feedback_credit
+            + 0.34 * context_feedback_credit
             + 0.12 * last_match_ratio
             + 0.08 * last_feedback_amount
             + 0.06 * maintenance["action_maintenance_ratio"]
+            + context_support_bonus
             + task_transform_bonus
             + 0.20 * urgency
             + 0.10 * ingress_backlog
@@ -186,6 +229,7 @@ class Phase8Selector:
             - 0.18 * cost_ratio
             - 0.35 * inhibited
             - 0.12 * queue_pressure * congestion
+            - context_support_penalty
             - identity_penalty
             - stale_penalty
         )

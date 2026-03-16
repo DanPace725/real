@@ -8,6 +8,7 @@ from pathlib import Path
 from pprint import pprint
 
 from compare_cold_warm import SCENARIOS, aggregate, build_system, compare_for_seed, run_workload
+from compare_task_transfer import transfer_for_seed
 
 
 ROOT = Path(__file__).resolve().parent
@@ -182,14 +183,42 @@ def run_stress_demo() -> None:
         print("-" * 60)
 
 
+def run_transfer_demo(seed: int) -> None:
+    result = transfer_for_seed(seed)
+    print("Phase 8 Task Transfer Demo")
+    print(f"Seed: {seed}")
+    print(f"Train scenario: {result['train_scenario']}")
+    print(f"Transfer scenario: {result['transfer_scenario']}")
+    print()
+    print("Training Task A")
+    pprint(_compact(result["training_task_a"]["summary"]))
+    print("Training transfer metrics")
+    pprint(result["training_task_a"]["transfer_metrics"])
+    print()
+    print("Task B evaluation")
+    print("Cold Task B")
+    pprint(_compact(result["cold_task_b"]["summary"]))
+    pprint(result["cold_task_b"]["transfer_metrics"])
+    print("Warm full Task B")
+    pprint(_compact(result["warm_full_task_b"]["summary"]))
+    pprint(result["warm_full_task_b"]["transfer_metrics"])
+    print("Warm substrate-only Task B")
+    pprint(_compact(result["warm_substrate_task_b"]["summary"]))
+    pprint(result["warm_substrate_task_b"]["transfer_metrics"])
+    print()
+    print("Transfer deltas")
+    print(f"Full carryover Task B delta: {result['delta_full_task_b']}")
+    print(f"Substrate-only Task B delta: {result['delta_substrate_task_b']}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Phase 8 multi-agent substrate demo")
     parser.add_argument("--seed", type=int, default=51, help="Deterministic demo seed")
     parser.add_argument(
         "--mode",
-        choices=("comparison", "detailed", "stress"),
+        choices=("comparison", "detailed", "stress", "transfer"),
         default="stress",
-        help="Stress runs all comparison scenarios; comparison and detailed use a single scenario.",
+        help="Stress runs all comparison scenarios; comparison and detailed use a single scenario; transfer runs the first Task A -> Task B transfer check.",
     )
     parser.add_argument(
         "--scenario",
@@ -203,6 +232,8 @@ def main() -> None:
         run_comparison_demo(args.seed, args.scenario)
     elif args.mode == "detailed":
         run_detailed_trace(args.seed, args.scenario)
+    elif args.mode == "transfer":
+        run_transfer_demo(args.seed)
     else:
         run_stress_demo()
 

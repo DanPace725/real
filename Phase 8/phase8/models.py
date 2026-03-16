@@ -69,6 +69,7 @@ class FeedbackPulse:
     edge_path: List[str]
     amount: float
     transform_path: List[str] = field(default_factory=list)
+    context_bit: int | None = None
     bit_match_ratio: float = 0.0
     matched_target: bool = False
     cursor: int = 0
@@ -107,6 +108,7 @@ class NodeRuntimeState:
     last_feedback_amount: float = 0.0
     last_match_ratio: float = 0.0
     transform_credit: Dict[str, float] = field(default_factory=dict)
+    context_transform_credit: Dict[str, float] = field(default_factory=dict)
 
     @property
     def dormant(self) -> bool:

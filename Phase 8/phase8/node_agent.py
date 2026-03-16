@@ -95,6 +95,29 @@ class NodeAgent:
             self.engine._run_consolidation()
         return entry
 
+    def absorb_feedback(self, feedback_events: list[dict[str, object]]) -> None:
+        for event in feedback_events:
+            edge = str(event.get("edge", ""))
+            if "->" not in edge:
+                continue
+            source_id, neighbor_id = edge.split("->", 1)
+            if source_id != self.node_id:
+                continue
+            transform_name = str(event.get("transform", "identity"))
+            context_bit = event.get("context_bit")
+            if context_bit is not None:
+                context_bit = int(context_bit)
+            amount = float(event.get("amount", 0.0))
+            bit_match_ratio = float(event.get("bit_match_ratio", 0.0))
+            feedback_scale = amount / max(self.environment.feedback_amount, 1e-9)
+            self.substrate.record_context_feedback(
+                neighbor_id,
+                transform_name,
+                context_bit,
+                credit_signal=feedback_scale,
+                bit_match_ratio=bit_match_ratio,
+            )
+
     def save_carryover(self, path: str | Path) -> None:
         state_store = SessionStateStore(Path(path))
         state_store.save(self.engine.export_carryover())

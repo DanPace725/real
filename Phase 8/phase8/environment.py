@@ -11,6 +11,7 @@ from .admission import AdmissionSubstrate
 from .models import FeedbackPulse, NodeRuntimeState, SignalPacket, SignalSpec
 
 TRANSFORM_NAMES = ("identity", "rotate_left_1", "xor_mask_1010", "xor_mask_0101")
+TASK_CONTEXT_MATCH_FLOOR = 0.75
 
 
 def _edge_id(source_id: str, target_id: str) -> str:
@@ -19,6 +20,10 @@ def _edge_id(source_id: str, target_id: str) -> str:
 
 def _normalize_transform_name(transform_name: str | None) -> str:
     return str(transform_name or "identity")
+
+
+def _context_credit_key(transform_name: str, context_bit: int) -> str:
+    return f"{transform_name}:context_{int(context_bit)}"
 
 
 def _apply_transform(bits: Sequence[int], transform_name: str | None) -> List[int]:
@@ -63,6 +68,13 @@ def _bit_match_ratio(observed_bits: Sequence[int], target_bits: Sequence[int]) -
     for observed, target in zip(observed_bits, target_bits):
         matched += 1 if int(observed) == int(target) else 0
     return matched / max(len(target_bits), 1)
+
+
+def _quality_scaled_credit(bit_match_ratio: float, *, floor: float = TASK_CONTEXT_MATCH_FLOOR) -> float:
+    quality = max(0.0, min(1.0, bit_match_ratio))
+    if quality <= floor:
+        return 0.0
+    return min(1.0, (quality - floor) / max(1.0 - floor, 1e-9))
 
 
 @dataclass
@@ -265,6 +277,16 @@ class RoutingEnvironment:
                 1.0,
                 max(0.0, state.transform_credit.get(transform_name, 0.0)),
             )
+            context_credit = 0.0
+            if head_packet is not None and head_packet.context_bit is not None:
+                context_credit = state.context_transform_credit.get(
+                    _context_credit_key(transform_name, int(head_packet.context_bit)),
+                    0.0,
+                )
+            local[f"context_feedback_credit_{transform_name}"] = min(
+                1.0,
+                max(0.0, context_credit),
+            )
         sink_position = self.positions[self.sink_id]
         span = max(abs(sink_position - self.positions[self.source_id]), 1)
 
@@ -365,6 +387,7 @@ class RoutingEnvironment:
                         edge_path=list(packet.edge_path),
                         amount=feedback_award,
                         transform_path=list(packet.transform_trace),
+                        context_bit=packet.context_bit,
                         bit_match_ratio=float(packet.bit_match_ratio or 0.0),
                         matched_target=bool(packet.matched_target),
                     )
@@ -415,12 +438,50 @@ class RoutingEnvironment:
             state.last_feedback_amount = pulse.amount
             state.last_match_ratio = pulse.bit_match_ratio
             transform_name = pulse.next_transform() or "identity"
-            prior_credit = state.transform_credit.get(transform_name, 0.0)
             credit_signal = min(1.0, pulse.amount / max(self.feedback_amount, 1e-9))
-            state.transform_credit[transform_name] = min(
-                1.0,
-                0.55 * prior_credit + 0.45 * credit_signal,
-            )
+            prior_credit = state.transform_credit.get(transform_name, 0.0)
+            if pulse.context_bit is None:
+                state.transform_credit[transform_name] = min(
+                    1.0,
+                    0.55 * prior_credit + 0.45 * credit_signal,
+                )
+            else:
+                context_key = _context_credit_key(transform_name, int(pulse.context_bit))
+                prior_context_credit = state.context_transform_credit.get(context_key, 0.0)
+                match_ratio = max(0.0, min(1.0, pulse.bit_match_ratio))
+                if match_ratio < TASK_CONTEXT_MATCH_FLOOR:
+                    contradiction = (
+                        TASK_CONTEXT_MATCH_FLOOR - match_ratio
+                    ) / max(TASK_CONTEXT_MATCH_FLOOR, 1e-9)
+                    residual_generic = 0.10 * credit_signal
+                    residual_context = 0.05 * credit_signal
+                    state.transform_credit[transform_name] = min(
+                        1.0,
+                        max(
+                            residual_generic,
+                            prior_credit * max(0.15, 0.58 - 0.24 * contradiction),
+                        ),
+                    )
+                    state.context_transform_credit[context_key] = min(
+                        1.0,
+                        max(
+                            residual_context,
+                            prior_context_credit * max(0.05, 0.32 - 0.18 * contradiction),
+                        ),
+                    )
+                else:
+                    quality_credit = _quality_scaled_credit(match_ratio)
+                    generic_mix = 0.18 + 0.12 * quality_credit
+                    context_mix = 0.42 + 0.23 * quality_credit
+                    effective_credit = 0.55 * credit_signal + 0.45 * quality_credit
+                    state.transform_credit[transform_name] = min(
+                        1.0,
+                        (1.0 - generic_mix) * prior_credit + generic_mix * effective_credit,
+                    )
+                    state.context_transform_credit[context_key] = min(
+                        1.0,
+                        (1.0 - context_mix) * prior_context_credit + context_mix * effective_credit,
+                    )
             delivered.append(
                 {
                     "packet_id": pulse.packet_id,
@@ -428,6 +489,7 @@ class RoutingEnvironment:
                     "node_id": source_id,
                     "amount": pulse.amount,
                     "transform": transform_name,
+                    "context_bit": pulse.context_bit,
                     "bit_match_ratio": pulse.bit_match_ratio,
                 }
             )
@@ -449,6 +511,10 @@ class RoutingEnvironment:
                 state.transform_credit[transform_name] *= 0.92
                 if state.transform_credit[transform_name] < 1e-4:
                     del state.transform_credit[transform_name]
+            for key in list(state.context_transform_credit.keys()):
+                state.context_transform_credit[key] *= 0.94
+                if state.context_transform_credit[key] < 1e-4:
+                    del state.context_transform_credit[key]
         self._update_admission_substrate()
         self._expire_stale_packets()
         self._admit_source_packets()
@@ -785,6 +851,12 @@ class NativeSubstrateSystem:
             if packet.delivered_cycle is None:
                 packet.delivered_cycle = self.global_cycle
         feedback = self.environment.advance_feedback()
+        for node_id, agent in self.agents.items():
+            local_feedback = [
+                event for event in feedback if event.get("node_id") == node_id
+            ]
+            if local_feedback:
+                agent.absorb_feedback(local_feedback)
         self.environment.tick(self.global_cycle)
         return {
             "cycle": self.global_cycle,

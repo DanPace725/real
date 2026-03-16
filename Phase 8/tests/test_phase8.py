@@ -22,6 +22,7 @@ from phase8 import (
     SignalSpec,
     phase8_scenarios,
 )
+from compare_task_transfer import transfer_metrics
 from real_core.types import CycleEntry, GCOStatus
 
 
@@ -75,6 +76,53 @@ class TestConnectionSubstrate(unittest.TestCase):
         self.assertGreater(result["spent"], 0.0)
         self.assertIn("n1:rotate_left_1:context_0", result["maintained_actions"])
         self.assertEqual(substrate.action_support_age("n1", "rotate_left_1", 0), 0)
+
+    def test_repeated_context_feedback_promotes_context_action_support(self) -> None:
+        substrate = ConnectionSubstrate(("n1",))
+
+        promoted = False
+        for _ in range(4):
+            promoted = substrate.record_context_feedback(
+                "n1",
+                "rotate_left_1",
+                0,
+                credit_signal=1.0,
+                bit_match_ratio=1.0,
+            ) or promoted
+
+        self.assertTrue(promoted)
+        self.assertGreaterEqual(
+            substrate.contextual_action_support("n1", "rotate_left_1", 0),
+            0.24,
+        )
+        self.assertEqual(
+            substrate.contextual_action_support("n1", "rotate_left_1", 1),
+            0.0,
+        )
+
+    def test_low_match_context_feedback_demotes_context_action_support(self) -> None:
+        substrate = ConnectionSubstrate(("n1",))
+        substrate.seed_action_support(
+            "n1",
+            "rotate_left_1",
+            value=0.6,
+            context_bit=1,
+        )
+
+        before = substrate.contextual_action_support("n1", "rotate_left_1", 1)
+        promoted = substrate.record_context_feedback(
+            "n1",
+            "rotate_left_1",
+            1,
+            credit_signal=0.5,
+            bit_match_ratio=0.5,
+        )
+
+        self.assertFalse(promoted)
+        self.assertLess(
+            substrate.contextual_action_support("n1", "rotate_left_1", 1),
+            before,
+        )
 
 
 class TestRoutingEnvironment(unittest.TestCase):
@@ -468,6 +516,36 @@ class TestRoutingEnvironment(unittest.TestCase):
         self.assertEqual(packet.feedback_award, 0.0)
         self.assertEqual(env.pending_feedback, [])
 
+    def test_sink_scores_task_b_exact_match(self) -> None:
+        env = RoutingEnvironment(
+            adjacency={
+                "n0": ("sink",),
+            },
+            positions={"n0": 0, "sink": 1},
+            source_id="n0",
+            sink_id="sink",
+            max_atp=1.0,
+        )
+        env.inject_signal(
+            count=1,
+            cycle=0,
+            packet_payloads=[[1, 0, 1, 1]],
+            context_bits=[1],
+            task_id="task_b",
+        )
+
+        result = env.route_signal(
+            "n0",
+            "sink",
+            cost=0.05,
+            transform_name="xor_mask_0101",
+        )
+
+        packet = env.delivered_packets[0]
+        self.assertTrue(packet.matched_target)
+        self.assertEqual(packet.target_bits, [1, 1, 1, 0])
+        self.assertAlmostEqual(result["feedback_award"], env.feedback_amount, places=6)
+
     def test_feedback_pulse_updates_transform_credit_on_returning_node(self) -> None:
         env = RoutingEnvironment(
             adjacency={
@@ -499,6 +577,86 @@ class TestRoutingEnvironment(unittest.TestCase):
         self.assertGreater(observation["feedback_credit_rotate_left_1"], 0.0)
         self.assertGreater(observation["last_match_ratio"], 0.0)
         self.assertGreater(observation["last_feedback_amount"], 0.0)
+
+    def test_feedback_credit_is_bound_to_matching_context(self) -> None:
+        env = RoutingEnvironment(
+            adjacency={
+                "n0": ("sink",),
+            },
+            positions={"n0": 0, "sink": 1},
+            source_id="n0",
+            sink_id="sink",
+            max_atp=1.0,
+        )
+        env.inject_signal(
+            count=1,
+            cycle=0,
+            packet_payloads=[[1, 0, 1, 1]],
+            context_bits=[0],
+            task_id="task_a",
+        )
+        env.route_signal(
+            "n0",
+            "sink",
+            cost=0.05,
+            transform_name="rotate_left_1",
+        )
+        env.advance_feedback()
+
+        env.inject_signal(
+            count=1,
+            cycle=1,
+            packet_payloads=[[1, 0, 1, 1]],
+            context_bits=[0],
+            task_id="task_a",
+        )
+        observation_context0 = env.observe_local("n0")
+        self.assertGreater(observation_context0["context_feedback_credit_rotate_left_1"], 0.0)
+
+        env.inboxes["n0"].clear()
+        env.inject_signal(
+            count=1,
+            cycle=2,
+            packet_payloads=[[1, 0, 1, 1]],
+            context_bits=[1],
+            task_id="task_a",
+        )
+        observation_context1 = env.observe_local("n0")
+        self.assertEqual(observation_context1["context_feedback_credit_rotate_left_1"], 0.0)
+        self.assertGreater(observation_context1["feedback_credit_rotate_left_1"], 0.0)
+
+    def test_low_match_feedback_relaxes_stale_context_credit(self) -> None:
+        env = RoutingEnvironment(
+            adjacency={
+                "n0": ("sink",),
+            },
+            positions={"n0": 0, "sink": 1},
+            source_id="n0",
+            sink_id="sink",
+            max_atp=1.0,
+        )
+        state = env.state_for("n0")
+        state.transform_credit["identity"] = 0.9
+        state.context_transform_credit["identity:context_0"] = 0.8
+        env.inject_signal(
+            count=1,
+            cycle=0,
+            packet_payloads=[[1, 0, 1, 1]],
+            context_bits=[0],
+            task_id="task_a",
+        )
+
+        env.route_signal(
+            "n0",
+            "sink",
+            cost=0.05,
+            transform_name="identity",
+        )
+        env.advance_feedback()
+
+        self.assertLess(state.transform_credit["identity"], 0.9)
+        self.assertLess(state.context_transform_credit["identity:context_0"], 0.8)
+        self.assertLess(state.context_transform_credit["identity:context_0"], 0.3)
 
 
 class TestNativeSubstrateSystem(unittest.TestCase):
@@ -898,6 +1056,64 @@ class TestNativeSubstrateSystem(unittest.TestCase):
         finally:
             shutil.rmtree(temp_dir, ignore_errors=True)
 
+    def test_substrate_only_carryover_restores_promoted_context_action_support(self) -> None:
+        system = NativeSubstrateSystem(
+            adjacency={
+                "n0": ("n1",),
+                "n1": ("sink",),
+            },
+            positions={"n0": 0, "n1": 1, "sink": 2},
+            source_id="n0",
+            sink_id="sink",
+            selector_seed=43,
+        )
+        agent = system.agents["n0"]
+        for _ in range(4):
+            agent.substrate.record_context_feedback(
+                "n1",
+                "rotate_left_1",
+                0,
+                credit_signal=1.0,
+                bit_match_ratio=1.0,
+            )
+
+        temp_dir = ROOT / "tests_tmp" / f"context_substrate_{uuid.uuid4().hex}"
+        temp_dir.mkdir(parents=True, exist_ok=True)
+
+        try:
+            system.save_substrate_carryover(temp_dir)
+            restored = NativeSubstrateSystem(
+                adjacency={
+                    "n0": ("n1",),
+                    "n1": ("sink",),
+                },
+                positions={"n0": 0, "n1": 1, "sink": 2},
+                source_id="n0",
+                sink_id="sink",
+                selector_seed=43,
+            )
+            loaded = restored.load_substrate_carryover(temp_dir)
+
+            self.assertTrue(loaded)
+            self.assertGreaterEqual(
+                restored.agents["n0"].substrate.contextual_action_support(
+                    "n1",
+                    "rotate_left_1",
+                    0,
+                ),
+                0.24,
+            )
+            self.assertEqual(
+                restored.agents["n0"].substrate.contextual_action_support(
+                    "n1",
+                    "rotate_left_1",
+                    1,
+                ),
+                0.0,
+            )
+        finally:
+            shutil.rmtree(temp_dir, ignore_errors=True)
+
     def test_summary_reports_packet_drops_under_strict_ttl(self) -> None:
         system = NativeSubstrateSystem(
             adjacency={
@@ -1009,6 +1225,50 @@ class TestScenarioCatalog(unittest.TestCase):
         first_signal = scenario.initial_signal_specs[0]
         self.assertEqual(first_signal.task_id, "task_a")
         self.assertIsNotNone(first_signal.context_bit)
+
+    def test_cvt1_task_b_stage1_scenario_is_available(self) -> None:
+        scenarios = phase8_scenarios()
+        scenario = scenarios["cvt1_task_b_stage1"]
+
+        self.assertGreater(len(scenario.initial_signal_specs), 0)
+        self.assertGreater(len(scenario.signal_schedule_specs or {}), 0)
+        first_signal = scenario.initial_signal_specs[0]
+        self.assertEqual(first_signal.task_id, "task_b")
+        self.assertIsNotNone(first_signal.context_bit)
+
+
+class TestTransferHarness(unittest.TestCase):
+    def test_transfer_metrics_report_best_rolling_scores(self) -> None:
+        system = NativeSubstrateSystem(
+            adjacency={
+                "n0": ("sink",),
+            },
+            positions={"n0": 0, "sink": 1},
+            source_id="n0",
+            sink_id="sink",
+            selector_seed=47,
+        )
+        for cycle in range(8):
+            system.environment.inject_signal(
+                count=1,
+                cycle=cycle,
+                packet_payloads=[[1, 0, 1, 1]],
+                context_bits=[0],
+                task_id="task_a",
+            )
+            system.environment.route_signal(
+                "n0",
+                "sink",
+                cost=0.05,
+                transform_name="rotate_left_1",
+            )
+            system.global_cycle = cycle + 1
+
+        metrics = transfer_metrics(system)
+
+        self.assertTrue(metrics["criterion_reached"])
+        self.assertEqual(metrics["examples_to_criterion"], 8)
+        self.assertGreaterEqual(metrics["best_rolling_exact_rate"], 1.0)
 
 
 if __name__ == "__main__":

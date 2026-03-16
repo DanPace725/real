@@ -324,6 +324,7 @@ class LocalNodeMemoryBinding:
             maintenance = self.substrate.maintain_supports(
                 state.atp,
                 transform_credit=dict(state.transform_credit),
+                context_transform_credit=dict(state.context_transform_credit),
                 context_bit=context_bit,
             )
             spent = float(maintenance["spent"])

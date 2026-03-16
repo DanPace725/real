@@ -36,6 +36,12 @@ class ConnectionSubstrateConfig:
     neighbor_discount: float = 0.08
     accelerated_decay_factor: float = 2.5
     velocity_alpha: float = 0.30
+    context_credit_decay: float = 0.92
+    context_credit_promotion_threshold: float = 0.95
+    context_credit_gain_scale: float = 0.65
+    context_credit_edge_seed: float = 0.32
+    context_credit_match_floor: float = 0.75
+    context_support_demote_scale: float = 0.22
 
 
 class ConnectionSubstrate:
@@ -48,6 +54,7 @@ class ConnectionSubstrate:
     ) -> None:
         self.neighbor_ids = tuple(neighbor_ids)
         self.config = config or ConnectionSubstrateConfig()
+        self._context_credit_accumulator: Dict[str, float] = {}
         self._edge_keys = {
             neighbor_id: self._edge_key(neighbor_id)
             for neighbor_id in self.neighbor_ids
@@ -98,6 +105,14 @@ class ConnectionSubstrate:
     ) -> str:
         return f"context_action:{neighbor_id}:{transform_name}:{context_bit}"
 
+    @staticmethod
+    def _credit_key(
+        neighbor_id: str,
+        transform_name: str,
+        context_bit: int,
+    ) -> str:
+        return f"{neighbor_id}:{transform_name}:context_{context_bit}"
+
     def support(self, neighbor_id: str) -> float:
         return self._inner.slow.get(self._edge_keys[neighbor_id], 0.0)
 
@@ -120,6 +135,20 @@ class ConnectionSubstrate:
             support = max(support, self._inner.slow.get(context_key, 0.0))
         return support
 
+    def base_action_support(self, neighbor_id: str, transform_name: str) -> float:
+        return self._inner.slow.get(self._action_keys[(neighbor_id, transform_name)], 0.0)
+
+    def contextual_action_support(
+        self,
+        neighbor_id: str,
+        transform_name: str,
+        context_bit: int,
+    ) -> float:
+        return self._inner.slow.get(
+            self._context_action_keys[(neighbor_id, transform_name, context_bit)],
+            0.0,
+        )
+
     def action_velocity(
         self,
         neighbor_id: str,
@@ -132,6 +161,17 @@ class ConnectionSubstrate:
             context_key = self._context_action_keys[(neighbor_id, transform_name, context_bit)]
             velocity = max(velocity, self._inner.slow_velocity.get(context_key, 0.0))
         return velocity
+
+    def contextual_action_velocity(
+        self,
+        neighbor_id: str,
+        transform_name: str,
+        context_bit: int,
+    ) -> float:
+        return self._inner.slow_velocity.get(
+            self._context_action_keys[(neighbor_id, transform_name, context_bit)],
+            0.0,
+        )
 
     def action_support_age(
         self,
@@ -255,12 +295,14 @@ class ConnectionSubstrate:
         atp_budget: float,
         *,
         transform_credit: Dict[str, float] | None = None,
+        context_transform_credit: Dict[str, float] | None = None,
         context_bit: int | None = None,
     ) -> dict[str, object]:
         total = 0.0
         maintained_edges: List[str] = []
         maintained_actions: List[str] = []
         credit = transform_credit or {}
+        context_credit = context_transform_credit or {}
         candidates: List[tuple[float, str, str, str, str | None, int | None]] = []
 
         for neighbor_id in self.active_neighbors():
@@ -289,6 +331,10 @@ class ConnectionSubstrate:
                 and action_context == context_bit
             ):
                 priority += 0.15
+                priority += 0.75 * max(
+                    0.0,
+                    context_credit.get(f"{transform_name}:context_{action_context}", 0.0),
+                )
             candidates.append(
                 (priority, key, "action", neighbor_id, transform_name, action_context)
             )
@@ -386,7 +432,7 @@ class ConnectionSubstrate:
         value: float = 0.25,
         context_bit: int | None = None,
     ) -> None:
-        keys = []
+        keys: List[str] = []
         if context_bit in SUPPORTED_CONTEXTS:
             context_key = self._context_action_keys.get((neighbor_id, transform_name, context_bit))
             if context_key is not None:
@@ -395,20 +441,81 @@ class ConnectionSubstrate:
             key = self._action_keys.get((neighbor_id, transform_name))
             if key is not None:
                 keys.append(key)
-        if keys:
-            self._inner.seed_support(keys, value=value)
+        for key in keys:
+            current = self._inner.slow.get(key, 0.0)
+            self._inner.seed_support((key,), value=max(current, value))
+
+    def record_context_feedback(
+        self,
+        neighbor_id: str,
+        transform_name: str,
+        context_bit: int | None,
+        *,
+        credit_signal: float,
+        bit_match_ratio: float,
+    ) -> bool:
+        if context_bit not in SUPPORTED_CONTEXTS:
+            return False
+        if neighbor_id not in self.neighbor_ids:
+            return False
+        key = self._credit_key(neighbor_id, transform_name, context_bit)
+        if bit_match_ratio < self.config.context_credit_match_floor:
+            mismatch = self.config.context_credit_match_floor - max(0.0, bit_match_ratio)
+            mismatch_ratio = mismatch / max(self.config.context_credit_match_floor, 1e-9)
+            demotion = min(
+                0.85,
+                self.config.context_support_demote_scale + 0.45 * mismatch_ratio,
+            )
+            context_support_key = self._context_action_keys[(neighbor_id, transform_name, context_bit)]
+            current_support = self._inner.slow.get(context_support_key, 0.0)
+            reduced = max(0.0, current_support * (1.0 - demotion))
+            self._inner.slow[context_support_key] = reduced
+            self._context_credit_accumulator[key] = self._context_credit_accumulator.get(key, 0.0) * 0.2
+            if reduced <= 1e-4:
+                self._inner.slow_age[context_support_key] = max(
+                    self._inner.slow_age.get(context_support_key, 0),
+                    1,
+                )
+            return False
+        prior = self._context_credit_accumulator.get(key, 0.0)
+        gain = self.config.context_credit_gain_scale * max(0.0, credit_signal) * max(0.0, bit_match_ratio)
+        updated = min(2.0, prior * 0.75 + gain)
+        self._context_credit_accumulator[key] = updated
+        if updated < self.config.context_credit_promotion_threshold:
+            return False
+
+        if self.support(neighbor_id) < self.config.context_credit_edge_seed:
+            self.seed_support((neighbor_id,), value=self.config.context_credit_edge_seed)
+        existing = self.contextual_action_support(neighbor_id, transform_name, context_bit)
+        promoted_value = min(1.0, max(existing, 0.24 + 0.18 * min(updated, 1.5)))
+        self.seed_action_support(
+            neighbor_id,
+            transform_name,
+            value=promoted_value,
+            context_bit=context_bit,
+        )
+        self._context_credit_accumulator[key] = max(
+            0.0,
+            updated - self.config.context_credit_promotion_threshold * 0.6,
+        )
+        return True
 
     def add_pattern(self, pattern: ConstraintPattern) -> None:
         self._inner.constraint_patterns.append(pattern)
 
     def tick(self) -> None:
         self._inner.tick()
+        for key in list(self._context_credit_accumulator.keys()):
+            self._context_credit_accumulator[key] *= self.config.context_credit_decay
+            if self._context_credit_accumulator[key] < 1e-4:
+                del self._context_credit_accumulator[key]
 
     def snapshot(self) -> SubstrateSnapshot:
         snapshot = self._inner.snapshot()
         snapshot.metadata["neighbor_ids"] = list(self.neighbor_ids)
         snapshot.metadata["active_neighbors"] = self.active_neighbors()
         snapshot.metadata["maintenance_metrics"] = self.maintenance_metrics()
+        snapshot.metadata["context_credit_accumulator"] = dict(self._context_credit_accumulator)
         return snapshot
 
     def save_state(self) -> SubstrateSnapshot:
@@ -416,10 +523,15 @@ class ConnectionSubstrate:
         snapshot.metadata["neighbor_ids"] = list(self.neighbor_ids)
         snapshot.metadata["active_neighbors"] = self.active_neighbors()
         snapshot.metadata["maintenance_metrics"] = self.maintenance_metrics()
+        snapshot.metadata["context_credit_accumulator"] = dict(self._context_credit_accumulator)
         return snapshot
 
     def load_state(self, snapshot: SubstrateSnapshot) -> None:
         self._inner.load_state(snapshot)
+        self._context_credit_accumulator = {
+            str(key): float(value)
+            for key, value in snapshot.metadata.get("context_credit_accumulator", {}).items()
+        }
 
     def _maintain_key(self, key: str, atp_budget: float) -> float | None:
         if self._inner.slow.get(key, 0.0) <= 0.0:
