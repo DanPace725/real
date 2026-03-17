@@ -16,7 +16,11 @@ ROOT = Path(__file__).resolve().parent
 SCENARIOS = phase8_scenarios()
 
 
-def build_system(seed: int, scenario_name: str = "branch_pressure") -> NativeSubstrateSystem:
+def build_system(
+    seed: int,
+    scenario_name: str = "branch_pressure",
+    **system_kwargs,
+) -> NativeSubstrateSystem:
     scenario = SCENARIOS[scenario_name]
     return NativeSubstrateSystem(
         adjacency=scenario.adjacency,
@@ -29,6 +33,7 @@ def build_system(seed: int, scenario_name: str = "branch_pressure") -> NativeSub
         source_admission_rate=scenario.source_admission_rate,
         source_admission_min_rate=scenario.source_admission_min_rate,
         source_admission_max_rate=scenario.source_admission_max_rate,
+        **system_kwargs,
     )
 
 

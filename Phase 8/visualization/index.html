@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phase 8: REAL Substrate Vision</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
+
+        :root {
+            --bg: #0b0c10;
+            --surface: rgba(30, 32, 40, 0.7);
+            --border: rgba(255, 255, 255, 0.1);
+            --text-main: #e2e8f0;
+            --text-muted: #94a3b8;
+            --accent: #38bdf8;
+            --accent-glow: rgba(56, 189, 248, 0.4);
+            --node-atp: #22c55e;
+            --node-depleted: #ef4444;
+            --packet: #fbbf24;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: radial-gradient(circle at 50% 50%, #171923 0%, var(--bg) 100%);
+        }
+
+        header {
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            z-index: 10;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.2rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            color: #fff;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .btn {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+            font-family: inherit;
+        }
+
+        .btn:hover {
+            border-color: var(--accent);
+            box-shadow: 0 0 10px var(--accent-glow);
+        }
+
+        #main-view {
+            flex: 1;
+            position: relative;
+            display: flex;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .overlay {
+            position: absolute;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--surface);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            min-width: 400px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            pointer-events: auto;
+            z-index: 10;
+        }
+
+        .playback-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .scrubber-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+
+        .metric {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            background: var(--surface);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            min-width: 200px;
+            font-size: 0.9rem;
+            z-index: 10;
+        }
+
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+        
+        .metric-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .metric-label {
+            color: var(--text-muted);
+        }
+
+        .metric-value {
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .empty-state {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: var(--text-muted);
+            pointer-events: none;
+            z-index: 5;
+        }
+        
+        .empty-state.hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>REAL Phase 8 Substrate</h1>
+        <div class="controls">
+            <label for="trace-upload" class="btn">Load Trace</label>
+            <input type="file" id="trace-upload" accept=".json">
+        </div>
+    </header>
+
+    <div id="main-view">
+        <div class="empty-state" id="empty-state">
+            <h2>Ecology of Agents</h2>
+            <p>Select a Phase 8 trace.json to visualize</p>
+        </div>
+
+        <canvas id="substrate-canvas"></canvas>
+        
+        <div class="metric hidden" id="metrics-panel">
+            <div class="metric-row">
+                <span class="metric-label">Cycle</span>
+                <span class="metric-value" id="val-cycle">0</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">In-Flight Packets</span>
+                <span class="metric-value" id="val-packets">0</span>
+            </div>
+        </div>
+
+        <div class="overlay hidden" id="playback-panel">
+            <div class="playback-controls">
+                <button class="btn" id="btn-prev">◀</button>
+                <button class="btn" id="btn-play">Pause</button>
+                <button class="btn" id="btn-next">▶</button>
+            </div>
+            <div class="scrubber-container">
+                <span id="label-start">1</span>
+                <input type="range" id="cycle-scrubber" min="1" max="1" value="1">
+                <span id="label-end">1</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('substrate-canvas');
+        const ctx = canvas.getContext('2d', { alpha: false });
+        
+        // UI Elements
+        const upload = document.getElementById('trace-upload');
+        const emptyState = document.getElementById('empty-state');
+        const playbackPanel = document.getElementById('playback-panel');
+        const metricsPanel = document.getElementById('metrics-panel');
+        const btnPlay = document.getElementById('btn-play');
+        const btnPrev = document.getElementById('btn-prev');
+        const btnNext = document.getElementById('btn-next');
+        const scrubber = document.getElementById('cycle-scrubber');
+        
+        // Metrics
+        const elCycle = document.getElementById('val-cycle');
+        const elPackets = document.getElementById('val-packets');
+
+        let data = null;
+        let layout = null;
+        let isPlaying = true;
+        let currentCycle = 1;
+        let animationFrame = null;
+        
+        // Interpolation
+        let visualTime = 1.0; 
+        
+        function resize() {
+            canvas.width = canvas.clientWidth * window.devicePixelRatio;
+            canvas.height = canvas.clientHeight * window.devicePixelRatio;
+            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+            if(data) computeLayout();
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        upload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                try {
+                    data = JSON.parse(ev.target.result);
+                    initTrace();
+                } catch(err) {
+                    alert('Invalid JSON file');
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        function computeLayout() {
+            if(!data) return;
+            const w = canvas.clientWidth;
+            const h = canvas.clientHeight;
+            
+            const positions = data.topology.positions;
+            let minX = Infinity, maxX = -Infinity;
+            const nodesByDepth = {};
+            
+            for(let id in positions) {
+                let p = positions[id];
+                minX = Math.min(minX, p);
+                maxX = Math.max(maxX, p);
+                if(!nodesByDepth[p]) nodesByDepth[p] = [];
+                nodesByDepth[p].push(id);
+            }
+            
+            const paddingX = 100;
+            const paddingY = 100;
+            const availableW = w - (paddingX * 2);
+            const availableH = h - (paddingY * 2);
+            
+            layout = {};
+            
+            const depthCount = (maxX - minX) + 1;
+            const stepX = depthCount > 1 ? availableW / (depthCount - 1) : 0;
+            
+            for(let depth in nodesByDepth) {
+                let nodes = nodesByDepth[depth];
+                nodes.sort();
+                let stepY = availableH / (nodes.length + 1);
+                
+                let cx = paddingX + ( (parseInt(depth) - minX) * stepX );
+                
+                nodes.forEach((id, idx) => {
+                    let cy = paddingY + (stepY * (idx + 1));
+                    layout[id] = { x: cx, y: cy };
+                });
+            }
+        }
+
+        function initTrace() {
+            emptyState.classList.add('hidden');
+            playbackPanel.classList.remove('hidden');
+            metricsPanel.classList.remove('hidden');
+            
+            scrubber.min = 1;
+            scrubber.max = data.cycles;
+            scrubber.value = 1;
+            document.getElementById('label-end').textContent = data.cycles;
+            
+            computeLayout();
+            
+            currentCycle = 1;
+            visualTime = 1.0;
+            isPlaying = true;
+            btnPlay.textContent = 'Pause';
+            
+            if(animationFrame) cancelAnimationFrame(animationFrame);
+            lastTime = performance.now();
+            loop(lastTime);
+        }
+
+        btnPlay.addEventListener('click', () => {
+            isPlaying = !isPlaying;
+            btnPlay.textContent = isPlaying ? 'Pause' : 'Play';
+        });
+        
+        btnPrev.addEventListener('click', () => {
+            currentCycle = Math.max(1, currentCycle - 1);
+            visualTime = currentCycle;
+            scrubber.value = currentCycle;
+        });
+        
+        btnNext.addEventListener('click', () => {
+            currentCycle = Math.min(data.cycles, currentCycle + 1);
+            visualTime = currentCycle;
+            scrubber.value = currentCycle;
+        });
+
+        scrubber.addEventListener('input', (e) => {
+            currentCycle = parseInt(e.target.value);
+            visualTime = currentCycle;
+            isPlaying = false;
+            btnPlay.textContent = 'Play';
+        });
+
+        let lastTime = 0;
+        function loop(time) {
+            animationFrame = requestAnimationFrame(loop);
+            const dt = (time - lastTime) / 1000;
+            lastTime = time;
+            
+            if(isPlaying) {
+                // 1 unit of visualTime = 1 real cycle
+                visualTime += dt * 1.5; // playback speed
+                
+                if(visualTime > data.cycles) {
+                    visualTime = data.cycles;
+                    isPlaying = false;
+                    btnPlay.textContent = 'Play';
+                }
+                
+                currentCycle = Math.floor(visualTime);
+                scrubber.value = currentCycle;
+            }
+            
+            render(visualTime);
+        }
+
+        function getFrameData(vTime) {
+            let baseFrame = Math.floor(vTime);
+            let nextFrame = Math.min(data.cycles, baseFrame + 1);
+            let t = vTime - baseFrame;
+            return {
+                base: data.frames[baseFrame - 1],
+                next: data.frames[nextFrame - 1],
+                t: t
+            };
+        }
+
+        function render(vTime) {
+            const w = canvas.clientWidth;
+            const h = canvas.clientHeight;
+            
+            // Draw background
+            ctx.fillStyle = '#0b0c10';
+            ctx.fillRect(0, 0, w, h);
+            
+            if(!data || !layout) return;
+            
+            const f = getFrameData(vTime);
+            if(!f.base) return;
+            
+            // Update Metrics
+            elCycle.textContent = f.base.cycle;
+            elPackets.textContent = f.base.packets.filter(p => p.location !== "delivered").length;
+
+            ctx.lineJoin = 'round';
+            ctx.lineCap = 'round';
+            
+            // Draw edges
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+            for(let u in f.base.adjacency) {
+                let neighbors = f.base.adjacency[u];
+                if(layout[u]) {
+                    neighbors.forEach(v => {
+                        if(layout[v]) {
+                            ctx.beginPath();
+                            ctx.moveTo(layout[u].x, layout[u].y);
+                            ctx.lineTo(layout[v].x, layout[v].y);
+                            ctx.stroke();
+                            
+                            // Draw directional arrow
+                            let dx = layout[v].x - layout[u].x;
+                            let dy = layout[v].y - layout[u].y;
+                            let angle = Math.atan2(dy, dx);
+                            let midX = layout[u].x + dx * 0.6;
+                            let midY = layout[u].y + dy * 0.6;
+                            
+                            ctx.beginPath();
+                            ctx.moveTo(midX, midY);
+                            ctx.lineTo(midX - 10 * Math.cos(angle - Math.PI/6), midY - 10 * Math.sin(angle - Math.PI/6));
+                            ctx.lineTo(midX - 10 * Math.cos(angle + Math.PI/6), midY - 10 * Math.sin(angle + Math.PI/6));
+                            ctx.closePath();
+                            ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+                            ctx.fill();
+                        }
+                    });
+                }
+            }
+
+            // Draw Feedback Pulses
+            f.base.feedback.forEach(fb => {
+                ctx.strokeStyle = 'rgba(56, 189, 248, 0.6)';
+                ctx.lineWidth = 4 + (fb.amount * 10); // scale thickness
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = '#38bdf8';
+                
+                if (fb.edge) {
+                    let parts = fb.edge.split("->");
+                    if(parts.length === 2) {
+                        let u = parts[0];
+                        let v = parts[1];
+                        if(layout[u] && layout[v]) {
+                            ctx.beginPath();
+                            // Feedback flows backwards, but we draw the path
+                            ctx.moveTo(layout[u].x, layout[u].y);
+                            ctx.lineTo(layout[v].x, layout[v].y);
+                            ctx.stroke();
+                        }
+                    }
+                }
+                ctx.shadowBlur = 0;
+            });
+            
+            // Draw Nodes
+            const nodeRadius = 24;
+            for(let node_id in layout) {
+                let pos = layout[node_id];
+                let nodeState = f.base.nodes[node_id];
+                
+                let atp = nodeState ? nodeState.atp : 0;
+                let maxAtp = nodeState ? nodeState.maxAtp || 1.0 : 1.0;
+                let ratio = Math.max(0, Math.min(1, atp / maxAtp));
+                
+                // Color interpolation based on ATP
+                let color = ratio > 0 ? `rgba(34, 197, 94, ${0.2 + ratio*0.8})` : '#ef4444';
+                
+                ctx.beginPath();
+                ctx.arc(pos.x, pos.y, nodeRadius, 0, Math.PI * 2);
+                ctx.fillStyle = '#1e2028';
+                ctx.fill();
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = color;
+                if(ratio > 0.8) {
+                    ctx.shadowBlur = 15;
+                    ctx.shadowColor = '#22c55e';
+                }
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+                
+                // ATP Meter Arc
+                ctx.beginPath();
+                ctx.arc(pos.x, pos.y, nodeRadius - 6, -Math.PI/2, -Math.PI/2 + (ratio * Math.PI*2));
+                ctx.lineWidth = 4;
+                ctx.strokeStyle = color;
+                ctx.stroke();
+
+                // Label
+                ctx.fillStyle = '#e2e8f0';
+                ctx.font = '12px Inter';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(node_id, pos.x, pos.y);
+            }
+            
+            // Draw Packets
+            f.base.packets.forEach(p => {
+                let u = p.location;
+                let ctxBit = p.context_bit;
+                
+                // if it's "delivered", maybe float it to sink + offset
+                if(u === "delivered" && layout[p.target]) {
+                     ctx.fillStyle = ctxBit === 1 ? '#a855f7' : '#fbbf24';
+                     ctx.shadowBlur = 10;
+                     ctx.shadowColor = ctx.fillStyle;
+                     ctx.beginPath();
+                     ctx.arc(layout[p.target].x + 30, layout[p.target].y - 30, Math.max(4, 12 - f.t*8), 0, Math.PI * 2);
+                     ctx.fill();
+                     ctx.shadowBlur = 0;
+                     return;
+                }
+                
+                if(!layout[u]) return;
+                
+                // Simple animation: pulse size
+                let osc = Math.sin(performance.now() * 0.01) * 2;
+                
+                ctx.fillStyle = ctxBit === 1 ? '#a855f7' : '#fbbf24';
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = ctx.fillStyle;
+                ctx.beginPath();
+                ctx.arc(layout[u].x - 12 + osc, layout[u].y - 12, 10, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            });
+        }
+    </script>
+</body>
+</html>

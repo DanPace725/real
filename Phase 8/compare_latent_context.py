@@ -70,9 +70,19 @@ def latent_signal_specs(scenario_name: str) -> tuple[tuple[SignalSpec, ...], dic
     return initial, schedule
 
 
-def run_scenario(seed: int, scenario_name: str, *, latent_context: bool) -> tuple[object, dict[str, object]]:
+def run_scenario(
+    seed: int,
+    scenario_name: str,
+    *,
+    latent_context: bool,
+    source_sequence_context_enabled: bool = True,
+) -> tuple[object, dict[str, object]]:
     scenario = SCENARIOS[scenario_name]
-    system = build_system(seed, scenario_name)
+    system = build_system(
+        seed,
+        scenario_name,
+        source_sequence_context_enabled=source_sequence_context_enabled,
+    )
     initial = scenario.initial_signal_specs
     schedule = scenario.signal_schedule_specs
     if latent_context:
@@ -87,9 +97,19 @@ def run_scenario(seed: int, scenario_name: str, *, latent_context: bool) -> tupl
     return system, result["summary"]
 
 
-def compare_latent_for_seed(seed: int, scenario_name: str) -> dict[str, object]:
+def compare_latent_for_seed(
+    seed: int,
+    scenario_name: str,
+    *,
+    source_sequence_context_enabled: bool = True,
+) -> dict[str, object]:
     visible_system, visible_summary = run_scenario(seed, scenario_name, latent_context=False)
-    latent_system, latent_summary = run_scenario(seed, scenario_name, latent_context=True)
+    latent_system, latent_summary = run_scenario(
+        seed,
+        scenario_name,
+        latent_context=True,
+        source_sequence_context_enabled=source_sequence_context_enabled,
+    )
     return {
         "seed": seed,
         "scenario": scenario_name,
@@ -109,9 +129,18 @@ def compare_latent_for_seed(seed: int, scenario_name: str) -> dict[str, object]:
     }
 
 
-def transfer_latent_for_seed(seed: int) -> dict[str, object]:
+def transfer_latent_for_seed(
+    seed: int,
+    *,
+    source_sequence_context_enabled: bool = True,
+) -> dict[str, object]:
     visible_train_system, visible_train_summary = run_scenario(seed, TRAIN_SCENARIO, latent_context=False)
-    latent_train_system, latent_train_summary = run_scenario(seed, TRAIN_SCENARIO, latent_context=True)
+    latent_train_system, latent_train_summary = run_scenario(
+        seed,
+        TRAIN_SCENARIO,
+        latent_context=True,
+        source_sequence_context_enabled=source_sequence_context_enabled,
+    )
 
     base_dir = ROOT / "tests_tmp" / f"latent_context_{uuid.uuid4().hex}"
     visible_dir = base_dir / "visible"
@@ -134,7 +163,11 @@ def transfer_latent_for_seed(seed: int) -> dict[str, object]:
         )
         visible_transfer_summary = visible_result["summary"]
 
-        latent_transfer = build_system(seed, TRANSFER_SCENARIO)
+        latent_transfer = build_system(
+            seed,
+            TRANSFER_SCENARIO,
+            source_sequence_context_enabled=source_sequence_context_enabled,
+        )
         latent_transfer.load_memory_carryover(latent_dir)
         latent_initial, latent_schedule = latent_signal_specs(TRANSFER_SCENARIO)
         latent_result = latent_transfer.run_workload(
@@ -168,12 +201,37 @@ def transfer_latent_for_seed(seed: int) -> dict[str, object]:
     }
 
 
-def evaluate_latent_context(*, seeds: tuple[int, ...] = DEFAULT_SEEDS) -> dict[str, object]:
-    task_a = [compare_latent_for_seed(seed, TRAIN_SCENARIO) for seed in seeds]
-    task_b = [compare_latent_for_seed(seed, TRANSFER_SCENARIO) for seed in seeds]
-    transfer = [transfer_latent_for_seed(seed) for seed in seeds]
+def evaluate_latent_context(
+    *,
+    seeds: tuple[int, ...] = DEFAULT_SEEDS,
+    source_sequence_context_enabled: bool = True,
+) -> dict[str, object]:
+    task_a = [
+        compare_latent_for_seed(
+            seed,
+            TRAIN_SCENARIO,
+            source_sequence_context_enabled=source_sequence_context_enabled,
+        )
+        for seed in seeds
+    ]
+    task_b = [
+        compare_latent_for_seed(
+            seed,
+            TRANSFER_SCENARIO,
+            source_sequence_context_enabled=source_sequence_context_enabled,
+        )
+        for seed in seeds
+    ]
+    transfer = [
+        transfer_latent_for_seed(
+            seed,
+            source_sequence_context_enabled=source_sequence_context_enabled,
+        )
+        for seed in seeds
+    ]
     return {
         "seeds": list(seeds),
+        "source_sequence_context_enabled": source_sequence_context_enabled,
         "scenarios": {
             TRAIN_SCENARIO: {
                 "results": task_a,

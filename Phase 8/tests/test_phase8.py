@@ -29,6 +29,7 @@ from compare_morphogenesis import (
     growth_counts_as_earned,
     growth_counts_as_win,
 )
+from analyze_transfer_timecourse import _aggregate_latent_variant, _latent_timeline_summary
 from compare_latent_context import latent_signal_specs
 from compare_task_transfer import aggregate_transfer, transfer_metrics
 from phase8.consolidation import Phase8ConsolidationPipeline
@@ -1712,6 +1713,8 @@ class TestNativeSubstrateSystem(unittest.TestCase):
 
         self.assertEqual(diagnostics["overall"]["identity_fallbacks"], 1)
         self.assertEqual(diagnostics["overall"]["wrong_transform_family"], 1)
+        self.assertEqual(diagnostics["overall"]["route_right_transform_wrong"], 1)
+        self.assertEqual(diagnostics["overall"]["route_wrong_transform_potentially_right"], 0)
         self.assertEqual(
             diagnostics["contexts"]["context_0"]["mismatch_transform_counts"]["identity"],
             1,
@@ -2315,6 +2318,7 @@ class TestLatentContextProbe(unittest.TestCase):
             source_id="n0",
             sink_id="sink",
             selector_seed=11,
+            source_sequence_context_enabled=False,
         )
         packet = system.environment.create_packet(
             cycle=0,
@@ -2349,13 +2353,52 @@ class TestLatentContextProbe(unittest.TestCase):
         observed = system.environment.observe_local("n0")
 
         self.assertGreater(observed["history_transform_evidence_rotate_left_1"], 0.0)
-        self.assertGreaterEqual(observed["latent_context_available"], 0.0)
-        self.assertEqual(observed["effective_has_context"], 1.0)
-        self.assertEqual(observed["effective_context_bit"], 0.0)
+        self.assertGreaterEqual(observed["effective_has_context"], 0.0)
         self.assertEqual(observed["task_transform_affinity_rotate_left_1"], 1.0)
         self.assertEqual(observed["task_transform_affinity_xor_mask_1010"], 1.0)
         self.assertEqual(observed["task_transform_affinity_xor_mask_0101"], -1.0)
+        self.assertEqual(observed["source_sequence_available"], 0.0)
         self.assertTrue(all("target" not in key for key in observed))
+
+    def test_source_sequence_adapter_exposes_source_local_features_without_effective_context(self) -> None:
+        system = NativeSubstrateSystem(
+            adjacency={"n0": ("sink",)},
+            positions={"n0": 0, "sink": 1},
+            source_id="n0",
+            sink_id="sink",
+            selector_seed=12,
+            source_sequence_context_enabled=True,
+        )
+        first_packet = system.environment.create_packet(
+            cycle=0,
+            input_bits=[1, 0, 0, 1],
+            payload_bits=[1, 0, 0, 1],
+            context_bit=None,
+            task_id="task_a",
+            target_bits=[0, 0, 1, 1],
+        )
+        second_packet = system.environment.create_packet(
+            cycle=1,
+            input_bits=[1, 0, 0, 1],
+            payload_bits=[1, 0, 0, 1],
+            context_bit=None,
+            task_id="task_a",
+            target_bits=[0, 0, 1, 1],
+        )
+        system.environment.inject_packets((first_packet,), cycle=0)
+        system.environment.observe_local("n0")
+        system.environment.inboxes["n0"].clear()
+        system.environment.inject_packets((second_packet,), cycle=1)
+
+        observed = system.environment.observe_local("n0")
+        self.assertEqual(observed["effective_has_context"], 0.0)
+        self.assertEqual(observed["source_sequence_available"], 1.0)
+        self.assertEqual(observed["source_sequence_prev_parity"], 0.0)
+        self.assertGreater(observed["source_sequence_context_confidence"], 0.0)
+        self.assertGreater(observed["source_sequence_transform_hint_rotate_left_1"], 0.0)
+        self.assertLess(observed["source_sequence_transform_hint_identity"], 0.0)
+        self.assertEqual(observed["source_prev_bit_0"], 1.0)
+        self.assertEqual(observed["source_delta_bit_0"], 0.0)
 
     def test_selector_uses_effective_context_when_explicit_context_is_hidden(self) -> None:
         system = NativeSubstrateSystem(
@@ -2421,6 +2464,42 @@ class TestLatentContextProbe(unittest.TestCase):
             {"route_transform:sink:rotate_left_1", "route_transform:sink:xor_mask_1010"},
         )
 
+    def test_source_sequence_hint_prefers_expected_transform_family(self) -> None:
+        system = NativeSubstrateSystem(
+            adjacency={"n0": ("sink",)},
+            positions={"n0": 0, "sink": 1},
+            source_id="n0",
+            sink_id="sink",
+            selector_seed=31,
+            source_sequence_context_enabled=True,
+        )
+        first_packet = system.environment.create_packet(
+            cycle=0,
+            input_bits=[1, 0, 0, 0],
+            payload_bits=[1, 0, 0, 0],
+            context_bit=None,
+            task_id="task_a",
+            target_bits=[0, 0, 0, 1],
+        )
+        second_packet = system.environment.create_packet(
+            cycle=1,
+            input_bits=[1, 0, 0, 1],
+            payload_bits=[1, 0, 0, 1],
+            context_bit=None,
+            task_id="task_a",
+            target_bits=[0, 0, 1, 1],
+        )
+        system.environment.inject_packets((first_packet,), cycle=0)
+        system.environment.observe_local("n0")
+        system.environment.inboxes["n0"].clear()
+        system.environment.inject_packets((second_packet,), cycle=1)
+        system.agents["n0"].engine.selector.exploration_rate = 0.0
+
+        available = system.agents["n0"].engine.actions.available_actions(0)
+        action, _ = system.agents["n0"].engine.selector.select(available, [])
+
+        self.assertEqual(action, "route_transform:sink:xor_mask_1010")
+
     def test_low_confidence_latent_feedback_does_not_promote_context_support(self) -> None:
         system = NativeSubstrateSystem(
             adjacency={"n0": ("sink",)},
@@ -2485,6 +2564,70 @@ class TestLatentContextProbe(unittest.TestCase):
         self.assertGreater(
             system.agents["n0"].substrate.contextual_action_support("sink", "rotate_left_1", 0),
             0.0,
+        )
+
+    def test_latent_tracker_snapshot_separates_route_and_feedback_channels(self) -> None:
+        system = NativeSubstrateSystem(
+            adjacency={"n0": ("sink",)},
+            positions={"n0": 0, "sink": 1},
+            source_id="n0",
+            sink_id="sink",
+            selector_seed=41,
+        )
+        tracker = system.environment.latent_context_trackers["n0"]
+        tracker.record_route("task_a", "rotate_left_1", is_source=True)
+        tracker.record_feedback(
+            "task_a",
+            "xor_mask_1010",
+            bit_match_ratio=1.0,
+            credit_signal=1.0,
+            is_source=True,
+        )
+
+        snapshot = tracker.snapshot("task_a")
+
+        self.assertGreater(snapshot["channel_context_confidence"]["source_route"], 0.0)
+        self.assertGreater(snapshot["channel_context_confidence"]["source_feedback"], 0.0)
+        self.assertGreater(
+            snapshot["channel_transform_evidence"]["source_route"]["rotate_left_1"],
+            0.0,
+        )
+        self.assertGreater(
+            snapshot["channel_transform_evidence"]["source_feedback"]["xor_mask_1010"],
+            0.0,
+        )
+
+    def test_source_feedback_reinforces_source_route_commitment(self) -> None:
+        system = NativeSubstrateSystem(
+            adjacency={"n0": ("sink",)},
+            positions={"n0": 0, "sink": 1},
+            source_id="n0",
+            sink_id="sink",
+            selector_seed=43,
+        )
+        tracker = system.environment.latent_context_trackers["n0"]
+        tracker.record_route("task_a", "rotate_left_1", is_source=True)
+        tracker.record_route("task_a", "xor_mask_1010", is_source=True)
+        mixed_snapshot = tracker.snapshot("task_a")
+        mixed_confidence = mixed_snapshot["channel_context_confidence"]["source_route"]
+
+        tracker.record_feedback(
+            "task_a",
+            "rotate_left_1",
+            bit_match_ratio=1.0,
+            credit_signal=1.0,
+            is_source=True,
+        )
+        reinforced_snapshot = tracker.snapshot("task_a")
+
+        self.assertEqual(reinforced_snapshot["channel_context_estimate"]["source_route"], 0)
+        self.assertGreater(
+            reinforced_snapshot["channel_context_confidence"]["source_route"],
+            mixed_confidence,
+        )
+        self.assertGreater(
+            reinforced_snapshot["channel_transform_evidence"]["source_route"]["rotate_left_1"],
+            reinforced_snapshot["channel_transform_evidence"]["source_route"]["xor_mask_1010"],
         )
 
     def test_consolidation_uses_effective_context_fields_for_latent_runs(self) -> None:
@@ -2555,6 +2698,284 @@ class TestLatentContextProbe(unittest.TestCase):
             self.assertGreater(snapshot["confidence"], 0.0)
         finally:
             shutil.rmtree(temp_dir, ignore_errors=True)
+
+    def test_transfer_adaptation_phase_only_applies_to_unseen_tasks_after_carryover(self) -> None:
+        system = NativeSubstrateSystem(
+            adjacency={"n0": ("sink",)},
+            positions={"n0": 0, "sink": 1},
+            source_id="n0",
+            sink_id="sink",
+            selector_seed=47,
+        )
+        system.environment.configure_transfer_regime(task_ids_seen=["task_a"], start_cycle=12)
+        system.environment.current_cycle = 12
+
+        self.assertEqual(
+            system.environment.transfer_adaptation_phase("task_a", node_id="n0"),
+            0.0,
+        )
+        self.assertGreater(
+            system.environment.transfer_adaptation_phase("task_b", node_id="n0"),
+            0.0,
+        )
+        self.assertEqual(
+            system.environment.transfer_adaptation_phase("task_b", node_id="sink"),
+            0.0,
+        )
+
+        system.environment.current_cycle = 12 + system.environment.transfer_adaptation_window
+        self.assertEqual(
+            system.environment.transfer_adaptation_phase("task_b", node_id="n0"),
+            0.0,
+        )
+
+    def test_disabled_latent_transfer_split_suppresses_adaptation_phase(self) -> None:
+        system = NativeSubstrateSystem(
+            adjacency={"n0": ("sink",)},
+            positions={"n0": 0, "sink": 1},
+            source_id="n0",
+            sink_id="sink",
+            selector_seed=59,
+            latent_transfer_split_enabled=False,
+        )
+        system.environment.configure_transfer_regime(task_ids_seen=["task_a"], start_cycle=2)
+        system.environment.current_cycle = 2
+
+        self.assertEqual(
+            system.environment.transfer_adaptation_phase("task_b", node_id="n0"),
+            0.0,
+        )
+
+    def test_observe_local_exposes_transfer_hidden_adaptation_fields(self) -> None:
+        system = NativeSubstrateSystem(
+            adjacency={"n0": ("sink",)},
+            positions={"n0": 0, "sink": 1},
+            source_id="n0",
+            sink_id="sink",
+            selector_seed=49,
+        )
+        system.environment.configure_transfer_regime(task_ids_seen=["task_a"], start_cycle=4)
+        system.environment.current_cycle = 4
+        hidden_packet = SignalPacket(
+            packet_id="pkt-hidden-transfer",
+            origin="src",
+            target="sink",
+            created_cycle=4,
+            input_bits=[1, 0, 1, 0],
+            task_id="task_b",
+            context_bit=None,
+        )
+        system.environment.inject_packets([hidden_packet], cycle=4)
+
+        source_observation = system.environment.observe_local("n0")
+        self.assertEqual(source_observation["transfer_hidden_unseen_task"], 1.0)
+        self.assertGreater(source_observation["transfer_adaptation_phase"], 0.0)
+        self.assertGreater(
+            source_observation["effective_context_threshold"],
+            source_observation["latent_context_confidence"] * 0.0 + 0.55,
+        )
+
+    def test_selector_explores_more_during_hidden_transfer_adaptation(self) -> None:
+        system = NativeSubstrateSystem(
+            adjacency={"n0": ("sink",)},
+            positions={"n0": 0, "sink": 1},
+            source_id="n0",
+            sink_id="sink",
+            selector_seed=53,
+        )
+        selector = system.agents["n0"].engine.selector
+
+        baseline = selector._local_exploration_rate(
+            history=[],
+            local_inbox=1,
+            urgency=0.0,
+            observation={
+                "transfer_hidden_unseen_task": 0.0,
+                "transfer_adaptation_phase": 0.0,
+            },
+        )
+        adapted = selector._local_exploration_rate(
+            history=[],
+            local_inbox=1,
+            urgency=0.0,
+            observation={
+                "transfer_hidden_unseen_task": 1.0,
+                "transfer_adaptation_phase": 1.0,
+            },
+        )
+
+        self.assertGreater(adapted, baseline)
+
+
+class TestLatentTimecourseAnalysis(unittest.TestCase):
+    def test_latent_timeline_summary_tracks_pre_effective_instability(self) -> None:
+        records = [
+            {
+                "cycle": 1,
+                "latent_context_available": 1.0,
+                "latent_context_confidence": 0.30,
+                "effective_has_context": 0.0,
+                "effective_context_confidence": 0.0,
+                "context_promotion_ready": 0.0,
+                "source_sequence_context_confidence": 0.80,
+                "source_route_context_confidence": 0.60,
+                "source_feedback_context_confidence": 0.10,
+                "downstream_mean_route_context_confidence": 0.20,
+                "downstream_mean_feedback_context_confidence": 0.15,
+                "source_atp_ratio": 0.90,
+                "delta_wrong_transform_family": 1.0,
+                "delta_transform_unstable_across_inferred_context_boundary": 1.0,
+                "delta_delayed_correction": 0.0,
+                "delta_route_wrong_transform_potentially_right": 0.0,
+                "delta_route_right_transform_wrong": 0.0,
+                "mean_bit_accuracy": 0.25,
+                "exact_matches": 0,
+            },
+            {
+                "cycle": 2,
+                "latent_context_available": 1.0,
+                "latent_context_confidence": 0.72,
+                "effective_has_context": 1.0,
+                "effective_context_confidence": 0.72,
+                "context_promotion_ready": 0.0,
+                "source_sequence_context_confidence": 0.85,
+                "source_route_context_confidence": 0.70,
+                "source_feedback_context_confidence": 0.40,
+                "downstream_mean_route_context_confidence": 0.30,
+                "downstream_mean_feedback_context_confidence": 0.50,
+                "source_atp_ratio": 0.70,
+                "delta_wrong_transform_family": 0.0,
+                "delta_transform_unstable_across_inferred_context_boundary": 1.0,
+                "delta_delayed_correction": 1.0,
+                "delta_route_wrong_transform_potentially_right": 1.0,
+                "delta_route_right_transform_wrong": 0.0,
+                "mean_bit_accuracy": 0.50,
+                "exact_matches": 1,
+            },
+            {
+                "cycle": 3,
+                "latent_context_available": 1.0,
+                "latent_context_confidence": 0.82,
+                "effective_has_context": 1.0,
+                "effective_context_confidence": 0.82,
+                "context_promotion_ready": 1.0,
+                "source_sequence_context_confidence": 0.90,
+                "source_route_context_confidence": 0.80,
+                "source_feedback_context_confidence": 0.20,
+                "downstream_mean_route_context_confidence": 0.35,
+                "downstream_mean_feedback_context_confidence": 0.55,
+                "source_atp_ratio": 0.60,
+                "delta_wrong_transform_family": 0.0,
+                "delta_transform_unstable_across_inferred_context_boundary": 0.0,
+                "delta_delayed_correction": 0.0,
+                "delta_route_wrong_transform_potentially_right": 0.0,
+                "delta_route_right_transform_wrong": 1.0,
+                "mean_bit_accuracy": 0.75,
+                "exact_matches": 2,
+            },
+        ]
+
+        summary = _latent_timeline_summary(records)
+
+        self.assertEqual(summary["first_latent_context_available_cycle"], 1)
+        self.assertEqual(summary["first_effective_context_cycle"], 2)
+        self.assertEqual(summary["first_context_promotion_ready_cycle"], 3)
+        self.assertEqual(summary["low_confidence_cycle_count"], 1)
+        self.assertEqual(summary["pre_effective_wrong_transform_events"], 1)
+        self.assertEqual(summary["pre_effective_instability_events"], 1)
+        self.assertEqual(summary["instability_event_count"], 2)
+        self.assertEqual(summary["wrong_transform_event_count"], 1)
+        self.assertEqual(summary["delayed_correction_event_count"], 1)
+        self.assertEqual(summary["route_wrong_transform_potentially_right_event_count"], 1)
+        self.assertEqual(summary["route_right_transform_wrong_event_count"], 1)
+        self.assertAlmostEqual(summary["avg_source_route_context_confidence"], 0.7, places=5)
+        self.assertAlmostEqual(summary["avg_source_feedback_context_confidence"], 0.23333, places=4)
+        self.assertAlmostEqual(summary["avg_downstream_feedback_context_confidence"], 0.4, places=5)
+        self.assertAlmostEqual(summary["final_mean_bit_accuracy"], 0.75, places=5)
+        self.assertEqual(summary["final_exact_matches"], 2)
+
+    def test_aggregate_latent_variant_exposes_selector_windows(self) -> None:
+        base_timeline = [
+            {
+                "cycle": 1,
+                "exact_matches": 0,
+                "mean_bit_accuracy": 0.25,
+                "latent_context_available": 1.0,
+                "latent_context_confidence": 0.30,
+                "effective_has_context": 0.0,
+                "effective_context_confidence": 0.0,
+                "source_sequence_context_confidence": 0.80,
+                "source_route_context_confidence": 0.60,
+                "source_feedback_context_confidence": 0.10,
+                "downstream_mean_route_context_confidence": 0.20,
+                "downstream_mean_feedback_context_confidence": 0.15,
+                "source_atp_ratio": 0.90,
+                "wrong_transform_family": 1.0,
+                "delta_wrong_transform_family": 1.0,
+                "delta_transform_unstable_across_inferred_context_boundary": 1.0,
+                "delta_delayed_correction": 0.0,
+                "route_count": 2,
+                "rest_count": 0,
+                "invest_count": 0,
+                "route_branch_counts": {"n1": 2},
+                "route_transform_counts": {"rotate_left_1": 2},
+                "route_mode_counts": {"constraint": 2},
+                "branch_transform_counts": {"n1:rotate_left_1": 2},
+                "mean_route_coherence": 0.4,
+                "mean_route_delta": 0.1,
+            },
+            {
+                "cycle": 2,
+                "exact_matches": 1,
+                "mean_bit_accuracy": 0.50,
+                "latent_context_available": 1.0,
+                "latent_context_confidence": 0.72,
+                "effective_has_context": 1.0,
+                "effective_context_confidence": 0.72,
+                "source_sequence_context_confidence": 0.85,
+                "source_route_context_confidence": 0.70,
+                "source_feedback_context_confidence": 0.40,
+                "downstream_mean_route_context_confidence": 0.30,
+                "downstream_mean_feedback_context_confidence": 0.50,
+                "source_atp_ratio": 0.70,
+                "wrong_transform_family": 1.0,
+                "delta_wrong_transform_family": 0.0,
+                "delta_transform_unstable_across_inferred_context_boundary": 1.0,
+                "delta_delayed_correction": 1.0,
+                "route_count": 1,
+                "rest_count": 1,
+                "invest_count": 0,
+                "route_branch_counts": {"n2": 1},
+                "route_transform_counts": {"xor_mask_1010": 1},
+                "route_mode_counts": {"constraint": 1},
+                "branch_transform_counts": {"n2:xor_mask_1010": 1},
+                "mean_route_coherence": 0.5,
+                "mean_route_delta": 0.2,
+            },
+        ]
+        summary = _latent_timeline_summary(base_timeline)
+        records = [
+            {"timeline": base_timeline, "summary": summary},
+            {"timeline": base_timeline, "summary": summary},
+        ]
+
+        aggregate = _aggregate_latent_variant(records)
+
+        self.assertEqual(aggregate["aggregate_summary"]["avg_low_confidence_cycle_count"], 1.0)
+        self.assertEqual(aggregate["aggregate_summary"]["avg_pre_effective_instability_events"], 1.0)
+        self.assertEqual(aggregate["aggregate_summary"]["avg_instability_event_count"], 2.0)
+        self.assertEqual(
+            aggregate["low_confidence_selector_summary"]["route_transform_counts"]["rotate_left_1"],
+            4,
+        )
+        self.assertEqual(
+            aggregate["instability_selector_summary"]["route_transform_counts"]["xor_mask_1010"],
+            2,
+        )
+        self.assertEqual(
+            aggregate["pre_effective_selector_summary"]["route_branch_counts"]["n1"],
+            4,
+        )
 
 
 if __name__ == "__main__":

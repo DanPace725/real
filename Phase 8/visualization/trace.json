@@ -1,0 +1,1762 @@
+{
+  "scenario": "branch_pressure",
+  "seed": 51,
+  "cycles": 18,
+  "topology": {
+    "positions": {
+      "n0": 0,
+      "n1": 1,
+      "n2": 1,
+      "n3": 2,
+      "n4": 2,
+      "n5": 2,
+      "sink": 3
+    }
+  },
+  "frames": [
+    {
+      "cycle": 1,
+      "nodes": {
+        "n0": {
+          "atp": 0.95,
+          "max_atp": 1.0
+        },
+        "n1": {
+          "atp": 0.95,
+          "max_atp": 1.0
+        },
+        "n2": {
+          "atp": 1.0,
+          "max_atp": 1.0
+        },
+        "n3": {
+          "atp": 1.0,
+          "max_atp": 1.0
+        },
+        "n4": {
+          "atp": 0.86,
+          "max_atp": 1.0
+        },
+        "n5": {
+          "atp": 1.0,
+          "max_atp": 1.0
+        }
+      },
+      "adjacency": {
+        "n0": [
+          "n1",
+          "n2"
+        ],
+        "n1": [
+          "n3",
+          "n4"
+        ],
+        "n2": [
+          "n4",
+          "n5"
+        ],
+        "n3": [
+          "sink"
+        ],
+        "n4": [
+          "sink"
+        ],
+        "n5": [
+          "sink"
+        ],
+        "sink": []
+      },
+      "packets": [
+        {
+          "id": "pkt-2",
+          "location": "n0",
+          "target": "sink",
+          "path_len": 0,
+          "context_bit": null
+        },
+        {
+          "id": "pkt-3",
+          "location": "n0",
+          "target": "sink",
+          "path_len": 0,
+          "context_bit": null
+        },
+        {
+          "id": "pkt-4",
+          "location": "n0",
+          "target": "sink",
+          "path_len": 0,
+          "context_bit": null
+        },
+        {
+          "id": "pkt-5",
+          "location": "n0",
+          "target": "sink",
+          "path_len": 0,
+          "context_bit": null
+        },
+        {
+          "id": "pkt-1",
+          "location": "delivered",
+          "target": "sink",
+          "path_len": 3,
+          "context_bit": null
+        }
+      ],
+      "feedback": [
+        {
+          "packet_id": "pkt-1",
+          "edge": "n3->sink",
+          "node_id": "n3",
+          "amount": 0.18,
+          "transform": "identity",
+          "context_bit": null,
+          "raw_context_bit": null,
+          "effective_context_confidence": 0.0,
+          "context_promotion_ready": false,
+          "task_id": null,
+          "bit_match_ratio": 0.0
+        }
+      ]
+    },
+    {
+      "cycle": 2,
+      "nodes": {
+        "n0": {
+          "atp": 0.8999999999999999,
+          "max_atp": 1.0
+        },
+        "n1": {
+          "atp": 1.0,
+          "max_atp": 1.0
+        },
+        "n2": {
+          "atp": 1.0,
+          "max_atp": 1.0
+        },
+        "n3": {
+          "atp": 1.0,
+          "max_atp": 1.0
+        },
+        "n4": {
+          "atp": 0.865,
+          "max_atp": 1.0
+        },
+        "n5": {
+          "atp": 0.86,
+          "max_atp": 1.0
+        }
+      },
+      "adjacency": {
+        "n0": [
+          "n1",
+          "n2"
+        ],
+        "n1": [
+          "n3",
+          "n4"
+        ],
+        "n2": [
+          "n4",
+          "n5"
+        ],
+        "n3": [
+          "sink"
+        ],
+        "n4": [
+          "sink"
+        ],
+        "n5": [
+          "sink"
+        ],
+        "sink": []
+      },
+      "packets": [
+        {
+          "id": "pkt-3",
+          "location": "n0",
+          "target": "sink",
+          "path_len": 0,
+          "context_bit": null
+        },
+        {
+          "id": "pkt-4",
+          "location": "n0",
+          "target": "sink",
+          "path_len": 0,
+          "context_bit": null
+        },
+        {
+          "id": "pkt-5",
+          "location": "n0",
+          "target": "sink",
+          "path_len": 0,
+          "context_bit": null
+        },
+        {
+          "id": "pkt-6",
+          "location": "n0",
+          "target": "sink",
+          "path_len": 0,
+          "context_bit": null
+        },
+        {
+          "id": "pkt-2",
+          "location": "delivered",
+          "target": "sink",
+          "path_len": 3,
+          "context_bit": null
+        }
+      ],
+      "feedback": [
+        {
+          "packet_id": "pkt-1",
+          "edge": "n1->n3",
+          "node_id": "n1",
+          "amount": 0.18,
+          "transform": "identity",
+          "context_bit": null,
+          "raw_context_bit": null,
+          "effective_context_confidence": 0.0,
+          "context_promotion_ready": false,
+          "task_id": null,
+          "bit_match_ratio": 0.0
+        },
+        {
+          "packet_id": "pkt-2",
+          "edge": "n3->sink",
+          "node_id": "n3",
+          "amount": 0.18,
+          "transform": "identity",
+          "context_bit": null,
+          "raw_context_bit": null,
+          "effective_context_confidence": 0.0,
+          "context_promotion_ready": false,
+          "task_id": null,
+          "bit_match_ratio": 0.0
+        }
+      ]
+    },
+    {
+      "cycle": 3,
+      "nodes": {
+        "n0": {
+          "atp": 1.0,
+          "max_atp": 1.0
+        },
+        "n1": {
+          "atp": 1.0,
+          "max_atp": 1.0
+        },
+        "n2": {
+          "atp": 1.0,
+          "max_atp": 1.0
+        },
+        "n3": {
+          "atp": 1.0,
+          "max_atp": 1.0
+        },
+        "n4": {
+          "atp": 0.87,
+          "max_atp": 1.0
+        },
+        "n5": {
+          "atp": 0.72,
+          "max_atp": 1.0
+        }
+      },
+      "adjacency": {
+        "n0": [
+          "n1",
+          "n2"
+        ],
+        "n1": [
+          "n3",
+          "n4"
+        ],
+        "n2": [
+          "n4",
+          "n5"
+        ],
+        "n3": [
+          "sink"
+        ],
+        "n4": [
+          "sink"
+        ],
+        "n5": [
+          "sink"
+        ],
+        "sink": []
+      },
+      "packets": [
+        {
+          "id": "pkt-4",
+          "location": "n0",
+          "target": "sink",
+          "path_len": 0,
+          "context_bit": null
+        },
+        {
+          "id": "pkt-5",
+          "location": "n0",
+          "target": "sink",
+          "path_len": 0,
+          "context_bit": null
+        },
+        {
+          "id": "pkt-6",
+          "location": "n0",
+          "target": "sink",
+          "path_len": 0,
+          "context_bit": null
+        },
+        {
+          "id": "pkt-3",
+          "location": "delivered",
+          "target": "sink",
+          "path_len": 3,
+          "context_bit": null
+        }
+      ],
+      "feedback": [
+        {
+          "packet_id": "pkt-1",
+          "edge": "n0->n1",
+          "node_id": "n0",
+          "amount": 0.18,
+          "transform": "identity",
+          "context_bit": null,
+          "raw_context_bit": null,
+          "effective_context_confidence": 0.0,
+          "context_promotion_ready": false,
+          "task_id": null,
+          "bit_match_ratio": 0.0
+        },
+        {
+          "packet_id": "pkt-2",
+          "edge": "n1->n3",
+          "node_id": "n1",
+          "amount": 0.18,
+          "transform": "xor_mask_1010",
+          "context_bit": null,
+          "raw_context_bit": null,
+          "effective_context_confidence": 0.0,
+          "context_promotion_ready": false,
+          "task_id": null,
+          "bit_match_ratio": 0.0
+        },
+        {
+          "packet_id": "pkt-3",
+          "edge": "n3->sink",
+          "node_id": "n3",
+          "amount": 0.18,
+          "transform": "xor_mask_0101",
+          "context_bit": null,
+          "raw_context_bit": null,
+          "effective_context_confidence": 0.0,
+          "context_promotion_ready": false,
+          "task_id": null,
+          "bit_match_ratio": 0.0
+        }
+      ]
+    },
+    {
+      "cycle": 4,
+      "nodes": {
+        "n0": {
+          "atp": 1.0,
+          "max_atp": 1.0
+        },
+        "n1": {
+          "atp": 1.0,
+          "max_atp": 1.0
+        },
+        "n2": {
+          "atp": 0.86,
+          "max_atp": 1.0
+        },
+        "n3": {
+          "atp": 1.0,
+          "max_atp": 1.0
+        },
+        "n4": {
+          "atp": 0.875,
+          "max_atp": 1.0
+        },
+        "n5": {
+          "atp": 0.725,
+          "max_atp": 1.0
+        }
+      },
+      "adjacency": {
+        "n0": [
+          "n1",
+          "n2"
+        ],
+        "n1": [
+          "n3",
+          "n4"
+        ],
+        "n2": [
+          "n4",
+          "n5"
+        ],
+        "n3": [
+          "sink"
+        ],
+        "n4": [
+          "sink"
+        ],
+        "n5": [
+          "sink"
+        ],
+        "sink": []
+      },
+      "packets": [
+        {
+          "id": "pkt-5",
+          "location": "n0",
+          "target": "sink",
+          "path_len": 0,
+          "context_bit": null
+        },
+        {
+          "id": "pkt-6",
+          "location": "n0",
+          "target": "sink",
+          "path_len": 0,
+          "context_bit": null
+        },
+        {
+          "id": "pkt-7",
+          "location": "n0",
+          "target": "sink",
+          "path_len": 0,
+          "context_bit": null
+        },
+        {
+          "id": "pkt-8",
+          "location": "n0",
+          "target": "sink",
+          "path_len": 0,
+          "context_bit": null
+        },
+        {
+          "id": "pkt-4",
+          "location": "delivered",
+          "target": "sink",
+          "path_len": 3,
+          "context_bit": null
+        }
+      ],
+      "feedback": [
+        {
+          "packet_id": "pkt-2",
+          "edge": "n0->n1",
+          "node_id": "n0",
+          "amount": 0.18,
+          "transform": "identity",
+          "context_bit": null,
+          "raw_context_bit": null,
+          "effective_context_confidence": 0.0,
+          "context_promotion_ready": false,
+          "task_id": null,
+          "bit_match_ratio": 0.0
+        },
+        {
+          "packet_id": "pkt-3",
+          "edge": "n1->n3",
+          "node_id": "n1",
+          "amount": 0.18,
+          "transform": "identity",
+          "context_bit": null,
+          "raw_context_bit": null,
+          "effective_context_confidence": 0.0,
+          "context_promotion_ready": false,
+          "task_id": null,
+          "bit_match_ratio": 0.0
+        },
+        {
+          "packet_id": "pkt-4",
+          "edge": "n3->sink",
+          "node_id": "n3",
+          "amount": 0.18,
+          "transform": "identity",
+          "context_bit": null,
+          "raw_context_bit": null,
+          "effective_context_confidence": 0.0,
+          "context_promotion_ready": false,
+          "task_id": null,
+          "bit_match_ratio": 0.0
+        }
+      ]
+    },
+    {
+      "cycle": 5,
+      "nodes": {
+        "n0": {
+          "atp": 1.0,
+          "max_atp": 1.0
+        },
+        "n1": {
+          "atp": 1.0,
+          "max_atp": 1.0
+        },
+        "n2": {
+          "atp": 0.72,
+          "max_atp": 1.0
+        },
+        "n3": {
+          "atp": 1.0,
+          "max_atp": 1.0
+        },
+        "n4": {
+          "atp": 1.0,
+          "max_atp": 1.0
+        },
+        "n5": {
+          "atp": 0.73,
+          "max_atp": 1.0
+        }
+      },
+      "adjacency": {
+        "n0": [
+          "n1",
+          "n2"
+        ],
+        "n1": [
+          "n3",
+          "n4"
+        ],
+        "n2": [
+          "n4",
+          "n5"
+        ],
+        "n3": [
+          "sink"
+        ],
+        "n4": [
+          "sink"
+        ],
+        "n5": [
+          "sink"
+        ],
+        "sink": []
+      },
+      "packets": [
+        {
+          "id": "pkt-6",
+          "location": "n0",
+          "target": "sink",
+          "path_len": 0,
+          "context_bit": null
+        },
+        {
+          "id": "pkt-7",
+          "location": "n0",
+          "target": "sink",
+          "path_len": 0,
+          "context_bit": null
+        },
+        {
+          "id": "pkt-8",
+          "location": "n0",
+          "target": "sink",
+          "path_len": 0,
+          "context_bit": null
+        },
+        {
+          "id": "pkt-5",
+          "location": "delivered",
+          "target": "sink",
+          "path_len": 3,
+          "context_bit": null
+        }
+      ],
+      "feedback": [
+        {
+          "packet_id": "pkt-3",
+          "edge": "n0->n1",
+          "node_id": "n0",
+          "amount": 0.18,
+          "transform": "identity",
+          "context_bit": null,
+          "raw_context_bit": null,
+          "effective_context_confidence": 0.0,
+          "context_promotion_ready": false,
+          "task_id": null,
+          "bit_match_ratio": 0.0
+        },
+        {
+          "packet_id": "pkt-4",
+          "edge": "n1->n3",
+          "node_id": "n1",
+          "amount": 0.18,
+          "transform": "xor_mask_1010",
+          "context_bit": null,
+          "raw_context_bit": null,
+          "effective_context_confidence": 0.0,
+          "context_promotion_ready": false,
+          "task_id": null,
+          "bit_match_ratio": 0.0
+        },
+        {
+          "packet_id": "pkt-5",
+          "edge": "n4->sink",
+          "node_id": "n4",
+          "amount": 0.18,
+          "transform": "identity",
+          "context_bit": null,
+          "raw_context_bit": null,
+          "effective_context_confidence": 0.0,
+          "context_promotion_ready": false,
+          "task_id": null,
+          "bit_match_ratio": 0.0
+        }
+      ]
+    },
+    {
+      "cycle": 6,
+      "nodes": {
+        "n0": {
+          "atp": 1.0,
+          "max_atp": 1.0
+        },
+        "n1": {
+          "atp": 1.0,
+          "max_atp": 1.0
+        },
+        "n2": {
+          "atp": 0.725,
+          "max_atp": 1.0
+        },
+        "n3": {
+          "atp": 1.0,
+          "max_atp": 1.0
+        },
+        "n4": {
+          "atp": 1.0,
+          "max_atp": 1.0
+        },
+        "n5": {
+          "atp": 0.7,
+          "max_atp": 1.0
+        }
+      },
+      "adjacency": {
+        "n0": [
+          "n1",
+          "n2"
+        ],
+        "n1": [
+          "n3",
+          "n4"
+        ],
+        "n2": [
+          "n4",
+          "n5"
+        ],
+        "n3": [
+          "sink"
+        ],
+        "n4": [
+          "sink"
+        ],
+        "n5": [
+          "sink"
+        ],
+        "sink": []
+      },
+      "packets": [
+        {
+          "id": "pkt-7",
+          "location": "n0",
+          "target": "sink",
+          "path_len": 0,
+          "context_bit": null
+        },
+        {
+          "id": "pkt-8",
+          "location": "n0",
+          "target": "sink",
+          "path_len": 0,
+          "context_bit": null
+        },
+        {
+          "id": "pkt-6",
+          "location": "delivered",
+          "target": "sink",
+          "path_len": 3,
+          "context_bit": null
+        }
+      ],
+      "feedback": [
+        {
+          "packet_id": "pkt-4",
+          "edge": "n0->n1",
+          "node_id": "n0",
+          "amount": 0.18,
+          "transform": "identity",
+          "context_bit": null,
+          "raw_context_bit": null,
+          "effective_context_confidence": 0.0,
+          "context_promotion_ready": false,
+          "task_id": null,
+          "bit_match_ratio": 0.0
+        },
+        {
+          "packet_id": "pkt-5",
+          "edge": "n1->n4",
+          "node_id": "n1",
+          "amount": 0.18,
+          "transform": "identity",
+          "context_bit": null,
+          "raw_context_bit": null,
+          "effective_context_confidence": 0.0,
+          "context_promotion_ready": false,
+          "task_id": null,
+          "bit_match_ratio": 0.0
+        },
+        {
+          "packet_id": "pkt-6",
+          "edge": "n3->sink",
+          "node_id": "n3",
+          "amount": 0.18,
+          "transform": "identity",
+          "context_bit": null,
+          "raw_context_bit": null,
+          "effective_context_confidence": 0.0,
+          "context_promotion_ready": false,
+          "task_id": null,
+          "bit_match_ratio": 0.0
+        }
+      ]
+    },
+    {
+      "cycle": 7,
+      "nodes": {
+        "n0": {
+          "atp": 1.0,
+          "max_atp": 1.0
+        },
+        "n1": {
+          "atp": 1.0,
+          "max_atp": 1.0
+        },
+        "n2": {
+          "atp": 0.73,
+          "max_atp": 1.0
+        },
+        "n3": {
+          "atp": 1.0,
+          "max_atp": 1.0
+        },
+        "n4": {
+          "atp": 1.0,
+          "max_atp": 1.0
+        },
+        "n5": {
+          "atp": 0.5599999999999999,
+          "max_atp": 1.0
+        }
+      },
+      "adjacency": {
+        "n0": [
+          "n1",
+          "n2"
+        ],
+        "n1": [
+          "n3",
+          "n4"
+        ],
+        "n2": [
+          "n4",
+          "n5"
+        ],
+        "n3": [
+          "sink"
+        ],
+        "n4": [
+          "sink"
+        ],
+        "n5": [
+          "sink"
+        ],
+        "sink": []
+      },
+      "packets": [
+        {
+          "id": "pkt-8",
+          "location": "n0",
+          "target": "sink",
+          "path_len": 0,
+          "context_bit": null
+        },
+        {
+          "id": "pkt-7",
+          "location": "delivered",
+          "target": "sink",
+          "path_len": 3,
+          "context_bit": null
+        }
+      ],
+      "feedback": [
+        {
+          "packet_id": "pkt-5",
+          "edge": "n0->n1",
+          "node_id": "n0",
+          "amount": 0.18,
+          "transform": "identity",
+          "context_bit": null,
+          "raw_context_bit": null,
+          "effective_context_confidence": 0.0,
+          "context_promotion_ready": false,
+          "task_id": null,
+          "bit_match_ratio": 0.0
+        },
+        {
+          "packet_id": "pkt-6",
+          "edge": "n1->n3",
+          "node_id": "n1",
+          "amount": 0.18,
+          "transform": "xor_mask_1010",
+          "context_bit": null,
+          "raw_context_bit": null,
+          "effective_context_confidence": 0.0,
+          "context_promotion_ready": false,
+          "task_id": null,
+          "bit_match_ratio": 0.0
+        },
+        {
+          "packet_id": "pkt-7",
+          "edge": "n3->sink",
+          "node_id": "n3",
+          "amount": 0.18,
+          "transform": "identity",
+          "context_bit": null,
+          "raw_context_bit": null,
+          "effective_context_confidence": 0.0,
+          "context_promotion_ready": false,
+          "task_id": null,
+          "bit_match_ratio": 0.0
+        }
+      ]
+    },
+    {
+      "cycle": 8,
+      "nodes": {
+        "n0": {
+          "atp": 1.0,
+          "max_atp": 1.0
+        },
+        "n1": {
+          "atp": 1.0,
+          "max_atp": 1.0
+        },
+        "n2": {
+          "atp": 0.735,
+          "max_atp": 1.0
+        },
+        "n3": {
+          "atp": 1.0,
+          "max_atp": 1.0
+        },
+        "n4": {
+          "atp": 0.86,
+          "max_atp": 1.0
+        },
+        "n5": {
+          "atp": 0.565,
+          "max_atp": 1.0
+        }
+      },
+      "adjacency": {
+        "n0": [
+          "n1",
+          "n2"
+        ],
+        "n1": [
+          "n3",
+          "n4"
+        ],
+        "n2": [
+          "n4",
+          "n5"
+        ],
+        "n3": [
+          "sink"
+        ],
+        "n4": [
+          "sink"
+        ],
+        "n5": [
+          "sink"
+        ],
+        "sink": []
+      },
+      "packets": [
+        {
+          "id": "pkt-10",
+          "location": "n0",
+          "target": "sink",
+          "path_len": 0,
+          "context_bit": null
+        },
+        {
+          "id": "pkt-9",
+          "location": "n0",
+          "target": "sink",
+          "path_len": 0,
+          "context_bit": null
+        },
+        {
+          "id": "pkt-8",
+          "location": "delivered",
+          "target": "sink",
+          "path_len": 3,
+          "context_bit": null
+        }
+      ],
+      "feedback": [
+        {
+          "packet_id": "pkt-6",
+          "edge": "n0->n1",
+          "node_id": "n0",
+          "amount": 0.18,
+          "transform": "identity",
+          "context_bit": null,
+          "raw_context_bit": null,
+          "effective_context_confidence": 0.0,
+          "context_promotion_ready": false,
+          "task_id": null,
+          "bit_match_ratio": 0.0
+        },
+        {
+          "packet_id": "pkt-7",
+          "edge": "n1->n3",
+          "node_id": "n1",
+          "amount": 0.18,
+          "transform": "identity",
+          "context_bit": null,
+          "raw_context_bit": null,
+          "effective_context_confidence": 0.0,
+          "context_promotion_ready": false,
+          "task_id": null,
+          "bit_match_ratio": 0.0
+        },
+        {
+          "packet_id": "pkt-8",
+          "edge": "n3->sink",
+          "node_id": "n3",
+          "amount": 0.18,
+          "transform": "identity",
+          "context_bit": null,
+          "raw_context_bit": null,
+          "effective_context_confidence": 0.0,
+          "context_promotion_ready": false,
+          "task_id": null,
+          "bit_match_ratio": 0.0
+        }
+      ]
+    },
+    {
+      "cycle": 9,
+      "nodes": {
+        "n0": {
+          "atp": 1.0,
+          "max_atp": 1.0
+        },
+        "n1": {
+          "atp": 1.0,
+          "max_atp": 1.0
+        },
+        "n2": {
+          "atp": 0.595,
+          "max_atp": 1.0
+        },
+        "n3": {
+          "atp": 1.0,
+          "max_atp": 1.0
+        },
+        "n4": {
+          "atp": 0.88,
+          "max_atp": 1.0
+        },
+        "n5": {
+          "atp": 0.57,
+          "max_atp": 1.0
+        }
+      },
+      "adjacency": {
+        "n0": [
+          "n1",
+          "n2"
+        ],
+        "n1": [
+          "n3",
+          "n4"
+        ],
+        "n2": [
+          "n4",
+          "n5"
+        ],
+        "n3": [
+          "sink"
+        ],
+        "n4": [
+          "sink"
+        ],
+        "n5": [
+          "sink"
+        ],
+        "sink": []
+      },
+      "packets": [
+        {
+          "id": "pkt-9",
+          "location": "n0",
+          "target": "sink",
+          "path_len": 0,
+          "context_bit": null
+        },
+        {
+          "id": "pkt-10",
+          "location": "delivered",
+          "target": "sink",
+          "path_len": 3,
+          "context_bit": null
+        }
+      ],
+      "feedback": [
+        {
+          "packet_id": "pkt-7",
+          "edge": "n0->n1",
+          "node_id": "n0",
+          "amount": 0.18,
+          "transform": "identity",
+          "context_bit": null,
+          "raw_context_bit": null,
+          "effective_context_confidence": 0.0,
+          "context_promotion_ready": false,
+          "task_id": null,
+          "bit_match_ratio": 0.0
+        },
+        {
+          "packet_id": "pkt-8",
+          "edge": "n1->n3",
+          "node_id": "n1",
+          "amount": 0.18,
+          "transform": "identity",
+          "context_bit": null,
+          "raw_context_bit": null,
+          "effective_context_confidence": 0.0,
+          "context_promotion_ready": false,
+          "task_id": null,
+          "bit_match_ratio": 0.0
+        },
+        {
+          "packet_id": "pkt-10",
+          "edge": "n3->sink",
+          "node_id": "n3",
+          "amount": 0.18,
+          "transform": "identity",
+          "context_bit": null,
+          "raw_context_bit": null,
+          "effective_context_confidence": 0.0,
+          "context_promotion_ready": false,
+          "task_id": null,
+          "bit_match_ratio": 0.0
+        }
+      ]
+    },
+    {
+      "cycle": 10,
+      "nodes": {
+        "n0": {
+          "atp": 1.0,
+          "max_atp": 1.0
+        },
+        "n1": {
+          "atp": 1.0,
+          "max_atp": 1.0
+        },
+        "n2": {
+          "atp": 0.6,
+          "max_atp": 1.0
+        },
+        "n3": {
+          "atp": 1.0,
+          "max_atp": 1.0
+        },
+        "n4": {
+          "atp": 0.9,
+          "max_atp": 1.0
+        },
+        "n5": {
+          "atp": 0.5399999999999999,
+          "max_atp": 1.0
+        }
+      },
+      "adjacency": {
+        "n0": [
+          "n1",
+          "n2"
+        ],
+        "n1": [
+          "n3",
+          "n4"
+        ],
+        "n2": [
+          "n4",
+          "n5"
+        ],
+        "n3": [
+          "sink"
+        ],
+        "n4": [
+          "sink"
+        ],
+        "n5": [
+          "sink"
+        ],
+        "sink": []
+      },
+      "packets": [
+        {
+          "id": "pkt-9",
+          "location": "delivered",
+          "target": "sink",
+          "path_len": 3,
+          "context_bit": null
+        }
+      ],
+      "feedback": [
+        {
+          "packet_id": "pkt-8",
+          "edge": "n0->n1",
+          "node_id": "n0",
+          "amount": 0.18,
+          "transform": "identity",
+          "context_bit": null,
+          "raw_context_bit": null,
+          "effective_context_confidence": 0.0,
+          "context_promotion_ready": false,
+          "task_id": null,
+          "bit_match_ratio": 0.0
+        },
+        {
+          "packet_id": "pkt-10",
+          "edge": "n1->n3",
+          "node_id": "n1",
+          "amount": 0.18,
+          "transform": "identity",
+          "context_bit": null,
+          "raw_context_bit": null,
+          "effective_context_confidence": 0.0,
+          "context_promotion_ready": false,
+          "task_id": null,
+          "bit_match_ratio": 0.0
+        },
+        {
+          "packet_id": "pkt-9",
+          "edge": "n3->sink",
+          "node_id": "n3",
+          "amount": 0.18,
+          "transform": "identity",
+          "context_bit": null,
+          "raw_context_bit": null,
+          "effective_context_confidence": 0.0,
+          "context_promotion_ready": false,
+          "task_id": null,
+          "bit_match_ratio": 0.0
+        }
+      ]
+    },
+    {
+      "cycle": 11,
+      "nodes": {
+        "n0": {
+          "atp": 1.0,
+          "max_atp": 1.0
+        },
+        "n1": {
+          "atp": 1.0,
+          "max_atp": 1.0
+        },
+        "n2": {
+          "atp": 0.605,
+          "max_atp": 1.0
+        },
+        "n3": {
+          "atp": 1.0,
+          "max_atp": 1.0
+        },
+        "n4": {
+          "atp": 0.92,
+          "max_atp": 1.0
+        },
+        "n5": {
+          "atp": 0.5449999999999999,
+          "max_atp": 1.0
+        }
+      },
+      "adjacency": {
+        "n0": [
+          "n1",
+          "n2"
+        ],
+        "n1": [
+          "n3",
+          "n4"
+        ],
+        "n2": [
+          "n4",
+          "n5"
+        ],
+        "n3": [
+          "sink"
+        ],
+        "n4": [
+          "sink"
+        ],
+        "n5": [
+          "sink"
+        ],
+        "sink": []
+      },
+      "packets": [],
+      "feedback": [
+        {
+          "packet_id": "pkt-10",
+          "edge": "n0->n1",
+          "node_id": "n0",
+          "amount": 0.18,
+          "transform": "identity",
+          "context_bit": null,
+          "raw_context_bit": null,
+          "effective_context_confidence": 0.0,
+          "context_promotion_ready": false,
+          "task_id": null,
+          "bit_match_ratio": 0.0
+        },
+        {
+          "packet_id": "pkt-9",
+          "edge": "n1->n3",
+          "node_id": "n1",
+          "amount": 0.18,
+          "transform": "identity",
+          "context_bit": null,
+          "raw_context_bit": null,
+          "effective_context_confidence": 0.0,
+          "context_promotion_ready": false,
+          "task_id": null,
+          "bit_match_ratio": 0.0
+        }
+      ]
+    },
+    {
+      "cycle": 12,
+      "nodes": {
+        "n0": {
+          "atp": 1.0,
+          "max_atp": 1.0
+        },
+        "n1": {
+          "atp": 0.9555,
+          "max_atp": 1.0
+        },
+        "n2": {
+          "atp": 0.46499999999999997,
+          "max_atp": 1.0
+        },
+        "n3": {
+          "atp": 0.86,
+          "max_atp": 1.0
+        },
+        "n4": {
+          "atp": 1.0,
+          "max_atp": 1.0
+        },
+        "n5": {
+          "atp": 0.5499999999999999,
+          "max_atp": 1.0
+        }
+      },
+      "adjacency": {
+        "n0": [
+          "n1",
+          "n2"
+        ],
+        "n1": [
+          "n3",
+          "n4"
+        ],
+        "n2": [
+          "n4",
+          "n5"
+        ],
+        "n3": [
+          "sink"
+        ],
+        "n4": [
+          "sink"
+        ],
+        "n5": [
+          "sink"
+        ],
+        "sink": []
+      },
+      "packets": [
+        {
+          "id": "pkt-12",
+          "location": "n0",
+          "target": "sink",
+          "path_len": 0,
+          "context_bit": null
+        },
+        {
+          "id": "pkt-11",
+          "location": "delivered",
+          "target": "sink",
+          "path_len": 3,
+          "context_bit": null
+        }
+      ],
+      "feedback": [
+        {
+          "packet_id": "pkt-9",
+          "edge": "n0->n1",
+          "node_id": "n0",
+          "amount": 0.18,
+          "transform": "identity",
+          "context_bit": null,
+          "raw_context_bit": null,
+          "effective_context_confidence": 0.0,
+          "context_promotion_ready": false,
+          "task_id": null,
+          "bit_match_ratio": 0.0
+        },
+        {
+          "packet_id": "pkt-11",
+          "edge": "n4->sink",
+          "node_id": "n4",
+          "amount": 0.18,
+          "transform": "identity",
+          "context_bit": null,
+          "raw_context_bit": null,
+          "effective_context_confidence": 0.0,
+          "context_promotion_ready": false,
+          "task_id": null,
+          "bit_match_ratio": 0.0
+        }
+      ]
+    },
+    {
+      "cycle": 13,
+      "nodes": {
+        "n0": {
+          "atp": 0.9644625,
+          "max_atp": 1.0
+        },
+        "n1": {
+          "atp": 1.0,
+          "max_atp": 1.0
+        },
+        "n2": {
+          "atp": 0.47,
+          "max_atp": 1.0
+        },
+        "n3": {
+          "atp": 0.88,
+          "max_atp": 1.0
+        },
+        "n4": {
+          "atp": 1.0,
+          "max_atp": 1.0
+        },
+        "n5": {
+          "atp": 0.5199999999999999,
+          "max_atp": 1.0
+        }
+      },
+      "adjacency": {
+        "n0": [
+          "n1",
+          "n2"
+        ],
+        "n1": [
+          "n3",
+          "n4"
+        ],
+        "n2": [
+          "n4",
+          "n5"
+        ],
+        "n3": [
+          "sink"
+        ],
+        "n4": [
+          "sink"
+        ],
+        "n5": [
+          "sink"
+        ],
+        "sink": []
+      },
+      "packets": [
+        {
+          "id": "pkt-12",
+          "location": "delivered",
+          "target": "sink",
+          "path_len": 3,
+          "context_bit": null
+        }
+      ],
+      "feedback": [
+        {
+          "packet_id": "pkt-11",
+          "edge": "n1->n4",
+          "node_id": "n1",
+          "amount": 0.18,
+          "transform": "identity",
+          "context_bit": null,
+          "raw_context_bit": null,
+          "effective_context_confidence": 0.0,
+          "context_promotion_ready": false,
+          "task_id": null,
+          "bit_match_ratio": 0.0
+        },
+        {
+          "packet_id": "pkt-12",
+          "edge": "n4->sink",
+          "node_id": "n4",
+          "amount": 0.18,
+          "transform": "identity",
+          "context_bit": null,
+          "raw_context_bit": null,
+          "effective_context_confidence": 0.0,
+          "context_promotion_ready": false,
+          "task_id": null,
+          "bit_match_ratio": 0.0
+        }
+      ]
+    },
+    {
+      "cycle": 14,
+      "nodes": {
+        "n0": {
+          "atp": 1.0,
+          "max_atp": 1.0
+        },
+        "n1": {
+          "atp": 1.0,
+          "max_atp": 1.0
+        },
+        "n2": {
+          "atp": 0.475,
+          "max_atp": 1.0
+        },
+        "n3": {
+          "atp": 0.9,
+          "max_atp": 1.0
+        },
+        "n4": {
+          "atp": 0.86,
+          "max_atp": 1.0
+        },
+        "n5": {
+          "atp": 0.3799999999999999,
+          "max_atp": 1.0
+        }
+      },
+      "adjacency": {
+        "n0": [
+          "n1",
+          "n2"
+        ],
+        "n1": [
+          "n3",
+          "n4"
+        ],
+        "n2": [
+          "n4",
+          "n5"
+        ],
+        "n3": [
+          "sink"
+        ],
+        "n4": [
+          "sink"
+        ],
+        "n5": [
+          "sink"
+        ],
+        "sink": []
+      },
+      "packets": [],
+      "feedback": [
+        {
+          "packet_id": "pkt-11",
+          "edge": "n0->n1",
+          "node_id": "n0",
+          "amount": 0.18,
+          "transform": "identity",
+          "context_bit": null,
+          "raw_context_bit": null,
+          "effective_context_confidence": 0.0,
+          "context_promotion_ready": false,
+          "task_id": null,
+          "bit_match_ratio": 0.0
+        },
+        {
+          "packet_id": "pkt-12",
+          "edge": "n1->n4",
+          "node_id": "n1",
+          "amount": 0.18,
+          "transform": "identity",
+          "context_bit": null,
+          "raw_context_bit": null,
+          "effective_context_confidence": 0.0,
+          "context_promotion_ready": false,
+          "task_id": null,
+          "bit_match_ratio": 0.0
+        }
+      ]
+    },
+    {
+      "cycle": 15,
+      "nodes": {
+        "n0": {
+          "atp": 1.0,
+          "max_atp": 1.0
+        },
+        "n1": {
+          "atp": 1.0,
+          "max_atp": 1.0
+        },
+        "n2": {
+          "atp": 0.48,
+          "max_atp": 1.0
+        },
+        "n3": {
+          "atp": 0.87,
+          "max_atp": 1.0
+        },
+        "n4": {
+          "atp": 0.88,
+          "max_atp": 1.0
+        },
+        "n5": {
+          "atp": 0.23999999999999988,
+          "max_atp": 1.0
+        }
+      },
+      "adjacency": {
+        "n0": [
+          "n1",
+          "n2"
+        ],
+        "n1": [
+          "n3",
+          "n4"
+        ],
+        "n2": [
+          "n4",
+          "n5"
+        ],
+        "n3": [
+          "sink"
+        ],
+        "n4": [
+          "sink"
+        ],
+        "n5": [
+          "sink"
+        ],
+        "sink": []
+      },
+      "packets": [],
+      "feedback": [
+        {
+          "packet_id": "pkt-12",
+          "edge": "n0->n1",
+          "node_id": "n0",
+          "amount": 0.18,
+          "transform": "identity",
+          "context_bit": null,
+          "raw_context_bit": null,
+          "effective_context_confidence": 0.0,
+          "context_promotion_ready": false,
+          "task_id": null,
+          "bit_match_ratio": 0.0
+        }
+      ]
+    },
+    {
+      "cycle": 16,
+      "nodes": {
+        "n0": {
+          "atp": 0.8712,
+          "max_atp": 1.0
+        },
+        "n1": {
+          "atp": 0.9448,
+          "max_atp": 1.0
+        },
+        "n2": {
+          "atp": 0.485,
+          "max_atp": 1.0
+        },
+        "n3": {
+          "atp": 0.89,
+          "max_atp": 1.0
+        },
+        "n4": {
+          "atp": 0.74,
+          "max_atp": 1.0
+        },
+        "n5": {
+          "atp": 0.09999999999999987,
+          "max_atp": 1.0
+        }
+      },
+      "adjacency": {
+        "n0": [
+          "n1",
+          "n2"
+        ],
+        "n1": [
+          "n3",
+          "n4"
+        ],
+        "n2": [
+          "n4",
+          "n5"
+        ],
+        "n3": [
+          "sink"
+        ],
+        "n4": [
+          "sink"
+        ],
+        "n5": [
+          "sink"
+        ],
+        "sink": []
+      },
+      "packets": [],
+      "feedback": []
+    },
+    {
+      "cycle": 17,
+      "nodes": {
+        "n0": {
+          "atp": 0.8912,
+          "max_atp": 1.0
+        },
+        "n1": {
+          "atp": 0.9648,
+          "max_atp": 1.0
+        },
+        "n2": {
+          "atp": 0.49,
+          "max_atp": 1.0
+        },
+        "n3": {
+          "atp": 0.91,
+          "max_atp": 1.0
+        },
+        "n4": {
+          "atp": 0.76,
+          "max_atp": 1.0
+        },
+        "n5": {
+          "atp": 0.10499999999999987,
+          "max_atp": 1.0
+        }
+      },
+      "adjacency": {
+        "n0": [
+          "n1",
+          "n2"
+        ],
+        "n1": [
+          "n3",
+          "n4"
+        ],
+        "n2": [
+          "n4",
+          "n5"
+        ],
+        "n3": [
+          "sink"
+        ],
+        "n4": [
+          "sink"
+        ],
+        "n5": [
+          "sink"
+        ],
+        "sink": []
+      },
+      "packets": [],
+      "feedback": []
+    },
+    {
+      "cycle": 18,
+      "nodes": {
+        "n0": {
+          "atp": 0.9112,
+          "max_atp": 1.0
+        },
+        "n1": {
+          "atp": 0.836,
+          "max_atp": 1.0
+        },
+        "n2": {
+          "atp": 0.35,
+          "max_atp": 1.0
+        },
+        "n3": {
+          "atp": 0.88,
+          "max_atp": 1.0
+        },
+        "n4": {
+          "atp": 0.62,
+          "max_atp": 1.0
+        },
+        "n5": {
+          "atp": 0.10999999999999988,
+          "max_atp": 1.0
+        }
+      },
+      "adjacency": {
+        "n0": [
+          "n1",
+          "n2"
+        ],
+        "n1": [
+          "n3",
+          "n4"
+        ],
+        "n2": [
+          "n4",
+          "n5"
+        ],
+        "n3": [
+          "sink"
+        ],
+        "n4": [
+          "sink"
+        ],
+        "n5": [
+          "sink"
+        ],
+        "sink": []
+      },
+      "packets": [],
+      "feedback": []
+    }
+  ]
+}

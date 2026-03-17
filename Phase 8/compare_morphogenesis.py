@@ -7,6 +7,7 @@ from dataclasses import asdict
 from statistics import mean
 
 from compare_cold_warm import ROOT, SCENARIOS, build_system, run_workload
+from compare_latent_context import latent_signal_specs
 from compare_task_transfer import transfer_metrics
 from phase8 import MorphogenesisConfig, NativeSubstrateSystem
 
@@ -19,6 +20,10 @@ WORKLOAD_SCENARIOS = (
 )
 TRAIN_SCENARIO = "cvt1_task_a_stage1"
 TRANSFER_SCENARIO = "cvt1_task_b_stage1"
+LATENT_WORKLOAD_SCENARIOS = (
+    TRAIN_SCENARIO,
+    TRANSFER_SCENARIO,
+)
 
 
 def benchmark_morphogenesis_config() -> MorphogenesisConfig:
@@ -46,6 +51,8 @@ def build_growth_system(
     scenario_name: str,
     *,
     morphogenesis_config: MorphogenesisConfig | None = None,
+    source_sequence_context_enabled: bool = True,
+    latent_transfer_split_enabled: bool = True,
 ) -> NativeSubstrateSystem:
     scenario = SCENARIOS[scenario_name]
     return NativeSubstrateSystem(
@@ -60,7 +67,29 @@ def build_growth_system(
         source_admission_min_rate=scenario.source_admission_min_rate,
         source_admission_max_rate=scenario.source_admission_max_rate,
         morphogenesis_config=_clone_config(morphogenesis_config),
+        source_sequence_context_enabled=source_sequence_context_enabled,
+        latent_transfer_split_enabled=latent_transfer_split_enabled,
     )
+
+
+def _run_growth_workload(
+    system: NativeSubstrateSystem,
+    scenario_name: str,
+    *,
+    latent_context: bool,
+) -> dict[str, object]:
+    if not latent_context:
+        return run_workload(system, scenario_name)
+    scenario = SCENARIOS[scenario_name]
+    initial_specs, schedule_specs = latent_signal_specs(scenario_name)
+    result = system.run_workload(
+        cycles=scenario.cycles,
+        initial_packets=scenario.initial_packets,
+        packet_schedule=scenario.packet_schedule,
+        initial_signal_specs=initial_specs,
+        signal_schedule_specs=schedule_specs,
+    )
+    return result["summary"]
 
 
 def growth_counts_as_earned(summary: dict[str, object]) -> bool:
@@ -127,20 +156,39 @@ def compare_growth_for_seed(
     scenario_name: str,
     *,
     morphogenesis_config: MorphogenesisConfig | None = None,
+    latent_context: bool = False,
+    source_sequence_context_enabled: bool = True,
+    latent_transfer_split_enabled: bool = True,
 ) -> dict[str, object]:
-    fixed_system = build_system(seed, scenario_name)
-    fixed_summary = run_workload(fixed_system, scenario_name)
+    fixed_system = build_system(
+        seed,
+        scenario_name,
+        source_sequence_context_enabled=source_sequence_context_enabled,
+        latent_transfer_split_enabled=latent_transfer_split_enabled,
+    )
+    fixed_summary = _run_growth_workload(
+        fixed_system,
+        scenario_name,
+        latent_context=latent_context,
+    )
 
     growth_system = build_growth_system(
         seed,
         scenario_name,
         morphogenesis_config=morphogenesis_config,
+        source_sequence_context_enabled=source_sequence_context_enabled,
+        latent_transfer_split_enabled=latent_transfer_split_enabled,
     )
-    growth_summary = run_workload(growth_system, scenario_name)
+    growth_summary = _run_growth_workload(
+        growth_system,
+        scenario_name,
+        latent_context=latent_context,
+    )
 
     return {
         "seed": seed,
         "scenario": scenario_name,
+        "latent_context": latent_context,
         "fixed": {
             "summary": fixed_summary,
             "transfer_metrics": transfer_metrics(fixed_system),
@@ -216,16 +264,34 @@ def transfer_growth_for_seed(
     train_scenario: str = TRAIN_SCENARIO,
     transfer_scenario: str = TRANSFER_SCENARIO,
     morphogenesis_config: MorphogenesisConfig | None = None,
+    latent_context: bool = False,
+    source_sequence_context_enabled: bool = True,
+    latent_transfer_split_enabled: bool = True,
 ) -> dict[str, object]:
-    fixed_training = build_system(seed, train_scenario)
-    fixed_training_summary = run_workload(fixed_training, train_scenario)
+    fixed_training = build_system(
+        seed,
+        train_scenario,
+        source_sequence_context_enabled=source_sequence_context_enabled,
+        latent_transfer_split_enabled=latent_transfer_split_enabled,
+    )
+    fixed_training_summary = _run_growth_workload(
+        fixed_training,
+        train_scenario,
+        latent_context=latent_context,
+    )
 
     growth_training = build_growth_system(
         seed,
         train_scenario,
         morphogenesis_config=morphogenesis_config,
+        source_sequence_context_enabled=source_sequence_context_enabled,
+        latent_transfer_split_enabled=latent_transfer_split_enabled,
     )
-    growth_training_summary = run_workload(growth_training, train_scenario)
+    growth_training_summary = _run_growth_workload(
+        growth_training,
+        train_scenario,
+        latent_context=latent_context,
+    )
 
     base_dir = ROOT / "tests_tmp" / f"morphogenesis_compare_{uuid.uuid4().hex}"
     fixed_dir = base_dir / "fixed"
@@ -236,17 +302,32 @@ def transfer_growth_for_seed(
         fixed_training.save_memory_carryover(fixed_dir)
         growth_training.save_memory_carryover(growth_dir)
 
-        fixed_transfer = build_system(seed, transfer_scenario)
+        fixed_transfer = build_system(
+            seed,
+            transfer_scenario,
+            source_sequence_context_enabled=source_sequence_context_enabled,
+            latent_transfer_split_enabled=latent_transfer_split_enabled,
+        )
         fixed_transfer.load_memory_carryover(fixed_dir)
-        fixed_transfer_summary = run_workload(fixed_transfer, transfer_scenario)
+        fixed_transfer_summary = _run_growth_workload(
+            fixed_transfer,
+            transfer_scenario,
+            latent_context=latent_context,
+        )
 
         growth_transfer = build_growth_system(
             seed,
             transfer_scenario,
             morphogenesis_config=morphogenesis_config,
+            source_sequence_context_enabled=source_sequence_context_enabled,
+            latent_transfer_split_enabled=latent_transfer_split_enabled,
         )
         growth_transfer.load_memory_carryover(growth_dir)
-        growth_transfer_summary = run_workload(growth_transfer, transfer_scenario)
+        growth_transfer_summary = _run_growth_workload(
+            growth_transfer,
+            transfer_scenario,
+            latent_context=latent_context,
+        )
     finally:
         shutil.rmtree(base_dir, ignore_errors=True)
 
@@ -254,6 +335,7 @@ def transfer_growth_for_seed(
         "seed": seed,
         "train_scenario": train_scenario,
         "transfer_scenario": transfer_scenario,
+        "latent_context": latent_context,
         "fixed_training": fixed_training_summary,
         "growth_training": {
             "summary": growth_training_summary,
@@ -314,14 +396,21 @@ def evaluate_morphogenesis(
     *,
     seeds: tuple[int, ...] = DEFAULT_SEEDS,
     morphogenesis_config: MorphogenesisConfig | None = None,
+    latent_context: bool = False,
+    source_sequence_context_enabled: bool = True,
+    latent_transfer_split_enabled: bool = True,
 ) -> dict[str, object]:
+    workload_scenarios = LATENT_WORKLOAD_SCENARIOS if latent_context else WORKLOAD_SCENARIOS
     scenario_results = {}
-    for scenario_name in WORKLOAD_SCENARIOS:
+    for scenario_name in workload_scenarios:
         results = [
             compare_growth_for_seed(
                 seed,
                 scenario_name,
                 morphogenesis_config=morphogenesis_config,
+                latent_context=latent_context,
+                source_sequence_context_enabled=source_sequence_context_enabled,
+                latent_transfer_split_enabled=latent_transfer_split_enabled,
             )
             for seed in seeds
         ]
@@ -335,12 +424,18 @@ def evaluate_morphogenesis(
         transfer_growth_for_seed(
             seed,
             morphogenesis_config=morphogenesis_config,
+            latent_context=latent_context,
+            source_sequence_context_enabled=source_sequence_context_enabled,
+            latent_transfer_split_enabled=latent_transfer_split_enabled,
         )
         for seed in seeds
     ]
 
     return {
         "seeds": list(seeds),
+        "latent_context": latent_context,
+        "source_sequence_context_enabled": source_sequence_context_enabled,
+        "latent_transfer_split_enabled": latent_transfer_split_enabled,
         "morphogenesis_config": asdict(_clone_config(morphogenesis_config)),
         "scenarios": scenario_results,
         "transfer": {
