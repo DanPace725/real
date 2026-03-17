@@ -1477,7 +1477,18 @@ class RoutingEnvironment:
         specs: List[dict[str, object]] = []
         local_queue_window = len(self.inboxes[node_id])
         low_local_pressure = local_queue_window <= self.morphogenesis_config.growth_queue_tolerance
-        if growth_ready and low_local_pressure:
+        # Context-resolution gate: suppress bud actions while a task packet is
+        # present and effective context confidence is below the configured
+        # threshold.  This prevents noisy structural growth during the window
+        # when the node is still inferring which transform context applies.
+        # Prune and apoptosis proposals are generated regardless.
+        context_gate = self.morphogenesis_config.context_resolution_growth_gate
+        context_gate_active = (
+            context_gate > 0.0
+            and observation.get("head_has_task", 0.0) >= 0.5
+            and observation.get("effective_context_confidence", 0.0) < context_gate
+        )
+        if growth_ready and low_local_pressure and not context_gate_active:
             for target_id in self._candidate_growth_targets(node_id):
                 target_pos = self.positions[target_id]
                 node_pos = self.positions[node_id]

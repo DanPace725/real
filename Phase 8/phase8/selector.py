@@ -43,6 +43,12 @@ class Phase8Selector:
     recency_half_life: float = 6.0
     rest_atp_threshold: float = 0.12
     maintain_velocity_threshold: float = -0.015
+    # Bonus weight applied to task-affinity transforms when the node is in
+    # hidden-context mode (head packet carries a task_id but no explicit or
+    # latent context bit is resolved yet).  Gives an early-cycle push toward
+    # the correct transform family based purely on the task label, without
+    # relaxing the context-promotion gate in the consolidation pipeline.
+    hidden_task_affinity_weight: float = 0.14
 
     def select(self, available: List[str], history: List[object]) -> Tuple[str, str]:
         if not available:
