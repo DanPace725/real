@@ -42,6 +42,12 @@ class Phase8Selector:
     recency_half_life: float = 6.0
     rest_atp_threshold: float = 0.12
     maintain_velocity_threshold: float = -0.015
+    # Bonus weight applied to task-affinity transforms when the node is in
+    # hidden-context mode (head packet carries a task_id but no explicit or
+    # latent context bit is resolved yet).  Gives an early-cycle push toward
+    # the correct transform family based purely on the task label, without
+    # relaxing the context-promotion gate in the consolidation pipeline.
+    hidden_task_affinity_weight: float = 0.14
 
     def select(self, available: List[str], history: List[object]) -> Tuple[str, str]:
         if not available:
@@ -270,11 +276,22 @@ class Phase8Selector:
                 growth_novelty_bonus += self.environment.morphogenesis_config.growth_route_probationary_bonus
         if hidden_task_commitment:
             if transform_name == "identity":
-                identity_penalty += 0.08 + 0.10 * min(1.0, best_non_identity_history)
+                # Stronger base penalty: identity is a bad default when the
+                # task label says a specific non-trivial transform is expected.
+                identity_penalty += 0.12 + 0.14 * min(1.0, best_non_identity_history)
             elif task_transform_affinity > 0.0:
-                task_transform_bonus += 0.08 + 0.10 * history_transform_evidence
+                # Direct task-affinity bonus (doesn't require history) plus the
+                # history-evidence component.  Together these provide an early
+                # push toward candidate transforms before feedback accumulates,
+                # while naturally yielding to evidence-based scoring as history
+                # grows.  The promotion gate in consolidation is untouched.
+                task_transform_bonus += (
+                    0.08
+                    + self.hidden_task_affinity_weight * task_transform_affinity
+                    + 0.12 * history_transform_evidence
+                )
             elif task_transform_affinity < 0.0:
-                identity_penalty += 0.06
+                identity_penalty += 0.08
         elif transform_name == "identity" and best_non_identity_history > 0.12:
             identity_penalty += 0.18 * min(1.0, best_non_identity_history)
         elif transform_name != "identity":

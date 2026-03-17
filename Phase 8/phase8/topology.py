@@ -41,6 +41,11 @@ class MorphogenesisConfig:
     seed_action_support: float = 0.24
     growth_route_novelty_bonus: float = 0.12
     growth_route_probationary_bonus: float = 0.10
+    # When > 0.0, bud_edge and bud_node proposals are suppressed while a node's
+    # effective_context_confidence is below this value AND a task packet is
+    # present.  Prevents structural growth during the context-inference window.
+    # Prune and apoptosis actions are never suppressed by this gate.
+    context_resolution_growth_gate: float = 0.0
 
 
 @dataclass
