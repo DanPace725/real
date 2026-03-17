@@ -22,6 +22,20 @@ LATENT_CONTEXT_PROMOTION_STREAK = 3
 LATENT_CONTEXT_EVIDENCE_DECAY = 0.88
 LATENT_CONTEXT_ROUTE_GAIN = 0.08
 LATENT_CONTEXT_FEEDBACK_GAIN = 0.42
+LATENT_CONTEXT_EVIDENCE_SATURATION = 0.50
+LATENT_EVIDENCE_CHANNELS = (
+    "source_route",
+    "downstream_route",
+    "source_feedback",
+    "downstream_feedback",
+)
+LATENT_SOURCE_COMMITMENT_BOOST = 0.12
+LATENT_SOURCE_COMMITMENT_DAMP = 0.82
+LATENT_SOURCE_FEEDBACK_REWRITE_MARGIN = 0.18
+LATENT_TRANSFER_ADAPTATION_BOOST_SCALE = 0.05
+LATENT_TRANSFER_ADAPTATION_DAMP_BLEND = 0.95
+LATENT_TRANSFER_ADAPTATION_REWRITE_SCALE = 0.10
+LATENT_TRANSFER_EFFECTIVE_THRESHOLD_BOOST = 0.18
 
 
 def _edge_id(source_id: str, target_id: str) -> str:
@@ -64,6 +78,18 @@ class LatentTaskState:
     transform_evidence: Dict[str, float] = field(
         default_factory=lambda: {name: 0.0 for name in TRANSFORM_NAMES}
     )
+    context_evidence_by_channel: Dict[str, Dict[int, float]] = field(
+        default_factory=lambda: {
+            channel: {0: 0.0, 1: 0.0}
+            for channel in LATENT_EVIDENCE_CHANNELS
+        }
+    )
+    transform_evidence_by_channel: Dict[str, Dict[str, float]] = field(
+        default_factory=lambda: {
+            channel: {name: 0.0 for name in TRANSFORM_NAMES}
+            for channel in LATENT_EVIDENCE_CHANNELS
+        }
+    )
     dominant_context: int | None = None
     confidence: float = 0.0
     total_evidence: float = 0.0
@@ -74,6 +100,11 @@ class LatentTaskState:
     last_input_bits: List[int] = field(default_factory=list)
     sequence_context_estimate: int | None = None
     sequence_context_confidence: float = 0.0
+    sequence_prev_parity: int | None = None
+    sequence_prev_bits: List[int] = field(default_factory=list)
+    sequence_change_ratio: float = 0.0
+    sequence_repeat_input: float = 0.0
+    sequence_delta_bits: List[int] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -86,6 +117,20 @@ class LatentTaskState:
                 str(key): float(value)
                 for key, value in self.transform_evidence.items()
             },
+            "context_evidence_by_channel": {
+                channel: {
+                    str(key): float(value)
+                    for key, value in channel_values.items()
+                }
+                for channel, channel_values in self.context_evidence_by_channel.items()
+            },
+            "transform_evidence_by_channel": {
+                channel: {
+                    str(key): float(value)
+                    for key, value in channel_values.items()
+                }
+                for channel, channel_values in self.transform_evidence_by_channel.items()
+            },
             "dominant_context": self.dominant_context,
             "confidence": self.confidence,
             "total_evidence": self.total_evidence,
@@ -96,6 +141,11 @@ class LatentTaskState:
             "last_input_bits": list(self.last_input_bits),
             "sequence_context_estimate": self.sequence_context_estimate,
             "sequence_context_confidence": self.sequence_context_confidence,
+            "sequence_prev_parity": self.sequence_prev_parity,
+            "sequence_prev_bits": list(self.sequence_prev_bits),
+            "sequence_change_ratio": self.sequence_change_ratio,
+            "sequence_repeat_input": self.sequence_repeat_input,
+            "sequence_delta_bits": list(self.sequence_delta_bits),
         }
 
     @classmethod
@@ -108,6 +158,26 @@ class LatentTaskState:
         state.transform_evidence = {
             name: float(dict(payload.get("transform_evidence", {})).get(name, 0.0))
             for name in TRANSFORM_NAMES
+        }
+        channel_context_payload = dict(payload.get("context_evidence_by_channel", {}))
+        state.context_evidence_by_channel = {
+            channel: {
+                int(key): float(value)
+                for key, value in dict(channel_context_payload.get(channel, {})).items()
+            }
+            for channel in LATENT_EVIDENCE_CHANNELS
+        }
+        for channel in LATENT_EVIDENCE_CHANNELS:
+            state.context_evidence_by_channel.setdefault(channel, {0: 0.0, 1: 0.0})
+            for context_bit in (0, 1):
+                state.context_evidence_by_channel[channel].setdefault(context_bit, 0.0)
+        channel_transform_payload = dict(payload.get("transform_evidence_by_channel", {}))
+        state.transform_evidence_by_channel = {
+            channel: {
+                name: float(dict(channel_transform_payload.get(channel, {})).get(name, 0.0))
+                for name in TRANSFORM_NAMES
+            }
+            for channel in LATENT_EVIDENCE_CHANNELS
         }
         state.dominant_context = payload.get("dominant_context")
         if state.dominant_context is not None:
@@ -125,6 +195,13 @@ class LatentTaskState:
         if state.sequence_context_estimate is not None:
             state.sequence_context_estimate = int(state.sequence_context_estimate)
         state.sequence_context_confidence = float(payload.get("sequence_context_confidence", 0.0))
+        state.sequence_prev_parity = payload.get("sequence_prev_parity")
+        if state.sequence_prev_parity is not None:
+            state.sequence_prev_parity = int(state.sequence_prev_parity)
+        state.sequence_prev_bits = [int(bit) for bit in payload.get("sequence_prev_bits", [])]
+        state.sequence_change_ratio = float(payload.get("sequence_change_ratio", 0.0))
+        state.sequence_repeat_input = float(payload.get("sequence_repeat_input", 0.0))
+        state.sequence_delta_bits = [int(bit) for bit in payload.get("sequence_delta_bits", [])]
         return state
 
 
@@ -149,6 +226,16 @@ class LatentContextTracker:
         return state
 
     def _recompute(self, state: LatentTaskState) -> None:
+        for context_bit in (0, 1):
+            state.context_evidence[context_bit] = sum(
+                float(state.context_evidence_by_channel.get(channel, {}).get(context_bit, 0.0))
+                for channel in LATENT_EVIDENCE_CHANNELS
+            )
+        for transform_name in TRANSFORM_NAMES:
+            state.transform_evidence[transform_name] = sum(
+                float(state.transform_evidence_by_channel.get(channel, {}).get(transform_name, 0.0))
+                for channel in LATENT_EVIDENCE_CHANNELS
+            )
         state.total_evidence = max(
             0.0,
             float(state.context_evidence.get(0, 0.0)) + float(state.context_evidence.get(1, 0.0)),
@@ -160,7 +247,119 @@ class LatentContextTracker:
         dominant_context = 0 if state.context_evidence.get(0, 0.0) >= state.context_evidence.get(1, 0.0) else 1
         diff = abs(state.context_evidence.get(1, 0.0) - state.context_evidence.get(0, 0.0))
         state.dominant_context = dominant_context
-        state.confidence = max(0.0, min(1.0, diff / max(state.total_evidence, 1e-9)))
+        purity = max(0.0, min(1.0, diff / max(state.total_evidence, 1e-9)))
+        evidence_scale = max(0.0, min(1.0, state.total_evidence / LATENT_CONTEXT_EVIDENCE_SATURATION))
+        state.confidence = purity * evidence_scale
+
+    def _channel_estimate_confidence(
+        self,
+        state: LatentTaskState,
+        channel: str,
+    ) -> tuple[int | None, float, float]:
+        channel_values = state.context_evidence_by_channel.get(channel, {0: 0.0, 1: 0.0})
+        total = float(channel_values.get(0, 0.0)) + float(channel_values.get(1, 0.0))
+        if total <= 1e-9:
+            return None, 0.0, 0.0
+        estimate = 0 if channel_values.get(0, 0.0) >= channel_values.get(1, 0.0) else 1
+        diff = abs(float(channel_values.get(1, 0.0)) - float(channel_values.get(0, 0.0)))
+        purity = max(0.0, min(1.0, diff / max(total, 1e-9)))
+        evidence_scale = max(0.0, min(1.0, total / LATENT_CONTEXT_EVIDENCE_SATURATION))
+        confidence = purity * evidence_scale
+        return estimate, confidence, total
+
+    def _reinforce_source_commitment(
+        self,
+        state: LatentTaskState,
+        *,
+        adaptation_phase: float = 0.0,
+    ) -> None:
+        route_estimate, route_confidence, _ = self._channel_estimate_confidence(state, "source_route")
+        feedback_estimate, feedback_confidence, _ = self._channel_estimate_confidence(state, "source_feedback")
+        if feedback_estimate is None:
+            self._recompute(state)
+            return
+        phase = max(0.0, min(1.0, adaptation_phase))
+        commitment_boost = LATENT_SOURCE_COMMITMENT_BOOST * (
+            (1.0 - phase) + phase * LATENT_TRANSFER_ADAPTATION_BOOST_SCALE
+        )
+        damp_factor = LATENT_SOURCE_COMMITMENT_DAMP + phase * (
+            1.0 - LATENT_SOURCE_COMMITMENT_DAMP
+        ) * LATENT_TRANSFER_ADAPTATION_DAMP_BLEND
+        rewrite_margin = LATENT_SOURCE_FEEDBACK_REWRITE_MARGIN * (
+            (1.0 - phase) + phase * LATENT_TRANSFER_ADAPTATION_REWRITE_SCALE
+        )
+        expected_transform = _expected_transform_for_task(state.task_id, int(feedback_estimate))
+        source_route_context = state.context_evidence_by_channel.setdefault(
+            "source_route",
+            {0: 0.0, 1: 0.0},
+        )
+        source_feedback_context = state.context_evidence_by_channel.setdefault(
+            "source_feedback",
+            {0: 0.0, 1: 0.0},
+        )
+        source_route_transforms = state.transform_evidence_by_channel.setdefault(
+            "source_route",
+            {name: 0.0 for name in TRANSFORM_NAMES},
+        )
+        source_feedback_transforms = state.transform_evidence_by_channel.setdefault(
+            "source_feedback",
+            {name: 0.0 for name in TRANSFORM_NAMES},
+        )
+        if (
+            route_estimate is not None
+            and route_estimate == feedback_estimate
+            and feedback_confidence >= 0.30
+        ):
+            boost = commitment_boost * max(0.35, min(route_confidence, feedback_confidence))
+            losing_context = 1 - int(feedback_estimate)
+            source_route_context[int(feedback_estimate)] = max(
+                0.0,
+                source_route_context.get(int(feedback_estimate), 0.0) + boost,
+            )
+            source_feedback_context[int(feedback_estimate)] = max(
+                0.0,
+                source_feedback_context.get(int(feedback_estimate), 0.0) + 0.65 * boost,
+            )
+            source_route_context[losing_context] = max(
+                0.0,
+                source_route_context.get(losing_context, 0.0) * damp_factor,
+            )
+            source_feedback_context[losing_context] = max(
+                0.0,
+                source_feedback_context.get(losing_context, 0.0) * (0.94 + 0.04 * (1.0 - feedback_confidence)),
+            )
+            if expected_transform is not None:
+                source_route_transforms[expected_transform] = max(
+                    0.0,
+                    source_route_transforms.get(expected_transform, 0.0) + boost,
+                )
+                source_feedback_transforms[expected_transform] = max(
+                    0.0,
+                    source_feedback_transforms.get(expected_transform, 0.0) + 0.65 * boost,
+                )
+        elif (
+            route_estimate is not None
+            and route_estimate != feedback_estimate
+            and feedback_confidence >= route_confidence + rewrite_margin
+        ):
+            losing_context = int(route_estimate)
+            winning_context = int(feedback_estimate)
+            source_route_context[losing_context] = max(
+                0.0,
+                source_route_context.get(losing_context, 0.0) * damp_factor,
+            )
+            source_route_context[winning_context] = max(
+                0.0,
+                source_route_context.get(winning_context, 0.0)
+                + commitment_boost * feedback_confidence,
+            )
+            if expected_transform is not None:
+                source_route_transforms[expected_transform] = max(
+                    0.0,
+                    source_route_transforms.get(expected_transform, 0.0)
+                    + commitment_boost * feedback_confidence,
+                )
+        self._recompute(state)
 
     def _apply_decay(self, state: LatentTaskState) -> None:
         for context_bit in (0, 1):
@@ -168,23 +367,50 @@ class LatentContextTracker:
                 0.0,
                 float(state.context_evidence.get(context_bit, 0.0)) * self.evidence_decay,
             )
+        for channel in LATENT_EVIDENCE_CHANNELS:
+            channel_context = state.context_evidence_by_channel.setdefault(channel, {0: 0.0, 1: 0.0})
+            for context_bit in (0, 1):
+                channel_context[context_bit] = max(
+                    0.0,
+                    float(channel_context.get(context_bit, 0.0)) * self.evidence_decay,
+                )
         for transform_name in TRANSFORM_NAMES:
             state.transform_evidence[transform_name] = max(
                 0.0,
                 float(state.transform_evidence.get(transform_name, 0.0)) * self.evidence_decay,
             )
+        for channel in LATENT_EVIDENCE_CHANNELS:
+            channel_transforms = state.transform_evidence_by_channel.setdefault(
+                channel,
+                {name: 0.0 for name in TRANSFORM_NAMES},
+            )
+            for transform_name in TRANSFORM_NAMES:
+                channel_transforms[transform_name] = max(
+                    0.0,
+                    float(channel_transforms.get(transform_name, 0.0)) * self.evidence_decay,
+                )
 
     def _apply_transform_signal(
         self,
         state: LatentTaskState,
         transform_name: str,
         signal: float,
+        *,
+        channel: str,
     ) -> None:
         transform = _normalize_transform_name(transform_name)
         self._apply_decay(state)
         state.transform_evidence[transform] = max(
             0.0,
             state.transform_evidence.get(transform, 0.0) + signal,
+        )
+        channel_transforms = state.transform_evidence_by_channel.setdefault(
+            channel,
+            {name: 0.0 for name in TRANSFORM_NAMES},
+        )
+        channel_transforms[transform] = max(
+            0.0,
+            channel_transforms.get(transform, 0.0) + signal,
         )
         for context_bit in (0, 1):
             expected = _expected_transform_for_task(state.task_id, context_bit)
@@ -193,13 +419,35 @@ class LatentContextTracker:
                     0.0,
                     state.context_evidence.get(context_bit, 0.0) + signal,
                 )
+                channel_context = state.context_evidence_by_channel.setdefault(
+                    channel,
+                    {0: 0.0, 1: 0.0},
+                )
+                channel_context[context_bit] = max(
+                    0.0,
+                    channel_context.get(context_bit, 0.0) + signal,
+                )
         self._recompute(state)
 
-    def record_route(self, task_id: str | None, transform_name: str) -> None:
+    def record_route(
+        self,
+        task_id: str | None,
+        transform_name: str,
+        *,
+        is_source: bool = False,
+        adaptation_phase: float = 0.0,
+    ) -> None:
         state = self._state_for(task_id)
         if state is None:
             return
-        self._apply_transform_signal(state, transform_name, self.route_gain)
+        self._apply_transform_signal(
+            state,
+            transform_name,
+            self.route_gain,
+            channel="source_route" if is_source else "downstream_route",
+        )
+        if is_source:
+            self._reinforce_source_commitment(state, adaptation_phase=adaptation_phase)
 
     def record_feedback(
         self,
@@ -208,13 +456,22 @@ class LatentContextTracker:
         *,
         bit_match_ratio: float,
         credit_signal: float,
+        is_source: bool = False,
+        adaptation_phase: float = 0.0,
     ) -> None:
         state = self._state_for(task_id)
         if state is None:
             return
         signed_quality = max(-1.0, min(1.0, (bit_match_ratio - 0.5) * 2.0))
         signal = self.feedback_gain * max(0.20, credit_signal) * signed_quality
-        self._apply_transform_signal(state, transform_name, signal)
+        self._apply_transform_signal(
+            state,
+            transform_name,
+            signal,
+            channel="source_feedback" if is_source else "downstream_feedback",
+        )
+        if is_source:
+            self._reinforce_source_commitment(state, adaptation_phase=adaptation_phase)
 
     def observe_packet(
         self,
@@ -227,18 +484,24 @@ class LatentContextTracker:
             return
         if state.last_packet_id == packet_id:
             return
+        current_bits = [1 if int(bit) else 0 for bit in list(input_bits or [])]
         prior_parity = _parity_bits(state.last_input_bits)
+        width = max(len(current_bits), len(state.last_input_bits), 4)
+        padded_current = current_bits + [0] * max(0, width - len(current_bits))
+        padded_previous = state.last_input_bits + [0] * max(0, width - len(state.last_input_bits))
+        delta_bits = [
+            int(current_bit != previous_bit)
+            for current_bit, previous_bit in zip(padded_current, padded_previous)
+        ]
         state.sequence_context_estimate = prior_parity
         state.sequence_context_confidence = 0.95 if prior_parity is not None else 0.0
-        if prior_parity is not None:
-            self._apply_decay(state)
-            state.context_evidence[prior_parity] = max(
-                0.0,
-                state.context_evidence.get(prior_parity, 0.0) + 0.35,
-            )
-            self._recompute(state)
+        state.sequence_prev_parity = prior_parity
+        state.sequence_prev_bits = list(padded_previous[:4])
+        state.sequence_delta_bits = list(delta_bits[:4])
+        state.sequence_change_ratio = sum(delta_bits) / max(len(delta_bits), 1)
+        state.sequence_repeat_input = 1.0 if state.last_input_bits and current_bits == state.last_input_bits else 0.0
         state.last_packet_id = str(packet_id)
-        state.last_input_bits = [1 if int(bit) else 0 for bit in list(input_bits or [])]
+        state.last_input_bits = current_bits
 
     def observe_task(self, task_id: str | None, cycle: int) -> dict[str, object]:
         state = self._state_for(task_id)
@@ -266,21 +529,53 @@ class LatentContextTracker:
                 "promotion_ready": False,
                 "observation_streak": 0,
                 "sequence_available": False,
+                "sequence_context_estimate": None,
+                "sequence_context_confidence": 0.0,
+                "sequence_prev_parity": None,
+                "sequence_change_ratio": 0.0,
+                "sequence_repeat_input": 0.0,
+                "sequence_prev_bits": [],
+                "sequence_delta_bits": [],
                 "transform_evidence": {name: 0.0 for name in TRANSFORM_NAMES},
+                "channel_context_evidence": {
+                    channel: {0: 0.0, 1: 0.0}
+                    for channel in LATENT_EVIDENCE_CHANNELS
+                },
+                "channel_transform_evidence": {
+                    channel: {name: 0.0 for name in TRANSFORM_NAMES}
+                    for channel in LATENT_EVIDENCE_CHANNELS
+                },
+                "channel_context_confidence": {
+                    channel: 0.0
+                    for channel in LATENT_EVIDENCE_CHANNELS
+                },
+                "channel_context_estimate": {
+                    channel: None
+                    for channel in LATENT_EVIDENCE_CHANNELS
+                },
             }
         sequence_available = state.sequence_context_estimate is not None and state.sequence_context_confidence > 0.0
-        available = sequence_available or (state.dominant_context is not None and state.total_evidence > 0.0)
-        estimate = state.sequence_context_estimate if sequence_available else state.dominant_context
-        confidence = (
-            max(state.confidence, state.sequence_context_confidence)
-            if sequence_available
-            else state.confidence
-        )
+        available = state.dominant_context is not None and state.total_evidence > 0.0
+        estimate = state.dominant_context
+        confidence = state.confidence
         promotion_ready = bool(
             state.dominant_context is not None
             and state.confidence >= self.promotion_threshold
             and state.observation_streak >= self.promotion_streak
         )
+        channel_context_confidence: dict[str, float] = {}
+        channel_context_estimate: dict[str, int | None] = {}
+        for channel in LATENT_EVIDENCE_CHANNELS:
+            channel_values = state.context_evidence_by_channel.get(channel, {0: 0.0, 1: 0.0})
+            total = float(channel_values.get(0, 0.0)) + float(channel_values.get(1, 0.0))
+            if total <= 1e-9:
+                channel_context_confidence[channel] = 0.0
+                channel_context_estimate[channel] = None
+                continue
+            estimate = 0 if channel_values.get(0, 0.0) >= channel_values.get(1, 0.0) else 1
+            diff = abs(float(channel_values.get(1, 0.0)) - float(channel_values.get(0, 0.0)))
+            channel_context_confidence[channel] = max(0.0, min(1.0, diff / max(total, 1e-9)))
+            channel_context_estimate[channel] = estimate
         return {
             "available": available,
             "estimate": estimate,
@@ -288,10 +583,39 @@ class LatentContextTracker:
             "promotion_ready": promotion_ready,
             "observation_streak": state.observation_streak,
             "sequence_available": sequence_available,
+            "sequence_context_estimate": state.sequence_context_estimate,
+            "sequence_context_confidence": state.sequence_context_confidence,
+            "sequence_prev_parity": state.sequence_prev_parity,
+            "sequence_change_ratio": state.sequence_change_ratio,
+            "sequence_repeat_input": state.sequence_repeat_input,
+            "sequence_prev_bits": list(state.sequence_prev_bits),
+            "sequence_delta_bits": list(state.sequence_delta_bits),
             "transform_evidence": {
                 name: max(0.0, min(1.0, float(state.transform_evidence.get(name, 0.0))))
                 for name in TRANSFORM_NAMES
             },
+            "channel_context_evidence": {
+                channel: {
+                    context_bit: max(
+                        0.0,
+                        min(1.0, float(state.context_evidence_by_channel.get(channel, {}).get(context_bit, 0.0))),
+                    )
+                    for context_bit in (0, 1)
+                }
+                for channel in LATENT_EVIDENCE_CHANNELS
+            },
+            "channel_transform_evidence": {
+                channel: {
+                    name: max(
+                        0.0,
+                        min(1.0, float(state.transform_evidence_by_channel.get(channel, {}).get(name, 0.0))),
+                    )
+                    for name in TRANSFORM_NAMES
+                }
+                for channel in LATENT_EVIDENCE_CHANNELS
+            },
+            "channel_context_confidence": channel_context_confidence,
+            "channel_context_estimate": channel_context_estimate,
         }
 
     def to_dict(self) -> dict[str, object]:
@@ -413,6 +737,9 @@ class RoutingEnvironment:
     source_admission_max_rate: int | None = None
     topology_state: TopologyState | None = None
     morphogenesis_config: MorphogenesisConfig = field(default_factory=MorphogenesisConfig)
+    source_sequence_context_enabled: bool = True
+    latent_transfer_split_enabled: bool = True
+    transfer_adaptation_window: int = 10
 
     def __post_init__(self) -> None:
         if self.topology_state is None:
@@ -462,6 +789,8 @@ class RoutingEnvironment:
             node_id: LatentContextTracker()
             for node_id in self.node_states
         }
+        self.carryover_task_ids: set[str] = set()
+        self.transfer_adaptation_start_cycle = 0
 
     def sync_topology(self) -> None:
         if self.topology_state is None:
@@ -594,6 +923,38 @@ class RoutingEnvironment:
             for node_id, tracker in self.latent_context_trackers.items()
         }
 
+    def configure_transfer_regime(
+        self,
+        *,
+        task_ids_seen: Iterable[str] | None,
+        start_cycle: int,
+    ) -> None:
+        self.carryover_task_ids = {
+            str(task_id)
+            for task_id in list(task_ids_seen or [])
+            if task_id is not None
+        }
+        self.transfer_adaptation_start_cycle = int(start_cycle)
+
+    def clear_transfer_regime(self) -> None:
+        self.carryover_task_ids = set()
+        self.transfer_adaptation_start_cycle = 0
+
+    def transfer_adaptation_phase(self, task_id: str | None, *, node_id: str | None = None) -> float:
+        if not self.latent_transfer_split_enabled:
+            return 0.0
+        if node_id is not None and node_id != self.source_id:
+            return 0.0
+        if not task_id or not self.carryover_task_ids:
+            return 0.0
+        if str(task_id) in self.carryover_task_ids:
+            return 0.0
+        elapsed = max(0, self.current_cycle - self.transfer_adaptation_start_cycle)
+        if elapsed >= self.transfer_adaptation_window:
+            return 0.0
+        remaining = self.transfer_adaptation_window - elapsed
+        return max(0.0, min(1.0, remaining / max(self.transfer_adaptation_window, 1)))
+
     def load_latent_context_state(self, payload: dict[str, object] | None) -> None:
         payload = payload or {}
         self.latent_context_trackers = {
@@ -633,7 +994,12 @@ class RoutingEnvironment:
         tracker = self.latent_context_trackers.get(node_id)
         if tracker is None:
             return
-        tracker.record_route(task_id, transform_name)
+        tracker.record_route(
+            task_id,
+            transform_name,
+            is_source=node_id == self.source_id,
+            adaptation_phase=self.transfer_adaptation_phase(task_id, node_id=node_id),
+        )
 
     def _resolved_feedback_context(
         self,
@@ -653,6 +1019,8 @@ class RoutingEnvironment:
             transform_name,
             bit_match_ratio=float(pulse.bit_match_ratio),
             credit_signal=credit_signal,
+            is_source=node_id == self.source_id,
+            adaptation_phase=self.transfer_adaptation_phase(pulse.task_id, node_id=node_id),
         )
         snapshot = tracker.observe_task(pulse.task_id, self.current_cycle)
         if not snapshot.get("promotion_ready"):
@@ -678,14 +1046,47 @@ class RoutingEnvironment:
                 and head_packet.context_bit is None
                 and head_task_id is not None
                 and node_id == self.source_id
+                and self.source_sequence_context_enabled
             ),
             packet_id=head_packet.packet_id if head_packet is not None else None,
             input_bits=head_packet.input_bits if head_packet is not None else None,
         )
+        source_sequence_available = (
+            1.0
+            if (
+                node_id == self.source_id
+                and head_packet is not None
+                and head_packet.context_bit is None
+                and self.source_sequence_context_enabled
+                and latent_snapshot.get("sequence_available")
+            )
+            else 0.0
+        )
         raw_has_context = 1.0 if head_packet is not None and head_packet.context_bit is not None else 0.0
+        transfer_adaptation_phase = (
+            self.transfer_adaptation_phase(head_task_id, node_id=node_id)
+            if (
+                head_packet is not None
+                and head_packet.context_bit is None
+                and head_task_id is not None
+            )
+            else 0.0
+        )
+        transfer_hidden_unseen_task = (
+            1.0
+            if (
+                transfer_adaptation_phase > 0.0
+                and raw_has_context < 0.5
+            )
+            else 0.0
+        )
         latent_available = 1.0 if latent_snapshot.get("available") else 0.0
         latent_estimate = latent_snapshot.get("estimate")
         latent_confidence = float(latent_snapshot.get("confidence", 0.0))
+        effective_context_threshold = (
+            LATENT_CONTEXT_CONFIDENCE_THRESHOLD
+            + transfer_adaptation_phase * LATENT_TRANSFER_EFFECTIVE_THRESHOLD_BOOST
+        )
         effective_context_bit = None
         effective_context_confidence = 0.0
         effective_has_context = 0.0
@@ -698,7 +1099,7 @@ class RoutingEnvironment:
         elif (
             latent_available >= 0.5
             and latent_estimate is not None
-            and latent_confidence >= LATENT_CONTEXT_CONFIDENCE_THRESHOLD
+            and latent_confidence >= effective_context_threshold
         ):
             effective_context_bit = int(latent_estimate)
             effective_context_confidence = latent_confidence
@@ -737,6 +1138,29 @@ class RoutingEnvironment:
                 float(latent_estimate) if latent_estimate is not None else 0.0
             ),
             "latent_context_confidence": latent_confidence,
+            "effective_context_threshold": effective_context_threshold,
+            "transfer_adaptation_phase": transfer_adaptation_phase,
+            "transfer_hidden_unseen_task": transfer_hidden_unseen_task,
+            "source_sequence_available": source_sequence_available,
+            "source_sequence_context_estimate": (
+                float(latent_snapshot.get("sequence_context_estimate"))
+                if latent_snapshot.get("sequence_context_estimate") is not None
+                else 0.0
+            ),
+            "source_sequence_context_confidence": float(
+                latent_snapshot.get("sequence_context_confidence", 0.0)
+            ),
+            "source_sequence_prev_parity": (
+                float(latent_snapshot.get("sequence_prev_parity"))
+                if latent_snapshot.get("sequence_prev_parity") is not None
+                else 0.0
+            ),
+            "source_sequence_change_ratio": float(
+                latent_snapshot.get("sequence_change_ratio", 0.0)
+            ),
+            "source_sequence_repeat_input": float(
+                latent_snapshot.get("sequence_repeat_input", 0.0)
+            ),
             "effective_has_context": effective_has_context,
             "effective_context_bit": (
                 float(effective_context_bit) if effective_context_bit is not None else 0.0
@@ -752,6 +1176,22 @@ class RoutingEnvironment:
         }
         transform_evidence = dict(latent_snapshot.get("transform_evidence", {}))
         candidate_transforms = set(_candidate_transforms_for_task(head_task_id))
+        sequence_estimate = latent_snapshot.get("sequence_context_estimate")
+        sequence_confidence = float(latent_snapshot.get("sequence_context_confidence", 0.0))
+        sequence_prev_bits = list(latent_snapshot.get("sequence_prev_bits", []))
+        sequence_delta_bits = list(latent_snapshot.get("sequence_delta_bits", []))
+        expected_sequence_transform = (
+            _expected_transform_for_task(head_task_id, int(sequence_estimate))
+            if sequence_estimate is not None
+            else None
+        )
+        for index in range(4):
+            local[f"source_prev_bit_{index}"] = (
+                float(sequence_prev_bits[index]) if source_sequence_available >= 0.5 and index < len(sequence_prev_bits) else 0.0
+            )
+            local[f"source_delta_bit_{index}"] = (
+                float(sequence_delta_bits[index]) if source_sequence_available >= 0.5 and index < len(sequence_delta_bits) else 0.0
+            )
         for transform_name in TRANSFORM_NAMES:
             local[f"history_transform_evidence_{transform_name}"] = max(
                 0.0,
@@ -766,6 +1206,17 @@ class RoutingEnvironment:
             else:
                 affinity = -1.0
             local[f"task_transform_affinity_{transform_name}"] = affinity
+            sequence_hint = 0.0
+            if source_sequence_available >= 0.5 and expected_sequence_transform is not None:
+                if transform_name == expected_sequence_transform:
+                    sequence_hint = sequence_confidence
+                elif transform_name in candidate_transforms and transform_name != "identity":
+                    sequence_hint = 0.15 * sequence_confidence
+                elif transform_name == "identity":
+                    sequence_hint = -0.35 * sequence_confidence
+                else:
+                    sequence_hint = -0.20 * sequence_confidence
+            local[f"source_sequence_transform_hint_{transform_name}"] = sequence_hint
         contradiction_pressure = self._contradiction_pressure(node_id)
         node_spec = self.topology_state.node_specs.get(node_id) if self.topology_state is not None else None
         candidate_targets = self._candidate_growth_targets(node_id)
@@ -1900,6 +2351,8 @@ class NativeSubstrateSystem:
         source_admission_min_rate: int = 1,
         source_admission_max_rate: int | None = None,
         morphogenesis_config: MorphogenesisConfig | None = None,
+        source_sequence_context_enabled: bool = True,
+        latent_transfer_split_enabled: bool = True,
     ) -> None:
         from .node_agent import NodeAgent
 
@@ -1930,6 +2383,8 @@ class NativeSubstrateSystem:
             source_admission_max_rate=source_admission_max_rate,
             topology_state=self.topology_state,
             morphogenesis_config=self.morphogenesis_config,
+            source_sequence_context_enabled=source_sequence_context_enabled,
+            latent_transfer_split_enabled=latent_transfer_split_enabled,
         )
         self.global_cycle = 0
         self.session_start_cycle = 0
@@ -2270,6 +2725,10 @@ class NativeSubstrateSystem:
                 "zero_matches": 0,
                 "identity_fallbacks": 0,
                 "wrong_transform_family": 0,
+                "route_wrong_transform_potentially_right": 0,
+                "route_right_transform_wrong": 0,
+                "transform_unstable_across_inferred_context_boundary": 0,
+                "delayed_correction": 0,
                 "stale_context_support_suspicions": 0,
                 "branch_counts": {},
                 "mismatch_branch_counts": {},
@@ -2278,6 +2737,7 @@ class NativeSubstrateSystem:
             },
         }
         overall = diagnostics["overall"]
+        successful_branches = self._successful_branches_by_group(scored_packets)
         for packet in scored_packets:
             context_key = f"context_{packet.context_bit}"
             expected_transform = _expected_transform_for_task(packet.task_id, packet.context_bit)
@@ -2293,6 +2753,10 @@ class NativeSubstrateSystem:
                     "zero_matches": 0,
                     "identity_fallbacks": 0,
                     "wrong_transform_family": 0,
+                    "route_wrong_transform_potentially_right": 0,
+                    "route_right_transform_wrong": 0,
+                    "transform_unstable_across_inferred_context_boundary": 0,
+                    "delayed_correction": 0,
                     "stale_context_support_suspicions": 0,
                     "mean_bit_accuracy_total": 0.0,
                     "final_transform_counts": {},
@@ -2327,6 +2791,36 @@ class NativeSubstrateSystem:
                 if final_transform == "identity":
                     stats["identity_fallbacks"] += 1
                     overall["identity_fallbacks"] += 1
+                if (
+                    expected_transform is not None
+                    and final_transform == expected_transform
+                ):
+                    stats["route_wrong_transform_potentially_right"] += 1
+                    overall["route_wrong_transform_potentially_right"] += 1
+                if self._route_right_transform_wrong(
+                    packet,
+                    expected_transform=expected_transform,
+                    final_transform=final_transform,
+                    first_hop=first_hop,
+                    successful_branches=successful_branches,
+                ):
+                    stats["route_right_transform_wrong"] += 1
+                    overall["route_right_transform_wrong"] += 1
+                if self._latent_transform_instability(
+                    scored_packets,
+                    packet=packet,
+                    final_transform=final_transform,
+                ):
+                    stats["transform_unstable_across_inferred_context_boundary"] += 1
+                    overall["transform_unstable_across_inferred_context_boundary"] += 1
+                if self._delayed_correction(
+                    scored_packets,
+                    packet=packet,
+                    first_hop=first_hop,
+                    final_transform=final_transform,
+                ):
+                    stats["delayed_correction"] += 1
+                    overall["delayed_correction"] += 1
                 if expected_transform is not None and final_transform != expected_transform:
                     stats["wrong_transform_family"] += 1
                     overall["wrong_transform_family"] += 1
@@ -2408,6 +2902,89 @@ class NativeSubstrateSystem:
         )
         return chosen_support > expected_support + 0.05
 
+    def _successful_branches_by_group(
+        self,
+        scored_packets: Sequence[SignalPacket],
+    ) -> dict[tuple[str, str], set[str]]:
+        successful: dict[tuple[str, str], set[str]] = {}
+        for packet in scored_packets:
+            if not packet.matched_target:
+                continue
+            group_key = (str(packet.task_id), f"context_{packet.context_bit}")
+            successful.setdefault(group_key, set()).add(self._packet_first_hop(packet))
+        return successful
+
+    def _route_right_transform_wrong(
+        self,
+        packet: SignalPacket,
+        *,
+        expected_transform: str | None,
+        final_transform: str,
+        first_hop: str,
+        successful_branches: dict[tuple[str, str], set[str]],
+    ) -> bool:
+        if expected_transform is None or final_transform == expected_transform:
+            return False
+        if first_hop == "sink":
+            return True
+        group_key = (str(packet.task_id), f"context_{packet.context_bit}")
+        return first_hop in successful_branches.get(group_key, set())
+
+    def _latent_transform_instability(
+        self,
+        scored_packets: Sequence[SignalPacket],
+        *,
+        packet: SignalPacket,
+        final_transform: str,
+    ) -> bool:
+        if packet.context_bit is not None or packet.task_id is None:
+            return False
+        admissible = set(_candidate_transforms_for_task(packet.task_id))
+        if final_transform not in admissible or len(admissible) < 2:
+            return False
+        siblings = [
+            other
+            for other in scored_packets
+            if other is not packet
+            and other.context_bit is None
+            and other.task_id == packet.task_id
+        ]
+        for other in siblings[-4:]:
+            other_transform = other.transform_trace[-1] if other.transform_trace else "identity"
+            if other_transform in admissible and other_transform != final_transform:
+                return True
+        return False
+
+    def _delayed_correction(
+        self,
+        scored_packets: Sequence[SignalPacket],
+        *,
+        packet: SignalPacket,
+        first_hop: str,
+        final_transform: str,
+    ) -> bool:
+        start_index = -1
+        for index, candidate in enumerate(scored_packets):
+            if candidate is packet:
+                start_index = index
+                break
+        if start_index < 0:
+            return False
+        seen_same_task = 0
+        for other in scored_packets[start_index + 1 :]:
+            if other.task_id != packet.task_id:
+                continue
+            seen_same_task += 1
+            if seen_same_task > 3:
+                break
+            other_hop = self._packet_first_hop(other)
+            other_transform = other.transform_trace[-1] if other.transform_trace else "identity"
+            if not other.matched_target:
+                continue
+            if other_hop == first_hop or other_transform == final_transform:
+                return True
+        return False
+
     def run_workload(
         self,
         *,
@@ -2438,6 +3015,16 @@ class NativeSubstrateSystem:
             "summary": self.summarize(),
         }
 
+    def _task_ids_seen(self) -> list[str]:
+        task_ids = {
+            str(packet.task_id)
+            for packet in self.environment.delivered_packets
+            if packet.task_id is not None
+        }
+        for tracker in self.environment.latent_context_trackers.values():
+            task_ids.update(str(task_id) for task_id in tracker.task_states.keys())
+        return sorted(task_ids)
+
     def save_carryover(self, root_dir: str | Path) -> Path:
         target = Path(root_dir)
         target.mkdir(parents=True, exist_ok=True)
@@ -2452,6 +3039,7 @@ class NativeSubstrateSystem:
             "environment": self.environment.export_runtime_state(),
             "agent_ids": list(self.agents.keys()),
             "topology": self.topology_state.to_dict(),
+            "task_ids_seen": self._task_ids_seen(),
         }
         manifest_path = target / "system_state.json"
         manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
@@ -2471,6 +3059,7 @@ class NativeSubstrateSystem:
             "admission_substrate": self.environment.admission_substrate.export_state(),
             "topology": self.topology_state.to_dict(),
             "latent_context_trackers": self.environment.export_latent_context_state(),
+            "task_ids_seen": self._task_ids_seen(),
         }
         manifest_path = target / "memory_state.json"
         manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
@@ -2490,6 +3079,7 @@ class NativeSubstrateSystem:
             "admission_substrate": self.environment.admission_substrate.export_state(),
             "topology": self.topology_state.to_dict(),
             "latent_context_trackers": self.environment.export_latent_context_state(),
+            "task_ids_seen": self._task_ids_seen(),
         }
         manifest_path = target / "substrate_state.json"
         manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
@@ -2513,6 +3103,10 @@ class NativeSubstrateSystem:
             manifest.get("admission_substrate")
         )
         self.environment.load_latent_context_state(manifest.get("latent_context_trackers"))
+        self.environment.configure_transfer_regime(
+            task_ids_seen=manifest.get("task_ids_seen", []),
+            start_cycle=self.global_cycle,
+        )
         nodes_dir = target / "nodes"
         for node_id, agent in self.agents.items():
             agent.load_carryover(nodes_dir / f"{node_id}.json")
@@ -2536,6 +3130,10 @@ class NativeSubstrateSystem:
             manifest.get("admission_substrate")
         )
         self.environment.load_latent_context_state(manifest.get("latent_context_trackers"))
+        self.environment.configure_transfer_regime(
+            task_ids_seen=manifest.get("task_ids_seen", []),
+            start_cycle=self.global_cycle,
+        )
         nodes_dir = target / "nodes"
         for node_id, agent in self.agents.items():
             agent.load_substrate_carryover(nodes_dir / f"{node_id}.json")
@@ -2551,6 +3149,10 @@ class NativeSubstrateSystem:
         self.global_cycle = int(manifest.get("global_cycle", 0))
         self.session_start_cycle = self.global_cycle
         self.environment.load_runtime_state(manifest.get("environment", {}))
+        self.environment.configure_transfer_regime(
+            task_ids_seen=manifest.get("task_ids_seen", []),
+            start_cycle=self.global_cycle,
+        )
         self.topology_state = self.environment.topology_state
         self.rebuild_agents_from_topology()
 
