@@ -1012,6 +1012,11 @@ class RoutingEnvironment:
             contradiction >= self.morphogenesis_config.contradiction_threshold
             or overload >= self.morphogenesis_config.overload_threshold
         )
+        feedback_gate = self.morphogenesis_config.routing_feedback_gate
+        routing_has_feedback = (
+            feedback_gate <= 0.0
+            or node_spec.feedback_recent >= feedback_gate
+        )
         growth_ready = (
             atp_ratio >= self.morphogenesis_config.atp_surplus_threshold
             and node_spec.positive_energy_streak >= 1
@@ -1021,6 +1026,7 @@ class RoutingEnvironment:
             and structural_value >= self.morphogenesis_config.growth_energy_threshold
             and structurally_motivated
             and not self.topology_state.max_dynamic_nodes_reached(self.morphogenesis_config)
+            and routing_has_feedback
         )
 
         specs: List[dict[str, object]] = []
@@ -1038,14 +1044,18 @@ class RoutingEnvironment:
             and observation.get("effective_context_confidence", 0.0) < context_gate
         )
         anticipatory_threshold = self.morphogenesis_config.anticipatory_growth_backlog_threshold
+        # Anticipatory growth fires under pre-overload pressure even without
+        # ATP surplus — so positive_energy_streak is intentionally not required
+        # here (it would be false precisely when this path is most needed).
         anticipatory_ready = (
             anticipatory_threshold > 0.0
-            and node_id == self.source_id
-            and observation.get("ingress_backlog", 0.0) >= anticipatory_threshold
+            and (
+                observation.get("ingress_backlog", 0.0) >= anticipatory_threshold
+                or observation.get("queue_pressure", 0.0) >= anticipatory_threshold
+            )
             and not backlog_crisis
-            and node_spec.positive_energy_streak >= 1
             and not self.topology_state.max_dynamic_nodes_reached(self.morphogenesis_config)
-            and structural_value >= self.morphogenesis_config.growth_energy_threshold
+            and routing_has_feedback
         )
         if (growth_ready or anticipatory_ready) and low_local_pressure and not context_gate_active:
             for target_id in self._candidate_growth_targets(node_id):

@@ -48,6 +48,10 @@ class MorphogenesisConfig:
     seed_action_support: float = 0.24
     growth_route_novelty_bonus: float = 0.12
     growth_route_probationary_bonus: float = 0.10
+    # When > 0.0, bud proposals are suppressed unless the node's
+    # feedback_recent meets this threshold.  Prevents growth before the node
+    # has demonstrated useful routing (positive feedback signal required).
+    routing_feedback_gate: float = 0.0
     # When > 0.0, bud_edge and bud_node proposals are suppressed while a node's
     # effective_context_confidence is below this value AND a task packet is
     # present.  Prevents structural growth during the context-inference window.

@@ -41,6 +41,9 @@ def benchmark_morphogenesis_config() -> MorphogenesisConfig:
         dynamic_node_upkeep=0.012,
         growth_grace_ticks=4,
         anticipatory_growth_backlog_threshold=0.55,
+        # Require positive feedback signal before growth fires; prevents
+        # branch_pressure premature budding (routing_feedback_gate fix).
+        routing_feedback_gate=0.05,
     )
 
 
