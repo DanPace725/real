@@ -39,6 +39,7 @@ class Phase8Selector:
     substrate: ConnectionSubstrate
     rng: random.Random = field(default_factory=random.Random)
     exploration_rate: float = 0.10
+    transfer_exploration_boost: float = 0.12
     recency_half_life: float = 6.0
     rest_atp_threshold: float = 0.12
     maintain_velocity_threshold: float = -0.015
@@ -78,7 +79,7 @@ class Phase8Selector:
             return self._best_growth_action(growth_actions), "guided"
 
         if local_inbox > 0 and route_actions:
-            if self.rng.random() < self._local_exploration_rate(history, local_inbox, urgency):
+            if self.rng.random() < self._local_exploration_rate(history, local_inbox, urgency, observation):
                 return self._sample_routes(route_actions, history), "fluctuation"
             return self._best_route(route_actions, history), "guided"
 
@@ -117,13 +118,30 @@ class Phase8Selector:
         history: List[object],
         local_inbox: int,
         urgency: float,
+        observation: dict[str, float],
     ) -> float:
         maturity = min(1.0, len(history) / 24.0)
         pressure_discount = min(0.06, local_inbox * 0.02)
         urgency_discount = min(0.05, urgency * 0.08)
+        transfer_exploration = 0.0
+        if (
+            self.node_id == self.environment.source_id
+            and observation.get("transfer_hidden_unseen_task", 0.0) >= 0.5
+        ):
+            transfer_phase = max(
+                0.0,
+                min(1.0, observation.get("transfer_adaptation_phase", 0.0)),
+            )
+            transfer_exploration = self.transfer_exploration_boost * transfer_phase
         return max(
             0.01,
-            self.exploration_rate * (1.0 - 0.7 * maturity) - pressure_discount - urgency_discount,
+            min(
+                0.35,
+                self.exploration_rate * (1.0 - 0.7 * maturity)
+                - pressure_discount
+                - urgency_discount
+                + transfer_exploration,
+            ),
         )
 
     def _best_route(self, route_actions: List[str], history: List[object]) -> str:
@@ -216,6 +234,21 @@ class Phase8Selector:
             f"task_transform_affinity_{transform_name}",
             0.0,
         )
+        source_sequence_hint = observation.get(
+            f"source_sequence_transform_hint_{transform_name}",
+            0.0,
+        )
+        source_sequence_available = observation.get("source_sequence_available", 0.0)
+        source_sequence_change_ratio = observation.get("source_sequence_change_ratio", 0.0)
+        source_sequence_repeat = observation.get("source_sequence_repeat_input", 0.0)
+        transfer_adaptation_phase = max(
+            0.0,
+            min(1.0, observation.get("transfer_adaptation_phase", 0.0)),
+        )
+        transfer_hidden_unseen_task = (
+            self.node_id == self.environment.source_id
+            and observation.get("transfer_hidden_unseen_task", 0.0) >= 0.5
+        )
         hidden_task_commitment = (
             observation.get("head_has_task", 0.0) >= 0.5
             and observation.get("head_has_context", 0.0) < 0.5
@@ -268,30 +301,81 @@ class Phase8Selector:
         competition_penalty = 0.0
         competition_bonus = 0.0
         growth_novelty_bonus = 0.0
+        source_pre_effective_route_drive = 0.0
+        hidden_wrong_family_penalty = 0.0
         if self.environment.topology_state is not None:
             neighbor_spec = self.environment.topology_state.node_specs.get(neighbor_id)
             if neighbor_spec is not None and neighbor_spec.dynamic:
                 growth_novelty_bonus += self.environment.morphogenesis_config.growth_route_novelty_bonus
             if neighbor_spec is not None and neighbor_spec.probationary:
                 growth_novelty_bonus += self.environment.morphogenesis_config.growth_route_probationary_bonus
+        source_pre_effective = (
+            hidden_task_commitment
+            and self.node_id == self.environment.source_id
+            and observation.get("has_packet", 0.0) >= 0.5
+            and source_sequence_available >= 0.5
+        )
         if hidden_task_commitment:
+            sequence_hint_scale = (
+                1.0 - 0.75 * transfer_adaptation_phase
+                if transfer_hidden_unseen_task
+                else 1.0
+            )
+            source_sequence_hint *= sequence_hint_scale
+            sequence_bonus_scale = (
+                0.18 * sequence_hint_scale
+                if source_sequence_available >= 0.5
+                else 0.0
+            )
+            sequence_repeat_penalty = 0.04 * source_sequence_repeat
+            transfer_candidate_bonus = (
+                0.04 * transfer_adaptation_phase
+                if transfer_hidden_unseen_task and task_transform_affinity > 0.0
+                else 0.0
+            )
             if transform_name == "identity":
-                # Stronger base penalty: identity is a bad default when the
-                # task label says a specific non-trivial transform is expected.
-                identity_penalty += 0.12 + 0.14 * min(1.0, best_non_identity_history)
-            elif task_transform_affinity > 0.0:
-                # Direct task-affinity bonus (doesn't require history) plus the
-                # history-evidence component.  Together these provide an early
-                # push toward candidate transforms before feedback accumulates,
-                # while naturally yielding to evidence-based scoring as history
-                # grows.  The promotion gate in consolidation is untouched.
-                task_transform_bonus += (
-                    0.08
-                    + self.hidden_task_affinity_weight * task_transform_affinity
-                    + 0.12 * history_transform_evidence
+                identity_penalty += (
+                    0.06
+                    + 0.08 * min(1.0, best_non_identity_history)
+                    + max(0.0, -source_sequence_hint) * sequence_bonus_scale
+                    + sequence_repeat_penalty
                 )
+                if transfer_hidden_unseen_task:
+                    identity_penalty += 0.05 * transfer_adaptation_phase
+                if source_pre_effective:
+                    identity_penalty += (
+                        0.12
+                        + 0.10 * max(0.0, -source_sequence_hint)
+                        + 0.04 * source_sequence_change_ratio
+                    )
+            elif task_transform_affinity > 0.0:
+                task_transform_bonus += (
+                    0.05
+                    + 0.08 * history_transform_evidence
+                    + max(0.0, source_sequence_hint) * sequence_bonus_scale
+                    + 0.03 * source_sequence_change_ratio
+                    + transfer_candidate_bonus
+                )
+                if source_pre_effective:
+                    pre_effective_drive_scale = (
+                        1.0 - 0.55 * transfer_adaptation_phase
+                        if transfer_hidden_unseen_task
+                        else 1.0
+                    )
+                    source_pre_effective_route_drive += (
+                        (
+                            0.10
+                            + 0.12 * max(0.0, source_sequence_hint)
+                            + 0.05 * source_sequence_change_ratio
+                            + 0.04 * observation.get("ingress_backlog", 0.0)
+                            + 0.03 * observation.get("reward_buffer", 0.0)
+                        )
+                        * pre_effective_drive_scale
+                    )
             elif task_transform_affinity < 0.0:
-                identity_penalty += 0.08
+                hidden_wrong_family_penalty += 0.04 + max(0.0, source_sequence_hint) * 0.14
+                if source_pre_effective:
+                    hidden_wrong_family_penalty += 0.08 + 0.06 * source_sequence_change_ratio
         elif transform_name == "identity" and best_non_identity_history > 0.12:
             identity_penalty += 0.18 * min(1.0, best_non_identity_history)
         elif transform_name != "identity":
@@ -422,6 +506,7 @@ class Phase8Selector:
             + growth_novelty_bonus
             + context_support_bonus
             + task_transform_bonus
+            + source_pre_effective_route_drive
             + branch_context_bonus
             + branch_transform_bonus
             + branch_escape_bonus
@@ -438,6 +523,7 @@ class Phase8Selector:
             - 0.48 * context_branch_feedback_debt * context_weight
             - 0.26 * branch_context_pressure * context_weight
             - identity_penalty
+            - hidden_wrong_family_penalty
             - competition_penalty
             - stale_penalty
             + competition_bonus
