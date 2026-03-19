@@ -44,6 +44,8 @@ Current focus:
 - `compare_cold_warm.py` - repeated-session cold vs warm comparison runner
 - `compare_task_transfer.py` - first Task A -> Task B transfer comparison runner
 - `run_phase8_demo.py` - multi-scenario stress, comparison, and detailed trace demo
+- `occupancy_baseline/` - separate traditional-NN setup for the first real-world occupancy benchmark
+- `compare_occupancy_baseline.py` - single-seed or multi-seed occupancy baseline vs REAL comparison runner
 
 ## Design constraints enforced in this slice
 
